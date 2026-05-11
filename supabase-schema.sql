@@ -1,3 +1,19 @@
+-- Destructive reset for the Uber Property app objects.
+-- Run this only when you are happy to wipe existing app data in this Supabase project.
+drop policy if exists "authenticated upload receipts" on storage.objects;
+drop policy if exists "authenticated update receipts" on storage.objects;
+drop policy if exists "public read receipts" on storage.objects;
+
+delete from storage.objects where bucket_id = 'receipts';
+delete from storage.buckets where id = 'receipts';
+
+drop table if exists certificates cascade;
+drop table if exists rent_due cascade;
+drop table if exists income cascade;
+drop table if exists expenses cascade;
+drop table if exists recurring_transactions cascade;
+drop table if exists properties cascade;
+
 create table if not exists properties (
   id uuid primary key,
   property_name text not null,
