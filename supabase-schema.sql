@@ -1,11 +1,12 @@
--- Destructive reset for the Uber Property app objects.
--- Run this only when you are happy to wipe existing app data in this Supabase project.
+-- Destructive reset for the Uber Property app database objects.
+-- Run this only when you are happy to wipe existing app table data in this Supabase project.
+--
+-- Supabase blocks direct SQL deletion from storage.objects. If you also want to
+-- remove existing receipt files, empty the "receipts" bucket from the Supabase
+-- Storage UI or Storage API before/after running this script.
 drop policy if exists "authenticated upload receipts" on storage.objects;
 drop policy if exists "authenticated update receipts" on storage.objects;
 drop policy if exists "public read receipts" on storage.objects;
-
-delete from storage.objects where bucket_id = 'receipts';
-delete from storage.buckets where id = 'receipts';
 
 drop table if exists certificates cascade;
 drop table if exists rent_due cascade;
@@ -92,7 +93,7 @@ create table if not exists certificates (
 
 insert into storage.buckets (id, name, public)
 values ('receipts', 'receipts', true)
-on conflict (id) do nothing;
+on conflict (id) do update set public = excluded.public;
 
 alter table properties enable row level security;
 alter table recurring_transactions enable row level security;
