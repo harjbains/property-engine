@@ -1,0 +1,468 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Uber Property</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Small UK landlord finance</p>
+        <h1>Uber Property</h1>
+      </div>
+      <button class="icon-button" id="syncButton" type="button" title="Sync data" aria-label="Sync data">
+        <span aria-hidden="true">&#8635;</span>
+      </button>
+    </header>
+
+    <main>
+      <section class="summary-strip" aria-label="Portfolio summary">
+        <article>
+          <span>Monthly rent</span>
+          <strong id="metricMonthlyRent">&pound;0</strong>
+        </article>
+        <article>
+          <span>Recurring costs</span>
+          <strong id="metricRecurring">&pound;0</strong>
+        </article>
+        <article>
+          <span>Net cashflow</span>
+          <strong id="metricCashflow">&pound;0</strong>
+        </article>
+        <article>
+          <span>Rent balance</span>
+          <strong id="metricRentBalance">&pound;0</strong>
+        </article>
+      </section>
+
+      <nav class="tabs" aria-label="Primary views">
+        <button class="tab is-active" type="button" data-view="dashboard">Dashboard</button>
+        <button class="tab" type="button" data-view="property">Property</button>
+        <button class="tab" type="button" data-view="tenancy">Tenancy</button>
+        <button class="tab" type="button" data-view="capture">Add New</button>
+        <button class="tab" type="button" data-view="diary">Compliance</button>
+        <button class="tab" type="button" data-view="records">History</button>
+        <button class="tab" type="button" data-view="reports">Reports</button>
+        <button class="tab" type="button" data-view="settings">Settings</button>
+      </nav>
+
+      <section class="view is-active" id="dashboardView" data-view-panel="dashboard">
+        <div class="section-heading">
+          <h2>Today</h2>
+          <button class="secondary-button" id="generateRecurringButton" type="button">Generate month</button>
+        </div>
+
+        <div class="dashboard-grid">
+          <article class="panel">
+            <h3>Portfolio</h3>
+            <div class="property-list" id="propertyList"></div>
+          </article>
+
+          <article class="panel">
+            <h3>Recent expenses</h3>
+            <div class="transaction-list" id="recentExpenses"></div>
+          </article>
+
+          <article class="panel">
+            <h3>Recurring costs</h3>
+            <div class="transaction-list" id="recurringList"></div>
+          </article>
+        </div>
+
+        <article class="panel tax-snapshot">
+          <div>
+            <h3>Current tax year</h3>
+            <p id="taxYearLabel">6 Apr - 5 Apr</p>
+          </div>
+          <div class="tax-numbers">
+            <span>Income <strong id="taxIncome">&pound;0</strong></span>
+            <span>Expenses <strong id="taxExpenses">&pound;0</strong></span>
+            <span>Estimated profit <strong id="taxProfit">&pound;0</strong></span>
+          </div>
+        </article>
+      </section>
+
+      <section class="view" id="propertyView" data-view-panel="property">
+        <div class="section-heading">
+          <h2>Property</h2>
+          <select id="propertyViewFilter" aria-label="Select property view"></select>
+        </div>
+
+        <div class="dashboard-grid">
+          <article class="panel">
+            <h3>Property details</h3>
+            <div id="propertyDetailPanel"></div>
+          </article>
+
+          <article class="panel">
+            <h3>Rent ledger</h3>
+            <div class="records-list" id="propertyRentLedger"></div>
+          </article>
+
+          <article class="panel">
+            <h3>Compliance data</h3>
+            <div class="diary-list" id="propertyComplianceList"></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="view" id="tenancyView" data-view-panel="tenancy">
+        <div class="section-heading">
+          <h2>Tenant / Tenancy</h2>
+          <select id="tenancyViewFilter" aria-label="Select tenancy view"></select>
+        </div>
+
+        <div class="dashboard-grid">
+          <article class="panel">
+            <h3>Tenant details</h3>
+            <div id="tenantDetailPanel"></div>
+          </article>
+
+          <article class="panel">
+            <h3>Tenant ledger</h3>
+            <div class="records-list" id="tenantLedger"></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="view" id="captureView" data-view-panel="capture">
+        <nav class="sub-tabs" aria-label="Add New options">
+          <button class="sub-tab is-active" type="button" data-add-panel="expense">Expense</button>
+          <button class="sub-tab" type="button" data-add-panel="income">Income</button>
+          <button class="sub-tab" type="button" data-add-panel="property">Property</button>
+          <button class="sub-tab" type="button" data-add-panel="recurring">Recurring</button>
+        </nav>
+
+        <div class="add-panel is-active" data-add-panel-view="expense">
+          <h2>Add expense</h2>
+          <form id="expenseForm" class="form-grid">
+            <input name="id" type="hidden">
+            <label>
+              Property
+              <select name="property_id" required></select>
+            </label>
+            <label>
+              Date
+              <input name="expense_date" type="date" required>
+            </label>
+            <label>
+              Category
+              <select name="category" required>
+                <option>Repairs and maintenance</option>
+                <option>Mortgage interest</option>
+                <option>Insurance</option>
+                <option>Letting fees</option>
+                <option>Service charge</option>
+                <option>Ground rent</option>
+                <option>Safety certificate</option>
+                <option>Cleaning</option>
+                <option>Other</option>
+              </select>
+            </label>
+            <label>
+              Amount
+              <input name="amount" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00" required>
+            </label>
+            <label>
+              Supplier
+              <input name="supplier" autocomplete="organization" placeholder="Supplier or contractor">
+            </label>
+            <label>
+              Camera receipt
+              <input name="receipt_camera" type="file" accept="image/*" capture="environment">
+            </label>
+            <label>
+              PDF or file
+              <input name="receipt_file" type="file" accept="image/*,.pdf">
+            </label>
+            <label class="wide">
+              Notes
+              <textarea name="notes" rows="3" placeholder="Short note for accountant"></textarea>
+            </label>
+            <button class="primary-button wide" type="submit">Save expense</button>
+          </form>
+        </div>
+
+        <div class="add-panel" data-add-panel-view="income">
+          <h2>Add income</h2>
+          <form id="incomeForm" class="form-grid">
+            <input name="id" type="hidden">
+            <label>
+              Property
+              <select name="property_id" required></select>
+            </label>
+            <label>
+              Date received
+              <input name="date_received" type="date" required>
+            </label>
+            <label>
+              Rent period
+              <input name="rent_period" type="month">
+            </label>
+            <label>
+              Rent due date
+              <input name="rent_due_date" type="date">
+            </label>
+            <label>
+              Amount
+              <input name="amount" type="number" inputmode="decimal" step="0.01" min="0" required>
+            </label>
+            <label class="wide">
+              Notes
+              <textarea name="notes" rows="3" placeholder="Rent month, adjustment, arrears, etc."></textarea>
+            </label>
+            <button class="primary-button wide" type="submit">Save income</button>
+          </form>
+        </div>
+
+        <div class="add-panel" data-add-panel-view="property">
+          <h2>Add property</h2>
+          <form id="propertyForm" class="form-grid">
+            <input name="id" type="hidden">
+            <label>
+              Property name
+              <input name="property_name" required placeholder="Flat 2, High Street">
+            </label>
+            <label>
+              Status
+              <select name="status">
+                <option value="tenanted">Tenanted</option>
+                <option value="vacant">Vacant</option>
+              </select>
+            </label>
+            <label class="wide">
+              Address
+              <textarea name="address" rows="2"></textarea>
+            </label>
+            <label>
+              Tenant name
+              <input name="tenant_name" autocomplete="name">
+            </label>
+            <label>
+              Tenant phone
+              <input name="tenant_phone" autocomplete="tel">
+            </label>
+            <label>
+              Tenant email
+              <input name="tenant_email" type="email" autocomplete="email">
+            </label>
+            <label>
+              Tenancy start date
+              <input name="tenancy_start_date" type="date">
+            </label>
+            <label>
+              Monthly rent
+              <input name="monthly_rent" type="number" inputmode="decimal" step="0.01" min="0">
+            </label>
+            <label>
+              Deposit held
+              <input name="deposit_amount" type="number" inputmode="decimal" step="0.01" min="0">
+            </label>
+            <label>
+              Deposit scheme
+              <input name="deposit_scheme" placeholder="DPS, TDS, MyDeposits">
+            </label>
+            <label>
+              Mortgage interest monthly
+              <input name="mortgage_interest_monthly" type="number" inputmode="decimal" step="0.01" min="0">
+            </label>
+            <label>
+              Insurance monthly
+              <input name="insurance_monthly" type="number" inputmode="decimal" step="0.01" min="0">
+            </label>
+            <label>
+              Management fee % override
+              <input name="management_fee_percentage" type="number" inputmode="decimal" step="0.1" min="0">
+            </label>
+            <label class="wide">
+              Notes
+              <textarea name="notes" rows="3"></textarea>
+            </label>
+            <button class="primary-button wide" type="submit">Save property</button>
+          </form>
+        </div>
+
+        <div class="add-panel" data-add-panel-view="recurring">
+          <h2>Add recurring cost</h2>
+          <form id="recurringForm" class="form-grid">
+            <input name="id" type="hidden">
+            <label>
+              Property
+              <select name="property_id" required></select>
+            </label>
+            <label>
+              Frequency
+              <select name="frequency">
+                <option value="monthly">Monthly</option>
+                <option value="yearly">Yearly</option>
+              </select>
+            </label>
+            <label>
+              Category
+              <select name="category">
+                <option>Mortgage interest</option>
+                <option>Insurance</option>
+                <option>Letting fees</option>
+                <option>Service charge</option>
+                <option>Ground rent</option>
+                <option>Other</option>
+              </select>
+            </label>
+            <label>
+              Amount
+              <input name="amount" type="number" inputmode="decimal" step="0.01" min="0" required>
+            </label>
+            <label>
+              Start date
+              <input name="start_date" type="date" required>
+            </label>
+            <label class="wide">
+              Description
+              <input name="description" placeholder="Monthly mortgage interest">
+            </label>
+            <button class="primary-button wide" type="submit">Save recurring cost</button>
+          </form>
+          <div class="embedded-list">
+            <h3>Current recurring transactions</h3>
+            <div class="transaction-list" id="recurringManageList"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="diaryView" data-view-panel="diary">
+        <div class="section-heading">
+          <h2>Compliance</h2>
+          <select id="diaryPropertyFilter" aria-label="Filter diary by property"></select>
+        </div>
+
+        <details class="drawer" open>
+          <summary>Add certificate or expiry</summary>
+          <form id="certificateForm" class="form-grid">
+            <input name="id" type="hidden">
+            <label>
+              Property
+              <select name="property_id" required></select>
+            </label>
+            <label>
+              Type
+              <select name="certificate_type" required>
+                <option>Gas safety certificate</option>
+                <option>Electrical installation condition report</option>
+                <option>EPC</option>
+                <option>Landlord insurance renewal</option>
+                <option>HMO licence</option>
+                <option>Other expiry</option>
+              </select>
+            </label>
+            <label>
+              Issue date
+              <input name="issue_date" type="date">
+            </label>
+            <label>
+              Expiry date
+              <input name="expiry_date" type="date" required>
+            </label>
+            <label>
+              Reminder date
+              <input name="reminder_date" type="date">
+            </label>
+            <label>
+              Certificate file
+              <input name="document_file" type="file" accept="image/*,.pdf">
+            </label>
+            <label class="wide">
+              Notes
+              <textarea name="notes" rows="3" placeholder="Inspector, certificate number, booking note, etc."></textarea>
+            </label>
+            <button class="primary-button wide" type="submit">Save diary item</button>
+          </form>
+        </details>
+
+        <div class="diary-list" id="diaryList"></div>
+      </section>
+
+      <section class="view" id="recordsView" data-view-panel="records">
+        <div class="section-heading">
+          <h2>History</h2>
+          <select id="recordPropertyFilter" aria-label="Filter history by property"></select>
+        </div>
+        <div class="records-list" id="recordsList"></div>
+      </section>
+
+      <section class="view" id="reportsView" data-view-panel="reports">
+        <article class="panel report-panel">
+          <div class="section-heading">
+            <h2>Tax year summary</h2>
+            <select id="taxYearSelect" aria-label="Select tax year"></select>
+          </div>
+          <div class="report-table" id="taxReport"></div>
+          <div class="button-row">
+            <button class="secondary-button" id="exportCsvButton" type="button">Export CSV</button>
+            <button class="secondary-button" id="printReportButton" type="button">PDF summary</button>
+          </div>
+        </article>
+
+        <article class="panel">
+          <h3>MTD record status</h3>
+          <ul class="check-list">
+            <li>Digital transaction date, category and amount stored for every income and expense entry.</li>
+            <li>Mortgage interest is separated from other costs for UK landlord tax reporting.</li>
+            <li>Receipts and invoices can be attached to expense records.</li>
+            <li>CSV and printable PDF summaries support accountant handoff.</li>
+          </ul>
+        </article>
+      </section>
+
+      <section class="view" id="settingsView" data-view-panel="settings">
+        <article class="panel">
+          <h2>Settings</h2>
+          <form id="settingsForm" class="form-grid settings-form">
+            <label>
+              Lettings commission
+              <select name="lettings_fee_mode" id="lettingsFeeMode">
+                <option value="percentage">Percentage of rent</option>
+                <option value="fixed">Fixed monthly fee</option>
+              </select>
+            </label>
+            <label data-settings-field="percentage">
+              Percentage rate
+              <input name="lettings_fee_percentage" type="number" inputmode="decimal" step="0.1" min="0" placeholder="8">
+            </label>
+            <label data-settings-field="fixed">
+              Fixed monthly fee
+              <input name="lettings_fee_fixed" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00">
+            </label>
+            <label>
+              Rent due day
+              <input name="rent_due_day" type="number" inputmode="numeric" min="1" max="28" step="1">
+            </label>
+            <label class="wide">
+              Supabase project URL
+              <input name="supabase_url" type="url" placeholder="https://your-project.supabase.co">
+            </label>
+            <label class="wide">
+              Supabase anon key
+              <input name="supabase_anon_key" autocomplete="off" spellcheck="false">
+            </label>
+            <label class="wide">
+              Portfolio notes
+              <textarea name="portfolio_notes" rows="3" placeholder="Default assumptions, accountant notes, reminders"></textarea>
+            </label>
+            <button class="primary-button wide" type="submit">Save settings</button>
+          </form>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <template id="emptyStateTemplate">
+    <p class="empty-state">No records yet.</p>
+  </template>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js"></script>
+</body>
+</html>
