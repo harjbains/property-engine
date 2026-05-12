@@ -198,7 +198,14 @@
   }
 
   function scrollTabs(direction) {
-    els.tabScroller.scrollBy({ left: direction * Math.round(els.tabScroller.clientWidth * 0.75), behavior: "smooth" });
+    const tabs = [...els.tabs];
+    const currentLeft = els.tabScroller.scrollLeft;
+    const target = direction > 0
+      ? tabs.find((tab) => tab.offsetLeft > currentLeft + 8)
+      : [...tabs].reverse().find((tab) => tab.offsetLeft < currentLeft - 8);
+    if (target) {
+      els.tabScroller.scrollTo({ left: target.offsetLeft - els.tabScroller.offsetLeft - 4, behavior: "smooth" });
+    }
   }
 
   function updateTabScrollHints() {
