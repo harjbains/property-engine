@@ -26,37 +26,41 @@
     </header>
 
     <main>
-      <section class="summary-strip" aria-label="Portfolio summary">
-        <article>
-          <span>Monthly rent</span>
-          <strong id="metricMonthlyRent">&pound;0</strong>
-        </article>
-        <article>
-          <span>Recurring costs</span>
-          <strong id="metricRecurring">&pound;0</strong>
-        </article>
-        <article>
-          <span>Net cashflow</span>
-          <strong id="metricCashflow">&pound;0</strong>
-        </article>
-        <article>
-          <span>Rent balance</span>
-          <strong id="metricRentBalance">&pound;0</strong>
-        </article>
-      </section>
-
-      <nav class="tabs" aria-label="Primary views">
-        <button class="tab is-active" type="button" data-view="dashboard">Dashboard</button>
-        <button class="tab" type="button" data-view="property">Property</button>
-        <button class="tab" type="button" data-view="tenancy">Tenancy</button>
-        <button class="tab" type="button" data-view="capture">Add New</button>
-        <button class="tab" type="button" data-view="diary">Compliance</button>
-        <button class="tab" type="button" data-view="records">History</button>
-        <button class="tab" type="button" data-view="reports">Reports</button>
-        <button class="tab" type="button" data-view="settings">Settings</button>
-      </nav>
+      <div class="tab-scroll-wrap" data-scroll-wrap>
+        <button class="scroll-hint scroll-left" type="button" data-scroll-tabs="-1" aria-label="Scroll tabs left">&lt;</button>
+        <nav class="tabs" aria-label="Primary views">
+          <button class="tab is-active" type="button" data-view="dashboard">Dashboard</button>
+          <button class="tab" type="button" data-view="property">Property</button>
+          <button class="tab" type="button" data-view="tenancy">Tenancy</button>
+          <button class="tab" type="button" data-view="capture">Add New</button>
+          <button class="tab" type="button" data-view="diary">Compliance</button>
+          <button class="tab" type="button" data-view="records">History</button>
+          <button class="tab" type="button" data-view="reports">Reports</button>
+          <button class="tab" type="button" data-view="settings">Settings</button>
+        </nav>
+        <button class="scroll-hint scroll-right is-visible" type="button" data-scroll-tabs="1" aria-label="Scroll tabs right">&gt;</button>
+      </div>
 
       <section class="view is-active" id="dashboardView" data-view-panel="dashboard">
+        <section class="summary-strip" aria-label="Portfolio summary">
+          <article>
+            <span>Monthly rent</span>
+            <strong id="metricMonthlyRent">&pound;0</strong>
+          </article>
+          <article>
+            <span>Recurring costs</span>
+            <strong id="metricRecurring">&pound;0</strong>
+          </article>
+          <article>
+            <span>Net cashflow</span>
+            <strong id="metricCashflow">&pound;0</strong>
+          </article>
+          <article>
+            <span>Rent balance</span>
+            <strong id="metricRentBalance">&pound;0</strong>
+          </article>
+        </section>
+
         <div class="section-heading">
           <h2>Today</h2>
           <button class="secondary-button" id="generateRecurringButton" type="button">Generate month</button>
@@ -463,6 +467,43 @@
         </article>
       </section>
     </main>
+  </div>
+
+  <div class="quick-layer" id="quickLayer" hidden>
+    <div class="quick-panel" data-quick-panel="menu" hidden>
+      <div class="quick-panel-head">
+        <strong>Go to</strong>
+        <button class="icon-button quick-close" type="button" data-quick-close aria-label="Close menu">x</button>
+      </div>
+      <div class="quick-grid">
+        <button type="button" data-jump-view="dashboard">Dashboard</button>
+        <button type="button" data-jump-view="property">Property</button>
+        <button type="button" data-jump-view="tenancy">Tenancy</button>
+        <button type="button" data-jump-view="records">History</button>
+        <button type="button" data-jump-view="diary">Compliance</button>
+        <button type="button" data-jump-view="reports">Reports</button>
+        <button type="button" data-jump-view="settings">Settings</button>
+      </div>
+    </div>
+
+    <div class="quick-panel" data-quick-panel="add" hidden>
+      <div class="quick-panel-head">
+        <strong>Add</strong>
+        <button class="icon-button quick-close" type="button" data-quick-close aria-label="Close add menu">x</button>
+      </div>
+      <div class="quick-grid">
+        <button type="button" data-jump-add="income">Income</button>
+        <button type="button" data-jump-add="expense">Expense</button>
+        <button type="button" data-jump-add="property">Property / tenancy</button>
+        <button type="button" data-jump-add="recurring">Recurring cost</button>
+        <button type="button" data-jump-view="diary">Compliance</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="floating-actions" aria-label="Quick actions">
+    <button class="floating-button" type="button" data-open-quick="menu">Menu</button>
+    <button class="floating-button primary-float" type="button" data-open-quick="add" aria-label="Add new">+</button>
   </div>
 
   <template id="emptyStateTemplate">

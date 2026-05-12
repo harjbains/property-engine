@@ -11,9 +11,13 @@
 
   const els = {
     tabs: document.querySelectorAll(".tab"),
+    tabScroller: document.querySelector(".tabs"),
+    scrollHints: document.querySelectorAll("[data-scroll-tabs]"),
     addTabs: document.querySelectorAll(".sub-tab"),
     addPanels: document.querySelectorAll("[data-add-panel-view]"),
     views: document.querySelectorAll("[data-view-panel]"),
+    quickLayer: document.querySelector("#quickLayer"),
+    quickPanels: document.querySelectorAll("[data-quick-panel]"),
     propertyForm: document.querySelector("#propertyForm"),
     expenseForm: document.querySelector("#expenseForm"),
     incomeForm: document.querySelector("#incomeForm"),
@@ -148,6 +152,11 @@
     els.tabs.forEach((tab) => {
       tab.addEventListener("click", () => switchView(tab.dataset.view));
     });
+    els.scrollHints.forEach((button) => {
+      button.addEventListener("click", () => scrollTabs(Number(button.dataset.scrollTabs)));
+    });
+    els.tabScroller.addEventListener("scroll", updateTabScrollHints);
+    window.addEventListener("resize", updateTabScrollHints);
     els.addTabs.forEach((tab) => {
       tab.addEventListener("click", () => switchAddPanel(tab.dataset.addPanel));
     });
@@ -169,6 +178,7 @@
     els.printReportButton.addEventListener("click", () => window.print());
     els.syncButton.addEventListener("click", syncFromSupabase);
     document.addEventListener("click", handleRecordAction);
+    document.addEventListener("click", handleQuickAction);
   }
 
   function setDefaultDates() {
@@ -183,11 +193,66 @@
   function switchView(view) {
     els.tabs.forEach((tab) => tab.classList.toggle("is-active", tab.dataset.view === view));
     els.views.forEach((panel) => panel.classList.toggle("is-active", panel.dataset.viewPanel === view));
+    updateTabScrollHints();
+    closeQuickPanels();
+  }
+
+  function scrollTabs(direction) {
+    els.tabScroller.scrollBy({ left: direction * Math.round(els.tabScroller.clientWidth * 0.75), behavior: "smooth" });
+  }
+
+  function updateTabScrollHints() {
+    const maxScroll = els.tabScroller.scrollWidth - els.tabScroller.clientWidth;
+    const left = document.querySelector(".scroll-left");
+    const right = document.querySelector(".scroll-right");
+    left.classList.toggle("is-visible", els.tabScroller.scrollLeft > 4);
+    right.classList.toggle("is-visible", els.tabScroller.scrollLeft < maxScroll - 4);
   }
 
   function switchAddPanel(panelName) {
     els.addTabs.forEach((tab) => tab.classList.toggle("is-active", tab.dataset.addPanel === panelName));
     els.addPanels.forEach((panel) => panel.classList.toggle("is-active", panel.dataset.addPanelView === panelName));
+    closeQuickPanels();
+  }
+
+  function handleQuickAction(event) {
+    const openButton = event.target.closest("[data-open-quick]");
+    if (openButton) {
+      openQuickPanel(openButton.dataset.openQuick);
+      return;
+    }
+
+    if (event.target.closest("[data-quick-close]")) {
+      closeQuickPanels();
+      return;
+    }
+
+    const viewButton = event.target.closest("[data-jump-view]");
+    if (viewButton) {
+      switchView(viewButton.dataset.jumpView);
+      return;
+    }
+
+    const addButton = event.target.closest("[data-jump-add]");
+    if (addButton) {
+      switchView("capture");
+      switchAddPanel(addButton.dataset.jumpAdd);
+    }
+  }
+
+  function openQuickPanel(panelName) {
+    els.quickLayer.hidden = false;
+    els.quickPanels.forEach((panel) => {
+      panel.hidden = panel.dataset.quickPanel !== panelName;
+    });
+  }
+
+  function closeQuickPanels() {
+    if (!els.quickLayer) return;
+    els.quickLayer.hidden = true;
+    els.quickPanels.forEach((panel) => {
+      panel.hidden = true;
+    });
   }
 
   async function handleRecordAction(event) {
@@ -663,6 +728,7 @@
     renderRecords();
     renderTaxYearOptions();
     renderReports();
+    updateTabScrollHints();
   }
 
   function renderPropertyOptions() {
