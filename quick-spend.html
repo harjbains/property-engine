@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Quick Spend</title>
   <meta name="theme-color" content="#111827">
-  <link rel="stylesheet" href="styles.css?v=89">
+  <link rel="stylesheet" href="styles.css?v=90">
 </head>
 <body class="quick-body">
   <main class="quick-shell">
@@ -14,12 +14,7 @@
         <p class="eyebrow">CASHFLOW CAPTURE</p>
         <h1>Quick spend</h1>
       </div>
-      <div class="quick-top-links">
-        <button id="quickImportButton" type="button">Import</button>
-        <input id="quickImportFile" type="file" accept="application/json,.json" hidden>
-        <button id="quickExportButton" type="button">Export</button>
-        <a href="index.html">Main app</a>
-      </div>
+      <div class="quick-top-links"><a href="index.html">Main app</a></div>
     </header>
 
     <section class="quick-card">
@@ -31,11 +26,9 @@
         <button id="syncCreateAccount" type="button">Create</button>
       </div>
       <div class="quick-sync-actions" data-sync-signed-in hidden>
-        <button type="button" data-sync-push>Push</button>
-        <button type="button" data-sync-pull>Pull</button>
         <button type="button" data-sync-signout>Sign out</button>
       </div>
-      <div class="quick-status" data-sync-status>Supabase sync ready.</div>
+      <div class="quick-status" data-sync-status>Sign in once to enable automatic sync.</div>
     </section>
 
     <section class="quick-card">
@@ -101,6 +94,6 @@
       <div class="quick-list" id="quickRecent"></div>
     </section>
   </main>
-  <script src="quick-spend.js?v=3"></script><script src="supabase-sync.js?v=1"></script>
+  <script src="quick-spend.js?v=4"></script><script src="supabase-sync.js?v=2"></script>
 </body>
 </html>

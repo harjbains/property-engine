@@ -74,9 +74,6 @@ function init(){
   by("#quickDate").value=todayIso();by("#quickMonth").value=monthIso();
   by("#quickProperty").innerHTML=propertyOptions();
   renderRecent();
-  by("#quickExportButton").addEventListener("click",exportAllLocalData);
-  by("#quickImportButton").addEventListener("click",()=>by("#quickImportFile").click());
-  by("#quickImportFile").addEventListener("change",event=>{importAllLocalData(event.target.files?.[0]);event.target.value="";});
   by("#quickMonth").addEventListener("change",renderRecent);
   by("#quickDate").addEventListener("change",event=>{by("#quickMonth").value=monthIso(event.target.value);renderRecent();});
   by("#quickSpendForm").addEventListener("submit",event=>{
