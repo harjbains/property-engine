@@ -3,7 +3,7 @@ const SUPABASE_URL="https://ixhxsylbdscfapmsjhlb.supabase.co";
 const SUPABASE_KEY="sb_publishable_JBlVdOh59UhN0MNbvvibAg_So1n4Myz";
 const SESSION_KEY="tax-engine-supabase-session",SYNC_PREFIX="tax-engine-";
 const by=s=>document.querySelector(s),all=s=>[...document.querySelectorAll(s)];
-let applyingRemote=false,pushTimer=null,lastPushAt=0,lastPullAt=0;
+let applyingRemote=false,pushTimer=null,lastPushAt=0,lastPullAt=0,lastLocalWriteAt=0;
 const nativeSetItem=Storage.prototype.setItem;
 const status=text=>{all("[data-sync-status]").forEach(x=>x.textContent=text);};
 function session(){try{return JSON.parse(localStorage.getItem(SESSION_KEY)||"null");}catch{return null;}}
@@ -42,19 +42,23 @@ async function pushAll(reason="saved"){
   const s=await ensureSession();if(!s?.access_token)return;
   const records=localRecords().map(r=>({...r,user_id:s.user.id}));
   if(!records.length)return;
+  clearTimeout(pushTimer);pushTimer=null;
   status(`Auto-syncing ${records.length} record(s)...`);
   const res=await fetch(`${SUPABASE_URL}/rest/v1/tax_engine_records?on_conflict=user_id,record_key`,{method:"POST",headers:{...headers(s.access_token),Prefer:"resolution=merge-duplicates"},body:JSON.stringify(records)});
   if(!res.ok)throw new Error(await res.text());
   lastPushAt=Date.now();
+  lastLocalWriteAt=0;
   status(`Synced ${new Date(lastPushAt).toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})}.`);
 }
 function schedulePush(){
   if(applyingRemote||!session()?.access_token)return;
+  lastLocalWriteAt=Date.now();
   clearTimeout(pushTimer);
   pushTimer=setTimeout(()=>pushAll().catch(e=>status(`Sync failed: ${e.message}`)),900);
 }
 async function pullAll({reload=true}={}){
   const s=await ensureSession();if(!s?.access_token)return 0;
+  if(pushTimer||Date.now()-lastLocalWriteAt<10000){status("Local changes pending sync...");return 0;}
   lastPullAt=Date.now();
   status("Loading cloud records...");
   const res=await fetch(`${SUPABASE_URL}/rest/v1/tax_engine_records?select=record_key,payload,updated_at&order=record_key.asc`,{headers:headers(s.access_token)});
