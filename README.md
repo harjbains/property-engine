@@ -1,34 +1,26 @@
-# Uber Property
+# Tax Engine
 
-Uber Property is a lightweight, mobile-first landlord accounting app for small UK portfolios. It focuses on rental income, recurring costs, expense capture, receipt retention, tax-year summaries, and accountant-friendly exports.
+Desktop-first UK tax forecasting and MTD-ready digital records for combined sole-trader Uber income, residential property income and pension income.
 
 ## Run locally
 
-Open `index.html` in a browser. The app works immediately with local browser storage and seeded demo data.
+Serve this folder over HTTP, for example with `python -m http.server 5510`, then open `http://127.0.0.1:5510/`.
 
-## Supabase setup
+The app seeds the requested Wolverhampton planning profile: £8,600 pension income, £32,000 property income, £3,000 property expenses, £3,700 residential finance costs, 52,000 annual Uber business miles and low/mid/high Uber turnover scenarios of £42,000/£55,000/£70,000.
 
-1. Create a Supabase project.
-2. Run `supabase-schema.sql` in the SQL editor.
-3. Open the app, go to Settings, and paste your Supabase project URL and anon key.
-4. Enable email OTP in Supabase Auth.
-5. Review row-level security policies before production use.
+## Calculation model
 
-Receipts are uploaded to the `receipts` storage bucket when Supabase credentials are configured. Without Supabase, uploaded files are attached as temporary local object URLs for the current browser session.
+- Tax-year-aware mileage: 45p/25p for 2025/26 and 55p/25p for 2026/27.
+- England and Wales Income Tax bands, Personal Allowance taper and Class 4 NI.
+- Residential finance costs handled as a basic-rate tax reduction, not a property-profit deduction.
+- HMRC payments reduce the forecast outstanding balance.
+- Property and tenancy records store tenant, monthly rent, tenancy dates and deposit separately from transactions.
+- Separate ledgers record rent income, rent changes and property expenses; mortgage interest is classified automatically as a finance cost.
+- Per-tax-year statutory rule sets can be reset to defaults or copied from the previous year.
+- Income modules can be enabled independently; disabled modules retain data while disappearing from calculations, navigation and reports.
+- Optional Employment/PAYE, savings, dividends and other-income calculations sit alongside the focused Uber, property and pension defaults.
+- HMRC planning supports reserves, catch-up shortfalls, minimum provisions, preferred payment day and configurable rounding.
 
-## v1 scope
+Run calculation tests with `node tax-engine.test.js`.
 
-- Property setup with rent, tenant, mortgage interest, insurance, and management fee fields.
-- Classic Property view with rent ledger, compliance data, tenancy start, rent and deposit details.
-- Classic Tenant/Tenancy view with contact details and tenant ledger.
-- Recurring monthly and yearly expense generation.
-- Recurring transaction management from Add New, including edit and delete controls.
-- Settings for default lettings commission as a percentage or fixed monthly fee.
-- Rent due generation with property balances for unpaid rent, part payments, arrears, and credits.
-- Payment records include received date, rent period, and related rent due date.
-- Expense and income capture.
-- Mobile camera/PDF receipt upload input.
-- Compliance diary for gas safety certificates, electrical certificates, EPCs, renewals, and other expiries.
-- Dashboard summary for monthly rent, recurring costs, cashflow, and current tax year.
-- Tax-year report using the UK 6 April to 5 April tax year.
-- CSV export and printable PDF summary.
+This is a planning tool, not tax advice or an HMRC filing product. Payments on account and less-common adjustments are not yet included.

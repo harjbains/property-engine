@@ -1,10 +1,10 @@
 {
-  "name": "Property Engine",
-  "short_name": "PE",
+  "name": "Tax Engine",
+  "short_name": "Tax Engine",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#f5f6f1",
-  "theme_color": "#227c63",
+  "background_color": "#f5f7fa",
+  "theme_color": "#111827",
   "icons": [
     {
       "src": "icons/icon-192.png",

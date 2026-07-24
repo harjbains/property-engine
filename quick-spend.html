@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quick Spend</title>
+  <meta name="theme-color" content="#111827">
+  <link rel="stylesheet" href="styles.css?v=88">
+</head>
+<body class="quick-body">
+  <main class="quick-shell">
+    <header class="quick-top">
+      <div>
+        <p class="eyebrow">CASHFLOW CAPTURE</p>
+        <h1>Quick spend</h1>
+      </div>
+      <a href="index.html">Main app</a>
+    </header>
+
+    <section class="quick-card">
+      <form class="quick-form" id="quickSpendForm">
+        <div class="quick-two">
+          <label>Month
+            <input id="quickMonth" name="month" type="month" required>
+          </label>
+          <label>Date
+            <input id="quickDate" name="date" type="date" required>
+          </label>
+        </div>
+        <label>What was it?
+          <input name="description" autocomplete="off" placeholder="Fuel, parking, supplies..." required>
+        </label>
+        <div class="quick-two">
+          <label>Amount
+            <input name="amount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00" required>
+          </label>
+          <label>Status
+            <select name="status">
+              <option>Paid</option>
+              <option>Part-paid</option>
+              <option>Unplanned</option>
+              <option>Planned</option>
+            </select>
+          </label>
+        </div>
+        <div class="quick-two">
+          <label>Category
+            <select name="category">
+              <option>Fuel</option>
+              <option>Parking</option>
+              <option>Vehicle</option>
+              <option>Property</option>
+              <option>Legal</option>
+              <option>Living</option>
+              <option>Other</option>
+            </select>
+          </label>
+          <label>Account
+            <select name="account">
+              <option value="zempler">Zempler</option>
+              <option value="lloyds">Lloyds</option>
+            </select>
+          </label>
+        </div>
+        <label>Property
+          <select name="propertyId" id="quickProperty">
+            <option value="">No property link</option>
+          </select>
+        </label>
+        <label>Notes
+          <textarea name="notes" placeholder="Optional detail"></textarea>
+        </label>
+        <button class="quick-save" type="submit">Add spending</button>
+        <div class="quick-status" id="quickStatus" role="status"></div>
+      </form>
+    </section>
+
+    <section class="quick-card">
+      <p class="eyebrow">LAST EXPENSES</p>
+      <div class="quick-list" id="quickRecent"></div>
+    </section>
+  </main>
+  <script src="quick-spend.js?v=1"></script>
+</body>
+</html>

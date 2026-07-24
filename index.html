@@ -1,516 +1,69 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Uber Property</title>
-  <meta name="theme-color" content="#227c63">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="Property Engine">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <link rel="manifest" href="manifest.webmanifest">
-  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
-  <link rel="stylesheet" href="styles.css">
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tax Engine</title><meta name="theme-color" content="#111827">
+  <link rel="manifest" href="manifest.webmanifest"><link rel="stylesheet" href="styles.css?v=88">
 </head>
 <body>
-  <div class="app-shell">
-    <header class="topbar">
-      <div>
-        <p class="eyebrow">Small UK landlord finance</p>
-        <h1>Uber Property</h1>
+  <aside class="sidebar">
+    <div class="brand"><span class="brand-mark">TE</span><div><strong>Tax Engine</strong><small>MTD-ready planning</small></div></div>
+    <nav id="nav">
+      <button class="active" data-view="dashboard">Tax Provision</button><button data-view="monthly">Monthly Entry</button><button data-view="employment" data-module-nav="employment" hidden>PAYE</button><button data-view="uber" data-module-nav="uber">Uber</button><button data-view="properties" data-module-nav="property">Properties</button><button data-view="pension" data-module-nav="pension">Pension</button><button data-view="mtd">MTD Updates</button><button data-view="payments">HMRC Payments</button><button data-view="calculation">Tax Calculation</button><button data-view="returnprep">Return Preparation</button><button data-view="audit">Audit Checks</button><button data-view="reports">Reports</button><button data-view="settings">Settings</button>
+    </nav>
+    <div class="side-note"><span class="status-dot"></span>Local records protected<br><small>Supabase-ready architecture</small></div>
+  </aside>
+  <main class="shell">
+    <header class="topbar"><div><p class="eyebrow">SOLE TRADER TAX FORECAST</p><h1 id="pageTitle">Tax Provision</h1></div><div class="top-actions"><a class="quick-link" href="quick-spend.html">Quick spend</a><label>Calculation year<select id="taxYear"><option value="2026-27">2026/27</option><option value="2025-26">2025/26</option></select></label><label>Entries filter<select id="entryYearFilter"><option value="all">All entries</option><option value="2025-26">2025/26</option><option value="2026-27">2026/27</option></select></label><button id="resetDemo" class="ghost">Reset local data</button></div></header>
+
+    <section class="view active" data-panel="dashboard">
+      <div class="dashboard-mode"><div><strong id="dashboardYearMode"></strong><span id="dashboardPeriodNote"></span></div><div class="segmented" id="dashboardViewSelector"><button class="active" data-dashboard-view="actual">This month</button><button data-dashboard-view="forecast">Year forecast</button><button data-dashboard-view="mtd">MTD quarter</button></div></div>
+      <div class="month-navigator" id="dashboardMonthNavigator"><button class="ghost" id="previousDashboardMonth">&larr; Previous</button><strong id="dashboardMonthLabel"></strong><button class="ghost" id="nextDashboardMonth">Next &rarr;</button></div>
+      <div class="notice"><strong id="dashboardModeLabel">Actual records</strong><span id="ruleNote"></span></div>
+      <div class="metrics" id="metrics"></div>
+      <article class="card" id="provisionDetail"></article>
+      <article class="card schedule-card" id="annualScheduleCard"><div class="card-head"><div><p class="eyebrow">APRIL TO MARCH</p><h2>Tax Provision Schedule</h2><p>Actual transactions replace forecast assumptions as each month is completed. Funding deadline: 31 March.</p></div></div><div id="provisionReconciliation" class="report provision-reconciliation"></div><div class="table records provision-schedule" id="provisionSchedule"></div></article>
+      <article class="card" id="dashboardMtdCard" hidden></article>
+      <div class="grid two" id="dashboardSupporting" hidden>
+        <article class="card"><div class="card-head"><div><p class="eyebrow">SCENARIO PLANNER</p><h2>Uber income range</h2></div><div class="segmented" id="scenario"><button data-income="42000">Low &pound;42K</button><button class="active" data-income="55000">Mid &pound;55K</button><button data-income="70000">High &pound;70K</button></div></div><div id="scenarioSummary" class="summary-grid"></div><div class="bar-wrap"><div class="bar-label"><span>Estimated effective burden</span><strong id="effectiveRate"></strong></div><div class="bar"><i id="effectiveBar"></i></div></div></article>
+        <article class="card"><div class="card-head"><div><p class="eyebrow">INCOME MIX</p><h2>Taxable sources</h2></div></div><div id="incomeMix" class="income-mix"></div></article>
       </div>
-      <button class="icon-button" id="syncButton" type="button" title="Sync data" aria-label="Sync data">
-        <span aria-hidden="true">&#8635;</span>
-      </button>
-    </header>
+      <article class="card" id="dashboardTaxBridgeCard" hidden><div class="card-head"><div><p class="eyebrow">CALCULATION</p><h2>Transparent tax bridge</h2></div><button class="ghost" data-view-link="reports">Open full report</button></div><div id="taxBridge" class="table"></div></article>
+    </section>
+    <section class="view" data-panel="monthly"><div class="section-intro"><div><p class="eyebrow">FAST DATA ENTRY</p><h2>Monthly Entry</h2><p>Choose a month, then use the enabled-module shortcuts to record the month in minutes.</p></div><label>Month<input id="entryMonth" type="month"></label></div><div id="monthlyHub" class="grid two"></div></section>
 
-    <main>
-      <div class="tab-scroll-wrap" data-scroll-wrap>
-        <button class="scroll-hint scroll-left" type="button" data-scroll-tabs="-1" aria-label="Scroll tabs left">&lt;</button>
-        <nav class="tabs" aria-label="Primary views">
-          <button class="tab is-active" type="button" data-view="dashboard">Dashboard</button>
-          <button class="tab" type="button" data-view="property">Property</button>
-          <button class="tab" type="button" data-view="tenancy">Tenancy</button>
-          <button class="tab" type="button" data-view="capture">Add New</button>
-          <button class="tab" type="button" data-view="diary">Compliance</button>
-          <button class="tab" type="button" data-view="records">History</button>
-          <button class="tab" type="button" data-view="reports">Reports</button>
-          <button class="tab" type="button" data-view="settings">Settings</button>
-        </nav>
-        <button class="scroll-hint scroll-right is-visible" type="button" data-scroll-tabs="1" aria-label="Scroll tabs right">&gt;</button>
-      </div>
+    <section class="view" data-panel="employment"><div class="section-intro"><div><p class="eyebrow">EMPLOYMENT RECORDS</p><h2>PAYE income</h2><p>Record each payslip or consolidated employment payment with tax and National Insurance already deducted.</p></div><button class="primary" data-open="employmentDialog">Record PAYE income</button></div><div class="metrics compact" id="employmentMetrics"></div><div class="card"><div class="table records" id="employmentTable"></div></div></section>
 
-      <section class="view is-active" id="dashboardView" data-view-panel="dashboard">
-        <section class="summary-strip" aria-label="Portfolio summary">
-          <article>
-            <span>Monthly rent</span>
-            <strong id="metricMonthlyRent">&pound;0</strong>
-          </article>
-          <article>
-            <span>Recurring costs</span>
-            <strong id="metricRecurring">&pound;0</strong>
-          </article>
-          <article>
-            <span>Net cashflow</span>
-            <strong id="metricCashflow">&pound;0</strong>
-          </article>
-          <article>
-            <span>Rent balance</span>
-            <strong id="metricRentBalance">&pound;0</strong>
-          </article>
-        </section>
+    <section class="view" data-panel="uber"><div class="section-intro"><div><p class="eyebrow">DIGITAL RECORDS</p><h2>Weekly Uber entries</h2><p>Record the required portal totals and business miles. Other Uber deductions are optional.</p></div><button class="primary" data-open="uberDialog">Add week</button></div><div class="metrics compact" id="uberMetrics"></div><div class="card"><div class="table records" id="uberTable"></div></div></section>
+    <section class="view" data-panel="properties">
+      <div class="section-intro"><div><p class="eyebrow">RENTAL PORTFOLIO</p><h2>Properties and performance</h2><p>Cashflow is the source of truth. This page reports rent, costs and tenancy details by property.</p></div><button class="primary" data-open="propertyDialog">Create property</button></div>
+      <div class="metrics compact" id="propertyMetrics"></div>
+      <div class="card"><div class="card-head"><div><p class="eyebrow">PROPERTY RECORDS</p><h2>Tenancies</h2></div></div><div class="table records" id="propertyTable"></div></div>
+      <div class="property-actions"><button class="primary" data-open-cashflow-workspace>Open Cashflow</button><button class="ghost" data-open="rentDialog">Raise rent</button></div><div class="property-ledger-month" id="propertyLedgerMonthControls"></div>
+      <div class="grid two property-ledgers"><div class="card"><div class="card-head"><div><p class="eyebrow">INCOME LEDGER</p><h2>Rent received</h2></div><label>Property filter<select id="propertyIncomeFilter"><option value="">All properties</option></select></label></div><div class="table records" id="propertyIncomeTable"></div></div><div class="card"><div class="card-head"><div><p class="eyebrow">EXPENSE LEDGER</p><h2>Property costs</h2></div></div><div class="table records" id="propertyExpenseTable"></div></div></div>
+      <div class="card"><div class="card-head"><div><p class="eyebrow">RENT HISTORY</p><h2>Rent changes</h2></div></div><div class="table records" id="rentHistoryTable"></div></div>
+      <div class="card arrears-card"><div class="card-head"><div><p class="eyebrow">ARREARS CONTROL</p><h2>Rent due and outstanding</h2><p>Scheduled rent is matched against receipts by property and rental month.</p></div><label>Property filter<select id="arrearsPropertyFilter"><option value="">All properties</option></select></label></div><div class="metrics compact" id="arrearsMetrics"></div><div class="table records" id="arrearsTable"></div></div>
+    </section>
+    <section class="view" data-panel="pension"><div class="section-intro"><div><p class="eyebrow">OTHER INCOME</p><h2>Pension receipts</h2></div><button class="primary" data-open="pensionDialog">Add receipt</button></div><div class="card"><div class="table records" id="pensionTable"></div></div></section>
+    <section class="view" data-panel="mtd"><div class="section-intro"><div><p class="eyebrow">MAKING TAX DIGITAL</p><h2>Quarterly updates</h2><p>Monthly provision and quarterly reporting are separate outputs built from the same transaction records.</p></div><label>MTD period<select id="mtdPeriod"></select></label></div><div class="metrics compact" id="mtdMetrics"></div><article class="card"><div class="card-head"><div><p class="eyebrow">READINESS</p><h2 id="mtdStatus">Incomplete � action required</h2></div><div><button class="ghost" id="exportMtdCsv">Export CSV</button><button class="primary" id="exportMtdJson">Export JSON</button></div></div><div id="mtdSummary" class="table"></div><div id="mtdWarnings" class="audit-list"></div></article></section>
+    <section class="view" data-panel="payments"><div class="section-intro"><div><p class="eyebrow">PAYMENT PLAN</p><h2>HMRC payments</h2></div><button class="primary" data-open="paymentDialog">Record payment</button></div><div class="metrics compact" id="paymentMetrics"></div><div class="card"><div class="table records" id="paymentTable"></div></div></section>
+    <section class="view" data-panel="calculation"><div class="section-intro"><div><p class="eyebrow">CALCULATION ENGINE</p><h2>Tax calculation</h2><p>Current-year tax and future payments on account are shown separately.</p></div></div><div id="calculationOutput" class="card report"></div></section>
+    <section class="view" data-panel="returnprep"><div class="section-intro"><div><p class="eyebrow">SELF ASSESSMENT</p><h2>Return preparation</h2><p>Figures are labelled according to whether they are entered on the return or support the calculation.</p></div><button class="primary" id="printReturn">Print / PDF</button></div><div id="returnOutput" class="card report"></div></section>
+    <section class="view" data-panel="audit"><div class="section-intro"><div><p class="eyebrow">DATA QUALITY</p><h2>Audit checks</h2></div></div><div id="auditOutput" class="card"></div></section>
+    <section class="view" data-panel="reports"><div class="section-intro"><div><p class="eyebrow">ACCOUNTANT-READY</p><h2>Year-end tax projection</h2></div><div><button class="ghost" id="exportCsv">Export CSV</button><button class="primary" id="printReport">Print / PDF</button></div></div><article class="card report" id="report"></article></section>
+    <section class="view" data-panel="settings"><div class="section-intro"><div><p class="eyebrow">CONFIGURATION</p><h2>Tax and forecast settings</h2><p>Choose the tax-return sections that apply, then maintain legislation and personal assumptions separately.</p></div><div><button class="ghost" id="exportAllData" type="button">Export all data</button><button class="ghost" id="importAllDataButton" type="button">Import data</button><input id="importAllDataFile" type="file" accept="application/json,.json" hidden><button class="ghost" id="copySettings">Copy previous year</button><button class="ghost" id="resetYearSettings">Reset year defaults</button></div></div><form id="settingsForm"><div id="settingsContent"></div><div class="settings-save"><span id="settingsWarning" role="alert"></span><button class="primary" type="submit">Save all settings</button></div></form></section>
+  </main>
 
-        <div class="section-heading">
-          <h2>Today</h2>
-          <button class="secondary-button" id="generateRecurringButton" type="button">Generate month</button>
-        </div>
-
-        <div class="dashboard-grid">
-          <article class="panel">
-            <h3>Portfolio</h3>
-            <div class="property-list" id="propertyList"></div>
-          </article>
-
-          <article class="panel">
-            <h3>Recent expenses</h3>
-            <div class="transaction-list" id="recentExpenses"></div>
-          </article>
-
-          <article class="panel">
-            <h3>Recurring costs</h3>
-            <div class="transaction-list" id="recurringList"></div>
-          </article>
-        </div>
-
-        <article class="panel tax-snapshot">
-          <div>
-            <h3>Current tax year</h3>
-            <p id="taxYearLabel">6 Apr - 5 Apr</p>
-          </div>
-          <div class="tax-numbers">
-            <span>Income <strong id="taxIncome">&pound;0</strong></span>
-            <span>Expenses <strong id="taxExpenses">&pound;0</strong></span>
-            <span>Estimated profit <strong id="taxProfit">&pound;0</strong></span>
-          </div>
-        </article>
-      </section>
-
-      <section class="view" id="propertyView" data-view-panel="property">
-        <div class="section-heading">
-          <h2>Property</h2>
-          <select id="propertyViewFilter" aria-label="Select property view"></select>
-        </div>
-
-        <div class="dashboard-grid">
-          <article class="panel">
-            <h3>Property details</h3>
-            <div id="propertyDetailPanel"></div>
-          </article>
-
-          <article class="panel">
-            <h3>Rent ledger</h3>
-            <div class="records-list" id="propertyRentLedger"></div>
-          </article>
-
-          <article class="panel">
-            <h3>Compliance data</h3>
-            <div class="diary-list" id="propertyComplianceList"></div>
-          </article>
-        </div>
-      </section>
-
-      <section class="view" id="tenancyView" data-view-panel="tenancy">
-        <div class="section-heading">
-          <h2>Tenant / Tenancy</h2>
-          <select id="tenancyViewFilter" aria-label="Select tenancy view"></select>
-        </div>
-
-        <div class="dashboard-grid">
-          <article class="panel">
-            <h3>Tenant details</h3>
-            <div id="tenantDetailPanel"></div>
-          </article>
-
-          <article class="panel">
-            <h3>Tenant ledger</h3>
-            <div class="records-list" id="tenantLedger"></div>
-          </article>
-        </div>
-      </section>
-
-      <section class="view" id="captureView" data-view-panel="capture">
-        <nav class="sub-tabs" aria-label="Add New options">
-          <button class="sub-tab is-active" type="button" data-add-panel="expense">Expense</button>
-          <button class="sub-tab" type="button" data-add-panel="income">Income</button>
-          <button class="sub-tab" type="button" data-add-panel="property">Property</button>
-          <button class="sub-tab" type="button" data-add-panel="recurring">Recurring</button>
-        </nav>
-
-        <div class="add-panel is-active" data-add-panel-view="expense">
-          <h2>Add expense</h2>
-          <form id="expenseForm" class="form-grid">
-            <input name="id" type="hidden">
-            <label>
-              Property
-              <select name="property_id" required></select>
-            </label>
-            <label>
-              Date
-              <input name="expense_date" type="date" required>
-            </label>
-            <label>
-              Category
-              <select name="category" required>
-                <option>Repairs and maintenance</option>
-                <option>Mortgage interest</option>
-                <option>Insurance</option>
-                <option>Letting fees</option>
-                <option>Service charge</option>
-                <option>Ground rent</option>
-                <option>Safety certificate</option>
-                <option>Cleaning</option>
-                <option>Other</option>
-              </select>
-            </label>
-            <label>
-              Amount
-              <input name="amount" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00" required>
-            </label>
-            <label>
-              Supplier
-              <input name="supplier" autocomplete="organization" placeholder="Supplier or contractor">
-            </label>
-            <label>
-              Camera receipt
-              <input name="receipt_camera" type="file" accept="image/*" capture="environment">
-            </label>
-            <label>
-              PDF or file
-              <input name="receipt_file" type="file" accept="image/*,.pdf">
-            </label>
-            <label class="wide">
-              Notes
-              <textarea name="notes" rows="3" placeholder="Short note for accountant"></textarea>
-            </label>
-            <button class="primary-button wide" type="submit">Save expense</button>
-          </form>
-        </div>
-
-        <div class="add-panel" data-add-panel-view="income">
-          <h2>Add income</h2>
-          <form id="incomeForm" class="form-grid">
-            <input name="id" type="hidden">
-            <label>
-              Property
-              <select name="property_id" required></select>
-            </label>
-            <label>
-              Date received
-              <input name="date_received" type="date" required>
-            </label>
-            <label>
-              Rent period
-              <input name="rent_period" type="month">
-            </label>
-            <label>
-              Rent due date
-              <input name="rent_due_date" type="date">
-            </label>
-            <label>
-              Amount
-              <input name="amount" type="number" inputmode="decimal" step="0.01" min="0" required>
-            </label>
-            <label class="wide">
-              Notes
-              <textarea name="notes" rows="3" placeholder="Rent month, adjustment, arrears, etc."></textarea>
-            </label>
-            <button class="primary-button wide" type="submit">Save income</button>
-          </form>
-        </div>
-
-        <div class="add-panel" data-add-panel-view="property">
-          <h2>Add property</h2>
-          <form id="propertyForm" class="form-grid">
-            <input name="id" type="hidden">
-            <label>
-              Property name
-              <input name="property_name" required placeholder="Flat 2, High Street">
-            </label>
-            <label>
-              Status
-              <select name="status">
-                <option value="tenanted">Tenanted</option>
-                <option value="vacant">Vacant</option>
-              </select>
-            </label>
-            <label class="wide">
-              Address
-              <textarea name="address" rows="2"></textarea>
-            </label>
-            <label>
-              Tenant name
-              <input name="tenant_name" autocomplete="name">
-            </label>
-            <label>
-              Tenant phone
-              <input name="tenant_phone" autocomplete="tel">
-            </label>
-            <label>
-              Tenant email
-              <input name="tenant_email" type="email" autocomplete="email">
-            </label>
-            <label>
-              Tenancy start date
-              <input name="tenancy_start_date" type="date">
-            </label>
-            <label>
-              Monthly rent
-              <input name="monthly_rent" type="number" inputmode="decimal" step="0.01" min="0">
-            </label>
-            <label>
-              Deposit held
-              <input name="deposit_amount" type="number" inputmode="decimal" step="0.01" min="0">
-            </label>
-            <label>
-              Deposit scheme
-              <input name="deposit_scheme" placeholder="DPS, TDS, MyDeposits">
-            </label>
-            <label>
-              Mortgage interest monthly
-              <input name="mortgage_interest_monthly" type="number" inputmode="decimal" step="0.01" min="0">
-            </label>
-            <label>
-              Insurance monthly
-              <input name="insurance_monthly" type="number" inputmode="decimal" step="0.01" min="0">
-            </label>
-            <label>
-              Management fee % override
-              <input name="management_fee_percentage" type="number" inputmode="decimal" step="0.1" min="0">
-            </label>
-            <label class="wide">
-              Notes
-              <textarea name="notes" rows="3"></textarea>
-            </label>
-            <button class="primary-button wide" type="submit">Save property</button>
-          </form>
-        </div>
-
-        <div class="add-panel" data-add-panel-view="recurring">
-          <h2>Add recurring cost</h2>
-          <form id="recurringForm" class="form-grid">
-            <input name="id" type="hidden">
-            <label>
-              Property
-              <select name="property_id" required></select>
-            </label>
-            <label>
-              Frequency
-              <select name="frequency">
-                <option value="monthly">Monthly</option>
-                <option value="yearly">Yearly</option>
-              </select>
-            </label>
-            <label>
-              Category
-              <select name="category">
-                <option>Mortgage interest</option>
-                <option>Insurance</option>
-                <option>Letting fees</option>
-                <option>Service charge</option>
-                <option>Ground rent</option>
-                <option>Other</option>
-              </select>
-            </label>
-            <label>
-              Amount
-              <input name="amount" type="number" inputmode="decimal" step="0.01" min="0" required>
-            </label>
-            <label>
-              Start date
-              <input name="start_date" type="date" required>
-            </label>
-            <label class="wide">
-              Description
-              <input name="description" placeholder="Monthly mortgage interest">
-            </label>
-            <button class="primary-button wide" type="submit">Save recurring cost</button>
-          </form>
-          <div class="embedded-list">
-            <h3>Current recurring transactions</h3>
-            <div class="transaction-list" id="recurringManageList"></div>
-          </div>
-        </div>
-      </section>
-
-      <section class="view" id="diaryView" data-view-panel="diary">
-        <div class="section-heading">
-          <h2>Compliance</h2>
-          <select id="diaryPropertyFilter" aria-label="Filter diary by property"></select>
-        </div>
-
-        <details class="drawer" open>
-          <summary>Add certificate or expiry</summary>
-          <form id="certificateForm" class="form-grid">
-            <input name="id" type="hidden">
-            <label>
-              Property
-              <select name="property_id" required></select>
-            </label>
-            <label>
-              Type
-              <select name="certificate_type" required>
-                <option>Gas safety certificate</option>
-                <option>Electrical installation condition report</option>
-                <option>EPC</option>
-                <option>Landlord insurance renewal</option>
-                <option>HMO licence</option>
-                <option>Other expiry</option>
-              </select>
-            </label>
-            <label>
-              Issue date
-              <input name="issue_date" type="date">
-            </label>
-            <label>
-              Expiry date
-              <input name="expiry_date" type="date" required>
-            </label>
-            <label>
-              Reminder date
-              <input name="reminder_date" type="date">
-            </label>
-            <label>
-              Certificate file
-              <input name="document_file" type="file" accept="image/*,.pdf">
-            </label>
-            <label class="wide">
-              Notes
-              <textarea name="notes" rows="3" placeholder="Inspector, certificate number, booking note, etc."></textarea>
-            </label>
-            <button class="primary-button wide" type="submit">Save diary item</button>
-          </form>
-        </details>
-
-        <div class="diary-list" id="diaryList"></div>
-      </section>
-
-      <section class="view" id="recordsView" data-view-panel="records">
-        <div class="section-heading">
-          <h2>History</h2>
-          <select id="recordPropertyFilter" aria-label="Filter history by property"></select>
-        </div>
-        <div class="records-list" id="recordsList"></div>
-      </section>
-
-      <section class="view" id="reportsView" data-view-panel="reports">
-        <article class="panel report-panel">
-          <div class="section-heading">
-            <h2>Tax year summary</h2>
-            <select id="taxYearSelect" aria-label="Select tax year"></select>
-          </div>
-          <div class="report-table" id="taxReport"></div>
-          <div class="button-row">
-            <button class="secondary-button" id="exportCsvButton" type="button">Export CSV</button>
-            <button class="secondary-button" id="printReportButton" type="button">PDF summary</button>
-          </div>
-        </article>
-
-        <article class="panel">
-          <h3>MTD record status</h3>
-          <ul class="check-list">
-            <li>Digital transaction date, category and amount stored for every income and expense entry.</li>
-            <li>Mortgage interest is separated from other costs for UK landlord tax reporting.</li>
-            <li>Receipts and invoices can be attached to expense records.</li>
-            <li>CSV and printable PDF summaries support accountant handoff.</li>
-          </ul>
-        </article>
-      </section>
-
-      <section class="view" id="settingsView" data-view-panel="settings">
-        <article class="panel">
-          <h2>Settings</h2>
-          <form id="settingsForm" class="form-grid settings-form">
-            <label>
-              Lettings commission
-              <select name="lettings_fee_mode" id="lettingsFeeMode">
-                <option value="percentage">Percentage of rent</option>
-                <option value="fixed">Fixed monthly fee</option>
-              </select>
-            </label>
-            <label data-settings-field="percentage">
-              Percentage rate
-              <input name="lettings_fee_percentage" type="number" inputmode="decimal" step="0.1" min="0" placeholder="8">
-            </label>
-            <label data-settings-field="fixed">
-              Fixed monthly fee
-              <input name="lettings_fee_fixed" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00">
-            </label>
-            <label>
-              Rent due day
-              <input name="rent_due_day" type="number" inputmode="numeric" min="1" max="28" step="1">
-            </label>
-            <label class="wide">
-              Supabase project URL
-              <input name="supabase_url" type="url" placeholder="https://your-project.supabase.co">
-            </label>
-            <label class="wide">
-              Supabase anon key
-              <input name="supabase_anon_key" autocomplete="off" spellcheck="false">
-            </label>
-            <label class="wide">
-              Portfolio notes
-              <textarea name="portfolio_notes" rows="3" placeholder="Default assumptions, accountant notes, reminders"></textarea>
-            </label>
-            <button class="primary-button wide" type="submit">Save settings</button>
-          </form>
-        </article>
-      </section>
-    </main>
-  </div>
-
-  <div class="quick-layer" id="quickLayer" hidden>
-    <div class="quick-panel" data-quick-panel="menu" hidden>
-      <div class="quick-panel-head">
-        <strong>Go to</strong>
-        <button class="icon-button quick-close" type="button" data-quick-close aria-label="Close menu">x</button>
-      </div>
-      <div class="quick-grid">
-        <button type="button" data-jump-view="dashboard">Dashboard</button>
-        <button type="button" data-jump-view="property">Property</button>
-        <button type="button" data-jump-view="tenancy">Tenancy</button>
-        <button type="button" data-jump-view="records">History</button>
-        <button type="button" data-jump-view="diary">Compliance</button>
-        <button type="button" data-jump-view="reports">Reports</button>
-        <button type="button" data-jump-view="settings">Settings</button>
-      </div>
-    </div>
-
-    <div class="quick-panel" data-quick-panel="add" hidden>
-      <div class="quick-panel-head">
-        <strong>Add</strong>
-        <button class="icon-button quick-close" type="button" data-quick-close aria-label="Close add menu">x</button>
-      </div>
-      <div class="quick-grid">
-        <button type="button" data-jump-add="income">Income</button>
-        <button type="button" data-jump-add="expense">Expense</button>
-        <button type="button" data-jump-add="property">Property / tenancy</button>
-        <button type="button" data-jump-add="recurring">Recurring cost</button>
-        <button type="button" data-jump-view="diary">Compliance</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="floating-actions" aria-label="Quick actions">
-    <button class="floating-button" type="button" data-open-quick="menu">Menu</button>
-    <button class="floating-button primary-float" type="button" data-open-quick="add" aria-label="Add new">+</button>
-  </div>
-
-  <template id="emptyStateTemplate">
-    <p class="empty-state">No records yet.</p>
-  </template>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="app.js"></script>
-</body>
-</html>
+  <dialog id="uberDialog"><form method="dialog" id="uberForm"><h2>Add Uber week</h2><p>Enter deductions as positive amounts. Enter a credit as a negative Other Uber deductions amount.</p><div class="form-grid"><label>Week ending<input name="date" type="date" required></label><label>Customer payments<input name="customerPayments" type="number" min="0" step="0.01" required></label><label>Amount Uber kept<input name="amountUberKept" type="number" min="0" step="0.01" required></label><label>Other Uber deductions / credits <small>(optional)</small><input name="otherUberDeductions" type="number" step="0.01" value="0"></label><label>Tips<input name="tips" type="number" min="0" step="0.01" value="0" required></label><label>Your total earnings<input name="totalEarnings" type="number" min="0" step="0.01" required></label><label>Business miles from Uber Engine<input name="miles" type="number" min="0" step="0.1" required></label><label class="wide">Notes<input name="notes"></label></div><p id="uberReconciliation" class="form-note" aria-live="polite"></p><div class="dialog-actions"><button type="button" data-close-dialog class="ghost">Cancel</button><button value="default" class="primary">Save week</button></div></form></dialog>
+  <dialog id="employmentDialog"><form method="dialog" id="employmentForm"><h2>Record PAYE income</h2><div class="form-grid"><label>Payment date<input name="date" type="date" required></label><label>Employer<input name="employer" required></label><label>Tax code<input name="taxCode" value="1257L" required></label><label>Gross pay<input name="gross" type="number" min="0" step="0.01" required></label><label>PAYE tax deducted<input name="tax" type="number" min="0" step="0.01" placeholder="Leave blank to estimate"></label><label>National Insurance deducted<input name="ni" type="number" min="0" step="0.01" value="0"></label><label>Benefits in kind<input name="benefits" type="number" min="0" step="0.01" value="0"></label><label class="wide">Notes<input name="notes"></label></div><div class="dialog-actions"><button type="button" data-close-dialog class="ghost">Cancel</button><button value="default" class="primary">Save PAYE record</button></div></form></dialog>
+  <dialog id="propertyDialog"><form method="dialog" id="propertyForm"><h2>Create property</h2><div class="form-grid"><label>Property name<input name="property" required placeholder="Wolverhampton rental"></label><label>Tenant name<input name="tenant" required></label><label>Ownership percentage<input name="ownership" type="number" min="0" max="100" step="0.01" value="100" required></label><label>Monthly rent<input name="rent" type="number" min="0" step="0.01" required></label><label>Deposit<input name="deposit" type="number" min="0" step="0.01" required></label><label>Tenancy start<input name="start" type="date" required></label><label>Tenancy end<input name="end" type="date"></label></div><div class="dialog-actions"><button type="button" data-close-dialog class="ghost">Cancel</button><button value="default" class="primary">Create property</button></div></form></dialog>
+  <dialog id="incomeDialog"><form method="dialog" id="incomeForm"><h2>Record property income</h2><div class="form-grid"><label>Property<select name="propertyId" data-property-select required></select></label><label>Date received<input name="date" type="date" required></label><label>Amount<input name="amount" type="number" min="0" step="0.01" required></label><label>Rent period<input name="period" type="month"></label><label class="wide">Notes<input name="notes"></label></div><div class="dialog-actions"><button type="button" data-close-dialog class="ghost">Cancel</button><button value="default" class="primary">Record income</button></div></form></dialog>
+  <dialog id="editPropertyDialog"><form method="dialog" id="editPropertyForm"><input name="id" type="hidden"><h2>Edit property</h2><div class="form-grid"><label>Property name<input name="property" required></label><label>Tenant name<input name="tenant" required></label><label>Ownership percentage<input name="ownership" type="number" min="0" max="100" step="0.01" required></label><label>Monthly rent<input name="rent" type="number" min="0" step="0.01" required></label><label>Deposit<input name="deposit" type="number" min="0" step="0.01" required></label><label>Tenancy start<input name="start" type="date" required></label><label>Tenancy end<input name="end" type="date"></label></div><div class="dialog-actions"><button type="button" data-close-dialog class="ghost">Cancel</button><button class="primary">Save changes</button></div></form></dialog>
+  <dialog id="editIncomeDialog"><form method="dialog" id="editIncomeForm"><input name="id" type="hidden"><h2>Edit rent receipt</h2><div class="form-grid"><label>Property<select name="propertyId" data-property-select required></select></label><label>Date received<input name="date" type="date" required></label><label>Amount<input name="amount" type="number" min="0" step="0.01" required></label><label>Rent period<input name="period" type="month"></label><label class="wide">Notes<input name="notes"></label></div><div class="dialog-actions"><button type="button" data-close-dialog class="ghost">Cancel</button><button class="primary">Save changes</button></div></form></dialog>
+  <dialog id="rentDialog"><form method="dialog" id="rentForm"><h2>Raise rent</h2><div class="form-grid"><label>Property<select name="propertyId" data-property-select required></select></label><label>Effective date<input name="date" type="date" required></label><label>New monthly rent<input name="rent" type="number" min="0" step="0.01" required></label><label class="wide">Reason / notes<input name="notes"></label></div><div class="dialog-actions"><button type="button" data-close-dialog class="ghost">Cancel</button><button value="default" class="primary">Save rent change</button></div></form></dialog>
+  <dialog id="expenseDialog"><form method="dialog" id="expenseForm"><h2>Record property expense</h2><div class="form-grid"><label>Property<select name="propertyId" data-property-select required></select></label><label>Date paid<input name="date" type="date" required></label><label>Category<select name="category"><option>Repairs</option><option>Insurance</option><option>Agent fees</option><option>Utilities</option><option>Mortgage interest</option><option>Other</option></select></label><label>Amount<input name="amount" type="number" min="0" step="0.01" required></label><label class="wide">Supplier / notes<input name="notes"></label></div><div class="dialog-actions"><button type="button" data-close-dialog class="ghost">Cancel</button><button value="default" class="primary">Record expense</button></div></form></dialog>
+  <dialog id="pensionDialog"><form method="dialog" id="pensionForm"><h2>Add pension receipt</h2><div class="form-grid"><label>Date<input name="date" type="date" required></label><label>Tax code<input name="taxCode" value="1257L" required></label><label>Gross receipt<input name="amount" type="number" step="0.01" required></label><label>Tax deducted<input name="tax" type="number" min="0" step="0.01" placeholder="Leave blank to estimate"></label><label class="wide">Provider / notes<input name="notes"></label></div><div class="dialog-actions"><button type="button" data-close-dialog class="ghost">Cancel</button><button value="default" class="primary">Save receipt</button></div></form></dialog>
+  <dialog id="paymentDialog"><form method="dialog" id="paymentForm"><h2>Record HMRC payment or credit</h2><div class="form-grid"><label>Payment date<input name="date" type="date" required></label><label>Tax year intended<select name="taxYear" required><option value="2025-26">2025/26</option><option value="2026-27">2026/27</option></select></label><label>Type<select name="paymentType" required><option>Voluntary monthly payment</option><option>Budget Payment Plan</option><option>Balancing payment</option><option>First payment on account</option><option>Second payment on account</option><option>Other HMRC payment</option><option>Credit brought forward</option><option>Refund</option></select></label><label>HMRC allocation status<select name="allocationStatus"><option>Unallocated</option><option>Allocated</option><option>Pending</option><option>Disputed</option></select></label><label>Amount<input name="amount" type="number" min="0" step="0.01" required></label><label>Reference<input name="reference"></label><label class="wide">Notes<input name="notes"></label></div><div class="dialog-actions"><button type="button" data-close-dialog class="ghost">Cancel</button><button value="default" class="primary">Save payment</button></div></form></dialog>
+  <dialog id="scheduleDetailDialog"><div class="schedule-detail"><h2 id="scheduleDetailTitle">Monthly detail</h2><div id="scheduleDetailBody" class="report"></div><div class="dialog-actions"><button type="button" data-close-dialog class="primary">Close</button></div></div></dialog>
+  <script src="tax-engine.js?v=23"></script><script src="app.js?v=89"></script>
+</body></html>
