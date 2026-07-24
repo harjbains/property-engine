@@ -23,6 +23,22 @@
     </header>
 
     <section class="quick-card">
+      <p class="eyebrow">SUPABASE SYNC</p>
+      <div class="quick-sync" data-sync-signed-out>
+        <input id="syncEmail" type="email" autocomplete="email" placeholder="Email">
+        <input id="syncPassword" type="password" autocomplete="current-password" placeholder="Password">
+        <button id="syncSignIn" type="button">Sign in</button>
+        <button id="syncCreateAccount" type="button">Create</button>
+      </div>
+      <div class="quick-sync-actions" data-sync-signed-in hidden>
+        <button type="button" data-sync-push>Push</button>
+        <button type="button" data-sync-pull>Pull</button>
+        <button type="button" data-sync-signout>Sign out</button>
+      </div>
+      <div class="quick-status" data-sync-status>Supabase sync ready.</div>
+    </section>
+
+    <section class="quick-card">
       <form class="quick-form" id="quickSpendForm">
         <div class="quick-two">
           <label>Month
@@ -85,6 +101,6 @@
       <div class="quick-list" id="quickRecent"></div>
     </section>
   </main>
-  <script src="quick-spend.js?v=3"></script>
+  <script src="quick-spend.js?v=3"></script><script src="supabase-sync.js?v=1"></script>
 </body>
 </html>
