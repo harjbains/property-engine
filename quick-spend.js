@@ -25,10 +25,23 @@ function exportAllLocalData(){
   const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"}),a=document.createElement("a");
   a.href=URL.createObjectURL(blob);a.download=`tax-engine-all-data-${new Date().toISOString().slice(0,10)}.json`;a.click();URL.revokeObjectURL(a.href);
 }
+function cleanImportItem(item){const x={...item};delete x.type;return x;}
+function storageFromImportPayload(payload){
+  if(payload.storage)return payload.storage;
+  if(payload.cashflow&&payload.month){
+    const c=payload.cashflow,fixedChecklist=c.fixedChecklist||[],state={month:payload.month,bank:num(c.bank),bankAccounts:c.summary?.accounts||{zempler:num(c.bank),lloyds:0},fixed:fixedChecklist.filter(i=>i.type!=="fixed_income").map(cleanImportItem),income:[...fixedChecklist.filter(i=>i.type==="fixed_income").map(i=>({...cleanImportItem(i),section:"fixed"})),...(c.incomeLedger||[]).map(cleanImportItem)],spending:(c.spendingLedger||[]).map(cleanImportItem)};
+    return{[cashflowKey(payload.month)]:JSON.stringify(state)};
+  }
+  return payload;
+}
+function importSummary(){
+  const months=cashflowMonths(),totals=months.reduce((a,month)=>{const x=loadCashflow(month);a.fixed+=x.fixed.length;a.income+=x.income.length;a.spending+=x.spending.length;return a;},{fixed:0,income:0,spending:0});
+  return{...totals,months:months.length};
+}
 function importAllLocalData(file){
   if(!file)return;
   const reader=new FileReader();
-  reader.onload=()=>{try{const payload=JSON.parse(reader.result),storage=payload.storage||payload;if(!storage||typeof storage!=="object")throw new Error("No storage object found");const keys=Object.keys(storage).filter(k=>k.startsWith("tax-engine-"));if(!keys.length)throw new Error("No Tax Engine records found");if(!confirm(`Import ${keys.length} Tax Engine records into this browser?`))return;keys.forEach(k=>localStorage.setItem(k,String(storage[k])));by("#quickProperty").innerHTML=propertyOptions();renderRecent();by("#quickStatus").textContent=`Imported ${keys.length} data records.`;}catch(err){by("#quickStatus").textContent=`Import failed: ${err.message}`;}};
+  reader.onload=()=>{try{const payload=JSON.parse(reader.result),storage=storageFromImportPayload(payload);if(!storage||typeof storage!=="object")throw new Error("No storage object found");const keys=Object.keys(storage).filter(k=>k.startsWith("tax-engine-"));if(!keys.length)throw new Error("No Tax Engine records found");if(!confirm(`Import ${keys.length} Tax Engine records into this browser?`))return;keys.forEach(k=>localStorage.setItem(k,String(storage[k])));const summary=importSummary();by("#quickProperty").innerHTML=propertyOptions();renderRecent();by("#quickStatus").textContent=`Imported ${keys.length} records. Cashflow: ${summary.months} month(s), ${summary.spending} spending row(s).`;}catch(err){by("#quickStatus").textContent=`Import failed: ${err.message}`;}};
   reader.readAsText(file);
 }
 function propertyOptions(){
