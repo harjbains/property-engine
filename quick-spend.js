@@ -53,6 +53,18 @@ function propertyName(id){
   if(!id)return"";
   try{const p=(JSON.parse(localStorage.getItem(KEY)||"{}").properties||[]).find(x=>x.id===id);return p?.property||p?.property_name||"";}catch{return"";}
 }
+function itemIsoDate(item,month){
+  const raw=String(item.date||"").trim();
+  if(/^\d{4}-\d{2}-\d{2}$/.test(raw))return raw;
+  const day=Number((raw.match(/\d+/)||[])[0])||0;
+  return day&&month?`${month}-${String(day).padStart(2,"0")}`:"";
+}
+function dateLabel(item,month){
+  const iso=itemIsoDate(item,month);
+  if(!iso)return item.date||month||"";
+  const d=new Date(`${iso}T00:00:00`);
+  return d.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"});
+}
 function addSpend(data){
   const x=loadCashflow(data.month),amount=num(data.amount),status=data.status||"Paid",account=data.account||DEFAULT_BANK_ACCOUNT;
   const propertyId=data.propertyId||"",treatment=propertyId?"property_expense":"cashflow";
@@ -66,9 +78,9 @@ function addSpend(data){
 function renderRecent(){
   const rows=cashflowMonths().flatMap(month=>{
     const x=loadCashflow(month);
-    return(x.spending||[]).map(i=>({...i,month}));
-  }).sort((a,b)=>String(b.createdAt||b.id||"").localeCompare(String(a.createdAt||a.id||""))).slice(0,10);
-  by("#quickRecent").innerHTML=rows.length?rows.map(i=>{const p=propertyName(i.propertyId);return`<div class="quick-row"><span><strong>${i.description}</strong><small>${i.date} - ${i.month}${p?` - ${p}`:""} - ${i.category} - ${i.status}</small></span><em>${money.format(num(i.actual??i.planned))}</em></div>`;}).join(""):`<div class="quick-empty">No spending recorded yet.</div>`;
+    return(x.spending||[]).map(i=>({...i,month,sortDate:itemIsoDate(i,month)}));
+  }).sort((a,b)=>(b.sortDate||"").localeCompare(a.sortDate||"")||String(b.createdAt||b.id||"").localeCompare(String(a.createdAt||a.id||""))).slice(0,10);
+  by("#quickRecent").innerHTML=rows.length?rows.map(i=>{const p=propertyName(i.propertyId),amount=num(i.actual??i.planned);return`<div class="quick-row"><span><strong>${dateLabel(i,i.month)} - ${i.description}</strong><small>${p?`${p} - `:""}${i.category} - ${i.status}</small></span><em>${money.format(amount)}</em></div>`;}).join(""):`<div class="quick-empty">No spending recorded yet.</div>`;
 }
 function init(){
   by("#quickDate").value=todayIso();by("#quickMonth").value=monthIso();
@@ -76,6 +88,9 @@ function init(){
   renderRecent();
   by("#quickMonth").addEventListener("change",renderRecent);
   by("#quickDate").addEventListener("change",event=>{by("#quickMonth").value=monthIso(event.target.value);renderRecent();});
+  window.addEventListener("pageshow",()=>setTimeout(renderRecent,750));
+  window.addEventListener("focus",()=>setTimeout(renderRecent,1200));
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden)setTimeout(renderRecent,1200);});
   by("#quickSpendForm").addEventListener("submit",event=>{
     event.preventDefault();
     const form=new FormData(event.currentTarget),item=addSpend(Object.fromEntries(form.entries()));

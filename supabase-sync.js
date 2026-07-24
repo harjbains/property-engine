@@ -3,7 +3,7 @@ const SUPABASE_URL="https://ixhxsylbdscfapmsjhlb.supabase.co";
 const SUPABASE_KEY="sb_publishable_JBlVdOh59UhN0MNbvvibAg_So1n4Myz";
 const SESSION_KEY="tax-engine-supabase-session",SYNC_PREFIX="tax-engine-";
 const by=s=>document.querySelector(s),all=s=>[...document.querySelectorAll(s)];
-let applyingRemote=false,pushTimer=null,lastPushAt=0;
+let applyingRemote=false,pushTimer=null,lastPushAt=0,lastPullAt=0;
 const nativeSetItem=Storage.prototype.setItem;
 const status=text=>{all("[data-sync-status]").forEach(x=>x.textContent=text);};
 function session(){try{return JSON.parse(localStorage.getItem(SESSION_KEY)||"null");}catch{return null;}}
@@ -55,6 +55,7 @@ function schedulePush(){
 }
 async function pullAll({reload=true}={}){
   const s=await ensureSession();if(!s?.access_token)return 0;
+  lastPullAt=Date.now();
   status("Loading cloud records...");
   const res=await fetch(`${SUPABASE_URL}/rest/v1/tax_engine_records?select=record_key,payload,updated_at&order=record_key.asc`,{headers:headers(s.access_token)});
   const rows=await res.json().catch(()=>[]);
@@ -93,6 +94,9 @@ function bind(){
   all("[data-sync-signout]").forEach(b=>b.addEventListener("click",signOut));
   renderAuthState();
   if(session()?.access_token)initialCloudSync().catch(e=>status(`Sync failed: ${e.message}`));
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden&&session()?.access_token&&Date.now()-lastPullAt>5000)pullAll({reload:true}).catch(e=>status(`Sync failed: ${e.message}`));});
+  window.addEventListener("focus",()=>{if(session()?.access_token&&Date.now()-lastPullAt>5000)pullAll({reload:true}).catch(e=>status(`Sync failed: ${e.message}`));});
+  setInterval(()=>{if(!document.hidden&&session()?.access_token&&Date.now()-lastPullAt>30000)pullAll({reload:true}).catch(e=>status(`Sync failed: ${e.message}`));},30000);
 }
 window.TaxEngineSync={pushAll,pullAll,schedulePush};
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",bind);else bind();
