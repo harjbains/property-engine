@@ -14,7 +14,12 @@
         <p class="eyebrow">CASHFLOW CAPTURE</p>
         <h1>Quick spend</h1>
       </div>
-      <a href="index.html">Main app</a>
+      <div class="quick-top-links">
+        <button id="quickImportButton" type="button">Import</button>
+        <input id="quickImportFile" type="file" accept="application/json,.json" hidden>
+        <button id="quickExportButton" type="button">Export</button>
+        <a href="index.html">Main app</a>
+      </div>
     </header>
 
     <section class="quick-card">
@@ -80,6 +85,6 @@
       <div class="quick-list" id="quickRecent"></div>
     </section>
   </main>
-  <script src="quick-spend.js?v=1"></script>
+  <script src="quick-spend.js?v=2"></script>
 </body>
 </html>

@@ -9,11 +9,28 @@ function loadCashflow(month){
   const saved=JSON.parse(localStorage.getItem(cashflowKey(month))||localStorage.getItem(month===TAX_WORKSPACE_MONTH?CASHFLOW_KEY:"null")||"null");
   const base=saved&&typeof saved==="object"?{...emptyCashflow(month),...saved,month}:emptyCashflow(month);
   base.fixed=Array.isArray(base.fixed)?base.fixed:[];base.spending=Array.isArray(base.spending)?base.spending:[];base.income=Array.isArray(base.income)?base.income:[];
-  base.bankAccounts=base.bankAccounts||{zempler:num(base.bank),lloyds:0};base.bankAccounts.zempler=num(base.bankAccounts.zempler);base.bankAccounts.lloyds=num(base.bankAccounts.lloyds);base.bank=num(base.bankAccounts.zempler)+num(base.bankAccounts.lloyds);
+  base.bankAccounts=base.bankAccounts||{zempler:num(base.bank),lloyds:0};
+  base.bankAccounts.zempler=num(base.bankAccounts.zempler);base.bankAccounts.lloyds=num(base.bankAccounts.lloyds);base.bank=num(base.bankAccounts.zempler)+num(base.bankAccounts.lloyds);
   return base;
 }
 function saveCashflow(x){x.bank=num(x.bankAccounts?.zempler)+num(x.bankAccounts?.lloyds);localStorage.setItem(cashflowKey(x.month),JSON.stringify(x));}
 function spendImpact(item){return item.status==="Paid"||item.status==="Part-paid"||item.actual!=null?-num(item.actual):0;}
+function cashflowMonths(){
+  const months=Object.keys(localStorage).filter(k=>k.startsWith(CASHFLOW_KEY_PREFIX)).map(k=>k.slice(CASHFLOW_KEY_PREFIX.length));
+  if(localStorage.getItem(CASHFLOW_KEY)&&!months.includes(TAX_WORKSPACE_MONTH))months.push(TAX_WORKSPACE_MONTH);
+  return months.sort();
+}
+function exportAllLocalData(){
+  const payload={exportedAt:new Date().toISOString(),app:"tax-engine",storage:Object.fromEntries(Object.keys(localStorage).filter(k=>k.startsWith("tax-engine-")).sort().map(k=>[k,localStorage.getItem(k)]))};
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"}),a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);a.download=`tax-engine-all-data-${new Date().toISOString().slice(0,10)}.json`;a.click();URL.revokeObjectURL(a.href);
+}
+function importAllLocalData(file){
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=()=>{try{const payload=JSON.parse(reader.result),storage=payload.storage||payload;if(!storage||typeof storage!=="object")throw new Error("No storage object found");const keys=Object.keys(storage).filter(k=>k.startsWith("tax-engine-"));if(!keys.length)throw new Error("No Tax Engine records found");if(!confirm(`Import ${keys.length} Tax Engine records into this browser?`))return;keys.forEach(k=>localStorage.setItem(k,String(storage[k])));by("#quickProperty").innerHTML=propertyOptions();renderRecent();by("#quickStatus").textContent=`Imported ${keys.length} data records.`;}catch(err){by("#quickStatus").textContent=`Import failed: ${err.message}`;}};
+  reader.readAsText(file);
+}
 function propertyOptions(){
   let properties=[];
   try{properties=JSON.parse(localStorage.getItem(KEY)||"{}").properties||[];}catch{}
@@ -34,16 +51,19 @@ function addSpend(data){
   return item;
 }
 function renderRecent(){
-  const rows=Object.keys(localStorage).filter(k=>k.startsWith(CASHFLOW_KEY_PREFIX)).flatMap(k=>{
-    const month=k.slice(CASHFLOW_KEY_PREFIX.length),x=loadCashflow(month);
+  const rows=cashflowMonths().flatMap(month=>{
+    const x=loadCashflow(month);
     return(x.spending||[]).map(i=>({...i,month}));
   }).sort((a,b)=>String(b.createdAt||b.id||"").localeCompare(String(a.createdAt||a.id||""))).slice(0,10);
-  by("#quickRecent").innerHTML=rows.length?rows.map(i=>{const p=propertyName(i.propertyId);return`<div class="quick-row"><span><strong>${i.description}</strong><small>${i.date} · ${i.month}${p?` · ${p}`:""} · ${i.category} · ${i.status}</small></span><em>${money.format(num(i.actual??i.planned))}</em></div>`;}).join(""):`<div class="quick-empty">No spending recorded yet.</div>`;
+  by("#quickRecent").innerHTML=rows.length?rows.map(i=>{const p=propertyName(i.propertyId);return`<div class="quick-row"><span><strong>${i.description}</strong><small>${i.date} - ${i.month}${p?` - ${p}`:""} - ${i.category} - ${i.status}</small></span><em>${money.format(num(i.actual??i.planned))}</em></div>`;}).join(""):`<div class="quick-empty">No spending recorded yet.</div>`;
 }
 function init(){
   by("#quickDate").value=todayIso();by("#quickMonth").value=monthIso();
   by("#quickProperty").innerHTML=propertyOptions();
   renderRecent();
+  by("#quickExportButton").addEventListener("click",exportAllLocalData);
+  by("#quickImportButton").addEventListener("click",()=>by("#quickImportFile").click());
+  by("#quickImportFile").addEventListener("change",event=>{importAllLocalData(event.target.files?.[0]);event.target.value="";});
   by("#quickMonth").addEventListener("change",renderRecent);
   by("#quickDate").addEventListener("change",event=>{by("#quickMonth").value=monthIso(event.target.value);renderRecent();});
   by("#quickSpendForm").addEventListener("submit",event=>{
