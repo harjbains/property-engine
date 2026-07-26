@@ -65,10 +65,13 @@ async function pullAll({reload=true}={}){
   const rows=await res.json().catch(()=>[]);
   if(!res.ok)throw new Error(Array.isArray(rows)?await res.text():rows.message||"Supabase pull failed");
   let changed=0;applyingRemote=true;
-  try{rows.forEach(r=>{const value=String(r.payload?.value??"");if(localStorage.getItem(r.record_key)!==value){nativeSetItem.call(localStorage,r.record_key,value);changed++;}});}
+  try{
+    rows.forEach(r=>{const value=String(r.payload?.value??"");if(localStorage.getItem(r.record_key)!==value){nativeSetItem.call(localStorage,r.record_key,value);changed++;}});
+    if(changed&&reload)window.TaxEngineReloadFromStorage?.();
+  }
   finally{applyingRemote=false;}
   status(changed?`Loaded ${changed} cloud update(s).`:`Cloud records are up to date.`);
-  if(changed&&reload)setTimeout(()=>location.reload(),650);
+  if(changed&&reload)await pushAll("remote-normalised");
   return rows.length;
 }
 async function initialCloudSync(){
