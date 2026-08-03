@@ -1,0 +1,21 @@
+name: Financial regression tests
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Tax calculation regression tests
+        run: node tax-engine.test.js
+      - name: Financial control regression tests
+        run: node financial-controls.test.js
