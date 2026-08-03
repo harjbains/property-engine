@@ -302,7 +302,7 @@ function addFixedIncome(){openCashflowEditor("income","add","","fixed");}
 function editIncome(id){const x=cashflowState(),i=(x.income||[]).find(v=>v.id===id);if(!i||guardCashflowLocked(x,"income",i))return;openCashflowEditor("income","edit",id);}
 function removeIncome(id){const x=cashflowState(),i=(x.income||[]).find(v=>v.id===id);if(!i||guardCashflowLocked(x,"income",i)||!confirm(`Remove ${i.description}?`))return;x.income=x.income.filter(v=>v.id!==id);saveCashflowState(x);taxWorkspaceTab="cashflow";renderDashboardSurface();}
 function cashDateIso(value,month=workspaceMonth()){const s=String(value||"").trim();if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;const day=cashDay(s);return day?`${month}-${String(day).padStart(2,"0")}`:"";}function cashDateMonth(value,month=workspaceMonth()){const iso=cashDateIso(value,month);return iso?iso.slice(0,7):"";}
-function workspaceMonth(){return dashboardMonth||TAX_WORKSPACE_MONTH;}
+function workspaceMonth(){return dashboardMonth||dashboardDates().cutoff.slice(0,7);}
 function workspaceMonthLabel(month){return new Intl.DateTimeFormat("en-GB",{month:"long",year:"numeric",timeZone:"UTC"}).format(new Date(`${month}-01T00:00:00Z`));}
 function normaliseLegacyCashflowStorage(){const legacy=localStorage.getItem(CASHFLOW_KEY),monthKey=cashflowKey(TAX_WORKSPACE_MONTH);if(legacy&&!localStorage.getItem(monthKey)){try{const x=JSON.parse(legacy);x.month=x.month||TAX_WORKSPACE_MONTH;localStorage.setItem(monthKey,JSON.stringify(x));}catch{localStorage.setItem(monthKey,legacy);}}}
 function cashflowStorageKeys(){normaliseLegacyCashflowStorage();return Object.keys(localStorage).filter(k=>k.startsWith(CASHFLOW_KEY_PREFIX)).sort();}
