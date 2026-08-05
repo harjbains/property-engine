@@ -43,10 +43,10 @@ for(const row of csvRows(fs.readFileSync(statementPath,"utf8"))){
   const date=isoUk(row.Date||"");if(!inTaxYear(date))continue;
   const mapping=mappings.find(([pattern])=>pattern.test(row.Description||""));if(!mapping)continue;
   const amount=Math.abs(Number(String(row.Debit||"").replace(/[^0-9.-]/g,""))||0);if(!amount)continue;
-  expenses.push({id:crypto.randomUUID(),property:mapping[1],date,category:mapping[2],amount,notes:`Recovered from bank statement: ${row.Description}`,recoverySource:row["Source Statement"]||"Merged bank statements"});
+  expenses.push({id:crypto.randomUUID(),property:mapping[1],date,category:mapping[2],amount,notes:`Recovered from bank statement: ${row.Description}${mapping[2]==="Mortgage interest"?" (interest-only mortgage confirmed by owner)":""}`,recoverySource:row["Source Statement"]||"Merged bank statements"});
 }
 const seen=new Set(),deduped=expenses.filter(row=>{const key=`${row.property}|${row.date}|${row.amount.toFixed(2)}|${row.category}`;if(seen.has(key))return false;seen.add(key);return true;});
-const payload={kind:"tax-engine-property-expense-recovery",version:1,taxYear:"2025-26",createdAt:new Date().toISOString(),source:"26 July Tax Engine backup and consolidated bank statements",propertyExpenses:deduped};
+const payload={kind:"tax-engine-property-expense-recovery",version:1,taxYear:"2025-26",createdAt:new Date().toISOString(),source:"26 July Tax Engine backup and consolidated bank statements; mortgages confirmed interest-only by owner on 5 August 2026",confirmedInterestOnly:true,propertyExpenses:deduped};
 fs.writeFileSync(outputPath,JSON.stringify(payload,null,2));
 const totals=Object.groupBy(deduped,row=>row.category);
 console.log(`Created ${outputPath}`);
