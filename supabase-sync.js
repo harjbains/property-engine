@@ -4,6 +4,8 @@ const SUPABASE_KEY="sb_publishable_JBlVdOh59UhN0MNbvvibAg_So1n4Myz";
 const SESSION_KEY="tax-engine-supabase-session",SYNC_PREFIX="tax-engine-";
 const by=s=>document.querySelector(s),all=s=>[...document.querySelectorAll(s)];
 let applyingRemote=false,pushTimer=null,lastPushAt=0,lastPullAt=0,lastLocalWriteAt=0;
+const cloudAudit={checkedAt:"",localOnly:[],cloudOnly:[],different:[],matched:0,prePull:{localOnly:0,cloudOnly:0,different:0}};
+window.TaxEngineCloudAudit=cloudAudit;
 const nativeSetItem=Storage.prototype.setItem;
 const status=text=>{all("[data-sync-status]").forEach(x=>x.textContent=text);};
 function session(){try{return JSON.parse(localStorage.getItem(SESSION_KEY)||"null");}catch{return null;}}
@@ -64,9 +66,12 @@ async function pullAll({reload=true}={}){
   const res=await fetch(`${SUPABASE_URL}/rest/v1/tax_engine_records?select=record_key,payload,updated_at&order=record_key.asc`,{headers:headers(s.access_token)});
   const rows=await res.json().catch(()=>[]);
   if(!res.ok)throw new Error(Array.isArray(rows)?await res.text():rows.message||"Supabase pull failed");
+  const localBefore=new Map(localRecords().map(r=>[r.record_key,String(r.payload?.value??"")])),cloudBefore=new Map(rows.map(r=>[r.record_key,String(r.payload?.value??"")]));
+  const beforeLocalOnly=[...localBefore.keys()].filter(k=>!cloudBefore.has(k)),beforeCloudOnly=[...cloudBefore.keys()].filter(k=>!localBefore.has(k)),beforeDifferent=[...cloudBefore.keys()].filter(k=>localBefore.has(k)&&localBefore.get(k)!==cloudBefore.get(k));cloudAudit.checkedAt=new Date().toISOString();cloudAudit.prePull={localOnly:beforeLocalOnly.length,cloudOnly:beforeCloudOnly.length,different:beforeDifferent.length};
   let changed=0;applyingRemote=true;
   try{
     rows.forEach(r=>{const value=String(r.payload?.value??"");if(localStorage.getItem(r.record_key)!==value){nativeSetItem.call(localStorage,r.record_key,value);changed++;}});
+    const localAfter=new Map(localRecords().map(r=>[r.record_key,String(r.payload?.value??"")]));cloudAudit.localOnly=[...localAfter.keys()].filter(k=>!cloudBefore.has(k));cloudAudit.cloudOnly=[...cloudBefore.keys()].filter(k=>!localAfter.has(k));cloudAudit.different=[...cloudBefore.keys()].filter(k=>localAfter.has(k)&&localAfter.get(k)!==cloudBefore.get(k));cloudAudit.matched=[...cloudBefore.keys()].filter(k=>localAfter.get(k)===cloudBefore.get(k)).length;
     if(changed&&reload)window.TaxEngineReloadFromStorage?.();
   }
   finally{applyingRemote=false;}
