@@ -53,4 +53,12 @@ const uberStatement = tax.calculate({year:"2026-27",modules:{uber:true,property:
 assert.equal(uberStatement.uberIncome,1114.13);
 assert.equal(uberStatement.uberPlatformExpenses,229.05);
 assert.equal(uberStatement.uberProfit,885.08);
+const hmrc2526=tax.calculate({year:"2025-26",modules:{employment:true,uber:false,property:true,pension:true,savings:false,dividends:false,other:false},employmentIncome:21773,payeTax:4355,payeTaxProvided:true,pensionIncome:8295,pensionTaxDeducted:692,pensionTaxProvided:true,propertyIncome:30800,propertyExpenses:5799,financeCosts:11925,financeRestrictionEnabled:true,hmrcPaid:832.40});
+assert.equal(hmrc2526.totalIncome,55069);
+assert.equal(hmrc2526.taxableIncome,42499);
+assert.equal(hmrc2526.financeCostCredit,2385);
+assert.equal(hmrc2526.liability,2027.60);
+assert.equal(hmrc2526.outstanding,1195.20);
+assert.equal(hmrc2526.firstPaymentOnAccount,1013.80);
+assert.equal(hmrc2526.secondPaymentOnAccount,1013.80);
 console.log("Tax Engine: all calculation tests passed.");
