@@ -1,9 +1,9 @@
 const fs=require("fs");
 const crypto=require("crypto");
 
-const [backupPath,statementPath,outputPath]=process.argv.slice(2);
+const [backupPath,statementPath,outputPath,startDate="2025-04-06",endDate="2026-04-05"]=process.argv.slice(2);
 if(!backupPath||!statementPath||!outputPath){
-  console.error("Usage: node tools/build-property-expense-recovery.js <backup.json> <statement.csv> <output.json>");
+  console.error("Usage: node tools/build-property-expense-recovery.js <backup.json> <statement.csv> <output.json> [start-date] [end-date]");
   process.exit(1);
 }
 
@@ -22,7 +22,7 @@ function csvRows(text){
   const headers=rows.shift();return rows.map(values=>Object.fromEntries(headers.map((h,i)=>[h,values[i]||""])));
 }
 function isoUk(date){const [day,month,year]=date.split("/");return `${year}-${month}-${day}`;}
-function inTaxYear(date){return date>="2025-04-06"&&date<="2026-04-05";}
+function inRecoveryRange(date){return date>=startDate&&date<=endDate;}
 
 const exported=JSON.parse(fs.readFileSync(backupPath,"utf8"));
 const state=JSON.parse(exported.storage?.["tax-engine-v3"]||"null");
@@ -30,7 +30,7 @@ if(!state)throw new Error("Backup does not contain tax-engine-v3");
 const propertyNames=new Map((state.properties||[]).map(property=>[property.id,property.property]));
 const expenses=[];
 for(const row of state.propertyExpenses||[]){
-  if(row.category!=="Property Management"||!inTaxYear(row.date))continue;
+  if(row.category!=="Property Management"||!inRecoveryRange(row.date))continue;
   expenses.push({id:crypto.randomUUID(),property:propertyNames.get(row.propertyId),date:row.date,category:"Agent fees",amount:Number(row.amount),notes:`Recovered letting-agent fee from 26 July backup (${row.notes||row.date})`,recoverySource:"Tax Engine export 2026-07-26"});
 }
 const mappings=[
@@ -40,13 +40,13 @@ const mappings=[
   [/UKI T\/A Direct Line/i,"5a Ranelagh Road","Insurance"]
 ];
 for(const row of csvRows(fs.readFileSync(statementPath,"utf8"))){
-  const date=isoUk(row.Date||"");if(!inTaxYear(date))continue;
+  const date=isoUk(row.Date||"");if(!inRecoveryRange(date))continue;
   const mapping=mappings.find(([pattern])=>pattern.test(row.Description||""));if(!mapping)continue;
   const amount=Math.abs(Number(String(row.Debit||"").replace(/[^0-9.-]/g,""))||0);if(!amount)continue;
   expenses.push({id:crypto.randomUUID(),property:mapping[1],date,category:mapping[2],amount,notes:`Recovered from bank statement: ${row.Description}${mapping[2]==="Mortgage interest"?" (interest-only mortgage confirmed by owner)":""}`,recoverySource:row["Source Statement"]||"Merged bank statements"});
 }
 const seen=new Set(),deduped=expenses.filter(row=>{const key=`${row.property}|${row.date}|${row.amount.toFixed(2)}|${row.category}`;if(seen.has(key))return false;seen.add(key);return true;});
-const payload={kind:"tax-engine-property-expense-recovery",version:1,taxYear:"2025-26",createdAt:new Date().toISOString(),source:"26 July Tax Engine backup and consolidated bank statements; mortgages confirmed interest-only by owner on 5 August 2026",confirmedInterestOnly:true,propertyExpenses:deduped};
+const payload={kind:"tax-engine-property-expense-recovery",version:1,recoveryPeriod:{start:startDate,end:endDate},createdAt:new Date().toISOString(),source:"26 July Tax Engine backup and consolidated bank statements; mortgages confirmed interest-only by owner on 5 August 2026",confirmedInterestOnly:true,propertyExpenses:deduped};
 fs.writeFileSync(outputPath,JSON.stringify(payload,null,2));
 const totals=Object.groupBy(deduped,row=>row.category);
 console.log(`Created ${outputPath}`);
