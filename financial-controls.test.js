@@ -33,4 +33,8 @@ assert.equal(accrued.surplus,0);
 const overfunded=controls.currentProvisionPosition({accruedLiability:2500,provisionHeld:2000,hmrcPayments:750});
 assert.equal(overfunded.shortfall,0);
 assert.equal(overfunded.surplus,250);
+const funding=controls.monthlyTaxFundingPlan({annualLiability:11252,catchupMonthly:300});
+assert.equal(Math.round(funding.rawMonthly),938);
+assert.equal(funding.normalMonthly,1000);
+assert.equal(funding.totalMonthly,1300);
 console.log("Financial controls: all tests passed.");
