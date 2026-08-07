@@ -27,4 +27,10 @@ const cash=[
   {month:"2026-08",date:"2 Aug",description:"Bank charges",actual:0.99}
 ];
 assert.equal(controls.cashflowDuplicates(cash).length,1);
+const accrued=controls.currentProvisionPosition({accruedLiability:2500,provisionHeld:1500,hmrcPayments:0});
+assert.equal(accrued.shortfall,1000);
+assert.equal(accrued.surplus,0);
+const overfunded=controls.currentProvisionPosition({accruedLiability:2500,provisionHeld:2000,hmrcPayments:750});
+assert.equal(overfunded.shortfall,0);
+assert.equal(overfunded.surplus,250);
 console.log("Financial controls: all tests passed.");
