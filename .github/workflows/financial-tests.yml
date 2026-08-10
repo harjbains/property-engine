@@ -19,3 +19,5 @@ jobs:
         run: node tax-engine.test.js
       - name: Financial control regression tests
         run: node financial-controls.test.js
+      - name: AbraTax export regression tests
+        run: node abratax-export.test.js
