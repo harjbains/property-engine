@@ -37,4 +37,14 @@ const funding=controls.monthlyTaxFundingPlan({annualLiability:11252,catchupMonth
 assert.equal(Math.round(funding.rawMonthly),938);
 assert.equal(funding.normalMonthly,1000);
 assert.equal(funding.totalMonthly,1300);
+const propertyPayslip=controls.propertyPayslipItems([
+  {id:"repair",category:"Repairs",amount:250,notes:"July repair"},
+  {id:"interest",category:"Mortgage interest",amount:301},
+  {id:"capital",treatment:"property_capital",actual:500,description:"Boiler improvement"}
+]);
+assert.equal(propertyPayslip[0].actual,250);
+assert.equal(propertyPayslip[0].description,"July repair");
+assert.equal(propertyPayslip[0].treatment,"property_expense");
+assert.equal(propertyPayslip[1].treatment,"property_interest");
+assert.equal(propertyPayslip[2].treatment,"property_capital");
 console.log("Financial controls: all tests passed.");
