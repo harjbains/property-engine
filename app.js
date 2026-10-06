@@ -1,7 +1,7 @@
 (()=>{"use strict";
 const KEY="tax-engine-v3",LEGACY_KEY="tax-engine-v2",money=new Intl.NumberFormat("en-GB",{style:"currency",currency:"GBP",maximumFractionDigits:2});
 const by=s=>document.querySelector(s),all=s=>[...document.querySelectorAll(s)],uid=()=>crypto.randomUUID(),num=v=>Math.max(0,Number(v)||0),normaliseTaxYear=v=>String(v||"").trim().replace("/","-"),paymentTaxYear=x=>normaliseTaxYear(x.taxYear||x.intendedTaxYear||x.taxYearIntended),paymentsForYear=year=>state.payments.filter(x=>paymentTaxYear(x)===normaliseTaxYear(year)),sum=(a,k)=>(a===state?.payments?paymentsForYear(state.year):a).reduce((t,x)=>t+num(x[k]),0),pct=v=>num(v)/100,showPct=v=>(num(v)*100).toFixed(2).replace(/\.00$/,"");
-const MODULE_LABELS={employment:"Employment/PAYE",uber:"Self-employment/Uber",property:"Property income",pension:"Private pension",savings:"Savings interest",dividends:"Dividends/shares",other:"Other income"};let incomePropertyFilter="",arrearsPropertyFilter="",entryYearFilter="all",dashboardView="actual",dashboardMonth="",propertyLedgerMonth="",mtdPeriodNumber=0,scheduleDetailData={},taxWorkspaceTab="payslip",cashflowEditor=null,sandboxEditor=null;
+const MODULE_LABELS={employment:"Employment/PAYE",uber:"Self-employment/Uber",property:"Property income",pension:"Private pension",savings:"Savings interest",dividends:"Dividends/shares",other:"Other income"};let incomePropertyFilter="",arrearsPropertyFilter="",entryYearFilter="all",dashboardView="actual",dashboardMonth="",propertyLedgerMonth="",mtdPeriodNumber=0,scheduleDetailData={},taxWorkspaceTab="cashflow",cashflowEditor=null,sandboxEditor=null;
 function yearSettings(year){const r={...TaxEngine.rulesFor(year)};return{rules:r,modules:{employment:false,uber:true,property:true,pension:true,savings:false,dividends:false,other:false},forecast:{monthsRemaining:12,method:"annual",scenario:"expected",uberForecast:55000,uberWeeklyProvision:750,annualMiles:52000,uberOtherExpenses:0,propertyIncome:32000,propertyExpenses:3000,pensionIncome:8295},hmrc:{reserve:0,standardMonthly:0,preferredDay:28,catchupShortfall:0,catchupMonths:12,minimumPayment:0,roundTo:10},moduleData:{employment:{gross:0,taxCode:"1257L",payeTax:0,payeTaxProvided:false,niDeducted:0,benefitsEnabled:false,benefits:0},uber:{simplifiedMileage:true},property:{treatment:"standard",basicRate:r.basicRate,higherRate:r.higherRate,additionalRate:r.additionalRate,financeRestriction:true,disallowedInterest:3700,carriedFinanceCosts:0,propertyAllowanceEnabled:false,propertyAllowanceAmount:r.propertyAllowance},pension:{annual:8295,taxCode:"1257L",taxDeducted:691.20,taxProvided:true,inputBasis:"gross",includeState:false},savings:{interest:0,personalAllowance:r.savingsAllowanceBasic,startingRateEnabled:false,basicRate:r.basicRate,higherRate:r.higherRate,additionalRate:r.additionalRate},dividends:{income:0,allowance:r.dividendAllowance,basicRate:r.dividendBasicRate,higherRate:r.dividendHigherRate,additionalRate:r.dividendAdditionalRate},other:{description:"",amount:0,category:"Other taxable income",taxDeducted:0}}};}
 function ranelaghRentDates(){return Array.from({length:16},(_,i)=>{const d=new Date(Date.UTC(2025,3+i,1));return`${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,"0")}-01`;});}function demo(){const ranelaghId=uid(),rentMonths=ranelaghRentDates().map(date=>({id:uid(),propertyId:ranelaghId,date,amount:550,period:date.slice(0,7),notes:"Monthly rent received on the 1st"}));return{version:3,year:"2026-27",settingsByYear:{"2025-26":yearSettings("2025-26"),"2026-27":yearSettings("2026-27")},employment:[],uber:[],properties:[{id:ranelaghId,property:"5a Ranelagh Road",tenant:"Not entered",ownership:100,rent:550,deposit:0,start:"2025-04-01",end:""}],propertyIncome:rentMonths,propertyExpenses:[],rentChanges:[],pension:[],payments:[]};}
 function ensureRanelagh(base){const removed=new Set(base.properties.filter(x=>x.property==="Wolverhampton rental").map(x=>x.id));base.properties=base.properties.filter(x=>!removed.has(x.id));base.propertyIncome=base.propertyIncome.filter(x=>!removed.has(x.propertyId));base.propertyExpenses=base.propertyExpenses.filter(x=>!removed.has(x.propertyId));base.rentChanges=base.rentChanges.filter(x=>!removed.has(x.propertyId));let p=base.properties.find(x=>x.property==="5a Ranelagh Road");if(!p){p={id:uid(),property:"5a Ranelagh Road",tenant:"Not entered",ownership:100,rent:550,deposit:0,start:"2025-04-01",end:""};base.properties.push(p);}p.ownership=p.ownership||100;const existing=new Set(base.propertyIncome.filter(x=>x.propertyId===p.id).map(x=>x.date));for(const date of ranelaghRentDates())if(!existing.has(date))base.propertyIncome.push({id:uid(),propertyId:p.id,date,amount:550,period:date.slice(0,7),notes:"Monthly rent received on the 1st"});return base;}
@@ -81,7 +81,7 @@ function moduleCard(k,title,body){return`<article class="card module-card" data-
 function renderModuleVisibility(){const m=current().modules;m.uber=true;all("[data-module-nav]").forEach(x=>x.hidden=!m[x.dataset.moduleNav]);all("[data-module-card]").forEach(x=>x.hidden=!m[x.dataset.moduleCard]);const panel=by('.view.active')?.dataset.panel;if(panel==="employment"&&!m.employment||panel==="properties"&&!m.property||panel==="pension"&&!m.pension)show("dashboard");}
 function readSettings(form){const fd=new FormData(form),s=current(),r=s.rules,f=s.forecast,h=s.hmrc,d=s.moduleData;for(const k of Object.keys(MODULE_LABELS))s.modules[k]=fd.get(`module_${k}`)==="on";Object.assign(r,{label:fd.get("rule_label"),country:fd.get("rule_country"),allowance:num(fd.get("rule_allowance")),basicRate:pct(fd.get("rule_basicRate")),basicBand:num(fd.get("rule_basicBand")),higherRate:pct(fd.get("rule_higherRate")),additionalRate:pct(fd.get("rule_additionalRate")),additionalThreshold:num(fd.get("rule_additionalThreshold")),lastUpdated:fd.get("rule_lastUpdated"),source:fd.get("rule_source"),class4Lower:num(fd.get("rule_class4Lower")),class4Upper:num(fd.get("rule_class4Upper")),class4Main:pct(fd.get("rule_class4Main")),class4UpperRate:pct(fd.get("rule_class4UpperRate")),mileageBand:num(fd.get("rule_mileageBand")),mileageFirst:pct(fd.get("rule_mileageFirst")),mileageAfter:pct(fd.get("rule_mileageAfter")),financeCreditRate:pct(fd.get("rule_financeCreditRate"))});Object.assign(f,{monthsRemaining:num(fd.get("forecast_months"))||12,method:fd.get("forecast_method"),scenario:fd.get("forecast_scenario"),uberForecast:num(fd.get("forecast_uber")),annualMiles:num(fd.get("forecast_miles")),uberOtherExpenses:num(fd.get("forecast_uberExpenses")),propertyIncome:num(fd.get("forecast_propertyIncome")),propertyExpenses:num(fd.get("forecast_propertyExpenses"))});Object.assign(h,{reserve:num(fd.get("hmrc_reserve")),standardMonthly:num(fd.get("hmrc_standard")),preferredDay:num(fd.get("hmrc_day"))||28,catchupShortfall:num(fd.get("hmrc_shortfall")),catchupMonths:num(fd.get("hmrc_catchupMonths"))||12,minimumPayment:num(fd.get("hmrc_minimum")),roundTo:num(fd.get("hmrc_round"))||10});Object.assign(d.uber,{simplifiedMileage:fd.get("uber_simplified")==="on"});Object.assign(d.property,{treatment:fd.get("property_treatment")||"standard",basicRate:pct(fd.get("property_basicRate")),higherRate:pct(fd.get("property_higherRate")),additionalRate:pct(fd.get("property_additionalRate")),financeRestriction:fd.get("property_financeRestriction")==="on",disallowedInterest:num(fd.get("property_interest")),carriedFinanceCosts:num(fd.get("property_carried")),propertyAllowanceEnabled:fd.get("property_allowanceEnabled")==="on",propertyAllowanceAmount:num(fd.get("property_allowance"))});Object.assign(d.pension,{annual:num(fd.get("pension_annual")),taxDeducted:num(fd.get("pension_tax")),inputBasis:fd.get("pension_basis")||"gross",includeState:fd.get("pension_state")==="on"});Object.assign(d.employment,{gross:num(fd.get("employment_gross")),payeTax:num(fd.get("employment_paye")),niDeducted:num(fd.get("employment_ni")),benefitsEnabled:fd.get("employment_benefitsEnabled")==="on",benefits:num(fd.get("employment_benefits"))});Object.assign(d.savings,{interest:num(fd.get("savings_interest")),personalAllowance:num(fd.get("savings_allowance")),startingRateEnabled:fd.get("savings_startingRate")==="on",basicRate:pct(fd.get("savings_basicRate")),higherRate:pct(fd.get("savings_higherRate")),additionalRate:pct(fd.get("savings_additionalRate"))});Object.assign(d.dividends,{income:num(fd.get("dividend_income")),allowance:num(fd.get("dividend_allowance")),basicRate:pct(fd.get("dividend_basicRate")),higherRate:pct(fd.get("dividend_higherRate")),additionalRate:pct(fd.get("dividend_additionalRate"))});Object.assign(d.other,{description:fd.get("other_description"),amount:num(fd.get("other_amount")),category:fd.get("other_category"),taxDeducted:num(fd.get("other_tax"))});}
 function propertyName(id){return state.properties.find(x=>x.id===id)?.property||"Unknown property";}function populatePropertySelects(){const o=state.properties.map(x=>`<option value="${x.id}">${x.property}</option>`).join("");all("[data-property-select]").forEach(x=>x.innerHTML=o||"<option value=''>Create a property first</option>");}
-all("[data-view],[data-view-link]").forEach(b=>b.addEventListener("click",()=>show(b.dataset.view||b.dataset.viewLink)));document.addEventListener("click",e=>{const b=e.target.closest("[data-open-cashflow-workspace]");if(!b)return;dashboardView="actual";taxWorkspaceTab="cashflow";show("dashboard");renderDashboardMode();renderDashboardSurface();});function show(n){all(".view").forEach(x=>x.classList.toggle("active",x.dataset.panel===n));all("#nav button").forEach(x=>x.classList.toggle("active",x.dataset.view===n));by("#pageTitle").textContent=({dashboard:"Tax Provision",monthly:"Monthly Entry",employment:"PAYE",uber:"Uber",properties:"Properties",pension:"Pension",mtd:"MTD Quarterly Updates",payments:"HMRC Payments",calculation:"Tax Calculation",returnprep:"Return Preparation",audit:"Audit Checks",reports:"Reports",settings:"Settings"})[n];}
+all("[data-view],[data-view-link]").forEach(b=>b.addEventListener("click",()=>show(b.dataset.view||b.dataset.viewLink)));document.addEventListener("click",e=>{const b=e.target.closest("[data-open-cashflow-workspace]");if(!b)return;dashboardView="actual";taxWorkspaceTab="cashflow";show("dashboard");renderDashboardMode();renderDashboardSurface();});function show(n){ if(n==="campaigns") { typeof renderCampaignsList !== "undefined" && renderCampaignsList(); }all(".view").forEach(x=>x.classList.toggle("active",x.dataset.panel===n));all("#nav button").forEach(x=>x.classList.toggle("active",x.dataset.view===n));by("#pageTitle").textContent=({dashboard:"Banking",campaigns:"Campaigns",monthly:"Monthly Entry",employment:"PAYE",uber:"Uber",properties:"Properties",pension:"Pension",mtd:"MTD Quarterly Updates",payments:"HMRC Payments",calculation:"Tax Calculation",returnprep:"Return Preparation",audit:"Audit Checks",reports:"Reports",settings:"Settings"})[n];}
 by("#taxYear").addEventListener("change",e=>{state.year=e.target.value;render();});all("[data-open]").forEach(b=>b.addEventListener("click",()=>by(`#${b.dataset.open}`).showModal()));document.addEventListener("click",e=>{const b=e.target.closest("[data-close-dialog]");if(b){e.preventDefault();b.closest("dialog")?.close("cancel");}});
 function onForm(id,type,map){by(id).addEventListener("submit",e=>{e.preventDefault();const f=new FormData(e.target);state[type].push({id:uid(),...map(f)});e.target.reset();e.target.closest("dialog").close();render();});}onForm("#employmentForm","employment",f=>({date:f.get("date"),employer:f.get("employer"),gross:num(f.get("gross")),tax:num(f.get("tax")),ni:num(f.get("ni")),benefits:num(f.get("benefits")),notes:f.get("notes")}));onForm("#uberForm","uber",f=>({date:f.get("date"),payments:num(f.get("payments")),fee:num(f.get("fee")),tips:num(f.get("tips")),miles:num(f.get("miles")),notes:f.get("notes")}));onForm("#propertyForm","properties",f=>({property:f.get("property"),tenant:f.get("tenant"),rent:num(f.get("rent")),deposit:num(f.get("deposit")),start:f.get("start"),end:f.get("end")}));onForm("#incomeForm","propertyIncome",f=>({propertyId:f.get("propertyId"),date:f.get("date"),amount:num(f.get("amount")),period:f.get("period"),notes:f.get("notes")}));onForm("#expenseForm","propertyExpenses",f=>({propertyId:f.get("propertyId"),date:f.get("date"),category:f.get("category"),amount:num(f.get("amount")),notes:f.get("notes")}));onForm("#pensionForm","pension",f=>{const net=num(f.get("net")),tax=num(f.get("tax"));return{date:f.get("date"),provider:f.get("provider"),net,tax,amount:net+tax,pensionNumber:f.get("pensionNumber"),notes:f.get("notes")};});onForm("#paymentForm","payments",f=>({date:f.get("date"),amount:num(f.get("amount")),reference:f.get("reference"),notes:f.get("notes")}));by("#rentForm").addEventListener("submit",e=>{e.preventDefault();const f=new FormData(e.target),p=state.properties.find(x=>x.id===f.get("propertyId"));if(!p)return;const rent=num(f.get("rent"));state.rentChanges.push({id:uid(),propertyId:p.id,date:f.get("date"),previousRent:p.rent,newRent:rent,notes:f.get("notes")});p.rent=rent;e.target.reset();e.target.closest("dialog").close();render();});
 document.addEventListener("click",e=>{const b=e.target.closest("[data-delete]");if(!b)return;const t=b.dataset.delete,id=b.dataset.id;if(t==="properties"){state.propertyIncome=state.propertyIncome.filter(x=>x.propertyId!==id);state.propertyExpenses=state.propertyExpenses.filter(x=>x.propertyId!==id);state.rentChanges=state.rentChanges.filter(x=>x.propertyId!==id);}state[t]=state[t].filter(x=>x.id!==id);render();});
@@ -354,8 +354,29 @@ function uberWeeklyIncomeRows(rows){const miles=v=>num(v).toLocaleString("en-GB"
 function uberPayslipDetailHtml(uber){const miles=v=>num(v).toLocaleString("en-GB",{maximumFractionDigits:2});return`<details class="payslip-expenses"><summary>Uber earned-period breakdown</summary>${uber.legacyRows.length?`<p class="legacy-warning">${uber.legacyRows.length} legacy/review Uber record(s): gross fare breakdown is unavailable until completed.</p>`:""}<div><span>Customer payments</span><strong>${money.format(uber.customer)}</strong></div><div><span>Tips</span><strong>${money.format(uber.tips)}</strong></div><div><span>Gross Uber income</span><strong>${money.format(uber.gross)}</strong></div><div><span>Uber service fees</span><strong>${money.format(uber.serviceFees)}</strong></div><div><span>Government and third-party fees</span><strong>${money.format(uber.thirdPartyFees)}</strong></div><div><span>Other Uber adjustments</span><strong>${money.format(uber.adjustments)}</strong></div><div><span>Business miles in earned period</span><strong>${miles(uber.monthMiles)}</strong></div><div><span>Tax-year miles before this month</span><strong>${miles(uber.milesBefore)}</strong></div><div><span>Miles at first rate (${Math.round(uber.firstRate*100)}p)</span><strong>${miles(uber.firstMiles)}</strong></div><div><span>Miles at lower rate (${Math.round(uber.afterRate*100)}p)</span><strong>${miles(uber.afterMiles)}</strong></div><div><span>Mileage deduction</span><strong>${money.format(uber.mileage)}</strong></div><div><span>Other eligible Uber costs</span><strong>${money.format(uber.separateCosts)}</strong></div><div><span>Taxable Uber profit</span><strong>${money.format(uber.net)}</strong></div><details class="uber-weekly-breakdown"><summary>Weekly records contributing to this month</summary>${uberWeeklyIncomeRows(uber.rows)}</details></details>`;}
 const uberPayslipForMonthBase=uberPayslipForMonth;uberPayslipForMonth=function(month){const result=uberPayslipForMonthBase(month),expenses=cashflowUberExpenseRecords(month),separateCosts=expenses.reduce((sum,x)=>sum+num(x.amount),0);result.privateHireExpenses=expenses;result.separateCosts=separateCosts;result.totalCosts+=separateCosts;result.net-=separateCosts;return result;};
 function renderTaxWorkspace(){const month=workspaceMonth(),monthLabel=workspaceMonthLabel(month),x=cashflowState(),s=cashflowSummary(x),m=monthlyCashPosition(month),uber=uberPayslipForMonth(month),propertyItems=paidCashflowPropertyItems(x,month),propertyIncomeItems=propertyIncomeRecords(month),propertyExpenseItems=propertyItems.filter(i=>i.treatment==="property_expense"),propertyInterest=propertyItems.filter(i=>i.treatment==="property_interest").reduce((a,b)=>a+num(b.actual),0),propertyCapital=propertyItems.filter(i=>i.treatment==="property_capital").reduce((a,b)=>a+num(b.actual),0),propertyCosts=propertyExpenseItems.reduce((a,b)=>a+num(b.actual),0),propertyGross=propertyIncomeItems.reduce((a,b)=>a+num(b.amount),0),propertyNet=propertyGross-propertyCosts,pensionGross=m.pensionGross,payslipTax=payslipTaxEstimate({pensionGross,pensionTax:m.pensionTax,propertyNet,propertyInterest,uberNet:uber.net}),payslip=[["Pension",pensionGross,0,pensionGross],["Properties",propertyGross,propertyCosts,propertyNet],["Uber",uber.gross,uber.totalCosts,uber.net]],totals=payslip.reduce((a,r)=>({gross:a.gross+r[1],costs:a.costs+r[2],net:a.net+r[3]}),{gross:0,costs:0,net:0}),propertyDetail=propertyItems.length||propertyIncomeItems.length?`<details class="payslip-expenses"><summary>Property treatment detail</summary>${propertyIncomeItems.map(i=>`<div><span>${propertyIncomeLineLabel(i)}</span><strong>+${money.format(i.amount)}</strong></div>`).join("")}${propertyExpenseItems.map(i=>`<div><span>${i.description}  -  ${propertyName(i.propertyId)}</span><strong>${money.format(i.actual)}</strong></div>`).join("")}${propertyInterest?`<p>Mortgage interest tracked separately: ${money.format(propertyInterest)}</p>`:""}${propertyCapital?`<p>Capital costs tracked separately: ${money.format(propertyCapital)}</p>`:""}</details>`:`<small>No paid cashflow property items linked yet.</small>`,uberWeekRows=uberWeeklyIncomeRows(uber.rows||[]),privateHireRows=(uber.privateHireExpenses||[]).map(i=>`<div><span>${auditEscape(i.description)} (${auditEscape(i.category)})</span><strong>${money.format(i.amount)}</strong></div>`).join(""),uberDetail=`<details class="payslip-expenses"><summary>Uber earned-period breakdown</summary><div><span>Business miles in earned period</span><strong>${num(uber.monthMiles).toLocaleString()}</strong></div><div><span>Miles before this month</span><strong>${num(uber.milesBefore).toLocaleString()}</strong></div>${uber.firstMiles?`<div><span>${num(uber.firstMiles).toLocaleString()} miles at ${Math.round(uber.firstRate*100)}p</span><strong>${money.format(uber.firstMiles*uber.firstRate)}</strong></div>`:""}${uber.afterMiles?`<div><span>${num(uber.afterMiles).toLocaleString()} miles at ${Math.round(uber.afterRate*100)}p</span><strong>${money.format(uber.afterMiles*uber.afterRate)}</strong></div>`:""}<div><span>Mileage deduction</span><strong>${money.format(uber.mileage)}</strong></div><div><span>Separate eligible private-hire costs</span><strong>${money.format(uber.separateCosts)}</strong></div>${privateHireRows}<div><span>Total Uber costs</span><strong>${money.format(uber.totalCosts)}</strong></div><p>Weekly portal entries</p>${uberWeekRows}</details>`,payRows=payslip.map(([source,gross,costs,net])=>`<div class="tax-workspace-row"><span>${source==="Properties"?`<div>Properties</div>${propertyDetail}`:source==="Uber"?`<div>Uber</div>${uberDetail}`:source}</span><span>${money.format(gross)}</span><span>${money.format(costs)}</span><span>${money.format(net)}</span></div>`).join("")+`<div class="tax-workspace-row total"><span>Total</span><span>${money.format(totals.gross)}</span><span>${money.format(totals.costs)}</span><span>${money.format(totals.net)}</span></div>`,fixedRows=fixedChecklistRowsHtml(x),incomeRows=(x.income||[]).filter(i=>i.section!=="fixed").map(i=>ledgerIncomeRowHtml(i,x)).join(""),spendRows=incomeRows+x.spending.map(i=>ledgerSpendingRowHtml(i,x)).join("");
-return`<div class="tax-workspace"><div class="tax-workspace-head"><div><p class="eyebrow">MONTHLY WORKSPACE</p><h2>${monthLabel}</h2><p>Taxable earned-period view. Cashflow uses bank receipt dates.</p></div><div class="tax-workspace-controls"><button class="ghost" data-cash-action="export-workspace">Export data</button><div class="segmented tax-workspace-tabs"><button class="${taxWorkspaceTab==="payslip"?"active":""}" data-tax-tab="payslip">Payslip</button><button class="${taxWorkspaceTab==="cashflow"?"active":""}" data-tax-tab="cashflow">Cashflow</button><button class="${taxWorkspaceTab==="sandbox"?"active":""}" data-tax-tab="sandbox">Sandbox</button></div></div></div><section data-tax-panel="payslip" ${taxWorkspaceTab==="payslip"?"":"hidden"}><div class="payslip-grid"><div class="tax-workspace-table payslip-table payslip-watermark" data-watermark="TAXABLE EARNED PERIOD"><div class="tax-workspace-row header"><span>Taxable source</span><span>Earned income</span><span>Allowable costs</span><span>Taxable net</span></div>${payRows}</div><aside class="net-available"><span>Estimated take-home after tax</span><strong>${money.format(payslipTax.afterTax)}</strong><small>Taxable earned period less estimated income tax and Class 4 NI</small></aside></div><div class="payslip-tax-panel"><div><span>Taxable net income</span><strong>${money.format(totals.net)}</strong><small>Before personal tax</small></div><div><span>Income tax estimate</span><strong>${money.format(payslipTax.incomeTax)}</strong><small>${payslipTax.band}</small></div><div><span>Class 4 NI estimate</span><strong>${money.format(payslipTax.ni)}</strong><small>Uber/self-employed profit only</small></div><div><span>Tax deducted at source</span><strong>${money.format(payslipTax.taxAtSource)}</strong><small>Pension/PAYE credits recorded</small></div><div class="due"><span>Provision still needed</span><strong>${money.format(payslipTax.provision)}</strong><small>Estimated HMRC reserve for this month</small></div></div></section><section data-tax-panel="cashflow" ${taxWorkspaceTab==="cashflow"?"":"hidden"}><div class="cashflow-cards"><div><span>Zempler balance</span><strong>${money.format(s.accounts.zempler)}</strong><button class="cash-card-link" data-cash-action="edit-balance" ${x.lock.status==="closed"?"disabled":""}>Edit balances</button></div><div class="lloyds"><span>Lloyds balance</span><strong>${money.format(s.lloyds)}</strong></div><div><span>Fixed costs still to leave</span><strong>${money.format(s.fixedUnpaid)}</strong></div><div><span>Planned spend left</span><strong>${money.format(s.plannedUnpaid)}</strong></div><div class="safe"><span>Safe available balance</span><strong>${money.format(s.safe)}</strong></div><div class="forecast"><span>Forecast balance</span><strong>${money.format(s.forecast)}</strong></div></div>${cashflowLockControls(x)}${renderCashflowEditor()}<div class="cashflow-two-pane"><section><div class="pane-head"><h3>Fixed-cost checklist</h3><p>${s.cleared+(x.income||[]).filter(i=>i.section==="fixed"&&i.status==="Received").length} of ${x.fixed.length+(x.income||[]).filter(i=>i.section==="fixed").length} items cleared - ${money.format(s.fixedPaid)} paid - ${money.format(s.fixedUnpaid)} still to leave</p><div class="cashflow-actions"><button class="ghost" data-cash-action="add-fixed" ${x.lock.status==="closed"?"disabled":""}>Add fixed cost</button><button class="ghost" data-cash-action="add-fixed-income" ${x.lock.status==="closed"?"disabled":""}>Add fixed income</button></div></div><div class="tax-workspace-table fixed-table"><div class="tax-workspace-row header"><span><button class="cash-sort" data-cash-sort="0">Due</button></span><span><button class="cash-sort" data-cash-sort="1">Payment</button></span><span><button class="cash-sort" data-cash-sort="2" data-sort-number>Amount</button></span><span><button class="cash-sort" data-cash-sort="3">Status</button></span><span>Actions</span></div>${fixedRows}</div></section><section><div class="pane-head"><h3>Spending ledger</h3><div class="cashflow-actions"><button class="ghost" data-cash-action="add-income" ${x.lock.status==="closed"?"disabled":""}>Add income</button><button class="ghost" data-cash-action="add-planned" ${x.lock.status==="closed"?"disabled":""}>Add planned expenditure</button><button class="ghost" data-cash-action="add-spending" ${x.lock.status==="closed"?"disabled":""}>Add spending</button><button class="ghost" data-cash-action="add-transfer" ${x.lock.status==="closed"?"disabled":""}>Transfer</button><button class="ghost">Cashflow summary</button></div></div><div class="tax-workspace-table spending-table"><div class="tax-workspace-row header"><span><button class="cash-sort" data-cash-sort="0">Date</button></span><span><button class="cash-sort" data-cash-sort="1">Description</button></span><span><button class="cash-sort" data-cash-sort="2">Category</button></span><span><button class="cash-sort" data-cash-sort="3" data-sort-number>Expected</button></span><span><button class="cash-sort" data-cash-sort="4" data-sort-number>Actual</button></span><span><button class="cash-sort" data-cash-sort="5">Status</button></span><span>Actions</span></div>${spendRows}</div></section></div></section><section data-tax-panel="sandbox" ${taxWorkspaceTab==="sandbox"?"":"hidden"}>${renderSandboxWorkspace()}</section></div>`;}
-const renderTaxWorkspaceBase=renderTaxWorkspace;renderTaxWorkspace=function(){const x=cashflowState(),s=cashflowSummary(x),source=s.taxDueOverridden?"Manual":workspaceMonthLabel(previousCashflowMonth(x.month)).split(" ")[0],outDue=s.fixedUnpaid+s.plannedUnpaid,netDue=s.incomeExpected-outDue,taxCard=`<div class="tax-due"><span>Tax due</span><strong>${money.format(s.taxDue)}</strong><small class="tax-card-meta"><span><em>Source</em><b>${source}</b></span><span><em>Moved</em><b>${money.format(s.taxProvisionTransfers)}</b></span><span><em>To fund</em><b>${money.format(s.taxStillToFund)}</b></span></small><button class="cash-card-link" data-cash-action="edit-tax-due" ${x.lock.status==="closed"?"disabled":""}>Edit tax due</button></div>`,dueCard=`<div class="transactions-due"><span>Transactions due</span><strong class="${netDue<0?"negative":"positive"}">${netDue>=0?"+":"−"}${money.format(Math.abs(netDue))}</strong><small class="due-card-meta"><span><em>In</em><b>+${money.format(s.incomeExpected)}</b></span><span><em>Out</em><b>−${money.format(outDue)}</b></span></small></div>`;return renderTaxWorkspaceBase().replace(`<div><span>Fixed costs still to leave</span><strong>${money.format(s.fixedUnpaid)}</strong></div>`,`${taxCard}${dueCard}`).replace(`<div><span>Planned spend left</span><strong>${money.format(s.plannedUnpaid)}</strong></div>`,"").replace(/<button class="ghost" data-cash-action="add-planned"[^>]*>Add planned expenditure<\/button>/,"").replace("Fixed-cost checklist","Fixed outgoings").replace(/(\d+) of (\d+) items cleared - ([^<]+) paid - ([^<]+) still to leave/,"$1/$2 cleared · $3 paid · $4 left").replace('<button class="ghost" data-cash-action="add-fixed"','<button class="ghost" data-cash-action="copy-previous-fixed">Copy prior costs &amp; rents</button><button class="ghost" data-cash-action="add-fixed"');};
+return`<div class="tax-workspace"><div class="tax-workspace-head"><div><p class="eyebrow">MONTHLY WORKSPACE</p><h2>${monthLabel}</h2><p>Taxable earned-period view. Cashflow uses bank receipt dates.</p></div><div class="tax-workspace-controls"><button class="ghost" data-cash-action="export-workspace">Export data</button><div class="segmented tax-workspace-tabs"><button class="${taxWorkspaceTab==="payslip"?"active":""}" data-tax-tab="payslip">Payslip</button><button class="${taxWorkspaceTab==="cashflow"?"active":""}" data-tax-tab="cashflow">Cashflow</button><button class="${taxWorkspaceTab==="sandbox"?"active":""}" data-tax-tab="sandbox">Sandbox</button></div></div></div><section data-tax-panel="payslip" ${taxWorkspaceTab==="payslip"?"":"hidden"}><div class="payslip-grid"><div class="tax-workspace-table payslip-table payslip-watermark" data-watermark="TAXABLE EARNED PERIOD"><div class="tax-workspace-row header"><span>Taxable source</span><span>Earned income</span><span>Allowable costs</span><span>Taxable net</span></div>${payRows}</div><aside class="net-available"><span>Estimated take-home after tax</span><strong>${money.format(payslipTax.afterTax)}</strong><small>Taxable earned period less estimated income tax and Class 4 NI</small></aside></div><div class="payslip-tax-panel"><div><span>Taxable net income</span><strong>${money.format(totals.net)}</strong><small>Before personal tax</small></div><div><span>Income tax estimate</span><strong>${money.format(payslipTax.incomeTax)}</strong><small>${payslipTax.band}</small></div><div><span>Class 4 NI estimate</span><strong>${money.format(payslipTax.ni)}</strong><small>Uber/self-employed profit only</small></div><div><span>Tax deducted at source</span><strong>${money.format(payslipTax.taxAtSource)}</strong><small>Pension/PAYE credits recorded</small></div><div class="due"><span>Provision still needed</span><strong>${money.format(payslipTax.provision)}</strong><small>Estimated HMRC reserve for this month</small></div></div></section><section data-tax-panel="cashflow" ${taxWorkspaceTab==="cashflow"?"":"hidden"}><div class="cashflow-cards"><div><span>Lloyds balance</span><strong>${money.format(s.accounts.zempler)}</strong><button class="cash-card-link" data-cash-action="edit-balance" ${x.lock.status==="closed"?"disabled":""}>Edit balances</button></div><div><span>Fixed costs still to leave</span><strong>${money.format(s.fixedUnpaid)}</strong></div><div><span>Planned spend left</span><strong>${money.format(s.plannedUnpaid)}</strong></div><div class="safe"><span>Safe available balance</span><strong>${money.format(s.safe)}</strong></div><div class="forecast"><span>Forecast balance</span><strong>${money.format(s.forecast)}</strong></div></div>${cashflowLockControls(x)}${renderCashflowEditor()}<div class="cashflow-two-pane"><section><div class="pane-head"><h3>Fixed-cost checklist</h3><p>${s.cleared+(x.income||[]).filter(i=>i.section==="fixed"&&i.status==="Received").length} of ${x.fixed.length+(x.income||[]).filter(i=>i.section==="fixed").length} items cleared - ${money.format(s.fixedPaid)} paid - ${money.format(s.fixedUnpaid)} still to leave</p><div class="cashflow-actions"><button class="ghost" data-cash-action="add-fixed" ${x.lock.status==="closed"?"disabled":""}>Add fixed cost</button><button class="ghost" data-cash-action="add-fixed-income" ${x.lock.status==="closed"?"disabled":""}>Add fixed income</button></div></div><div class="tax-workspace-table fixed-table"><div class="tax-workspace-row header"><span><button class="cash-sort" data-cash-sort="0">Due</button></span><span><button class="cash-sort" data-cash-sort="1">Payment</button></span><span><button class="cash-sort" data-cash-sort="2" data-sort-number>Amount</button></span><span><button class="cash-sort" data-cash-sort="3">Status</button></span><span>Actions</span></div>${fixedRows}</div></section><section><div class="pane-head"><h3>Spending ledger</h3><div class="cashflow-actions"><button class="ghost" data-cash-action="add-income" ${x.lock.status==="closed"?"disabled":""}>Add income</button><button class="ghost" data-cash-action="add-planned" ${x.lock.status==="closed"?"disabled":""}>Add planned expenditure</button><button class="ghost" data-cash-action="add-spending" ${x.lock.status==="closed"?"disabled":""}>Add spending</button><button class="ghost" data-cash-action="add-transfer" ${x.lock.status==="closed"?"disabled":""}>Transfer</button><button class="ghost">Cashflow summary</button></div></div><div class="tax-workspace-table spending-table"><div class="tax-workspace-row header"><span><button class="cash-sort" data-cash-sort="0">Date</button></span><span><button class="cash-sort" data-cash-sort="1">Description</button></span><span><button class="cash-sort" data-cash-sort="2">Category</button></span><span><button class="cash-sort" data-cash-sort="3" data-sort-number>Expected</button></span><span><button class="cash-sort" data-cash-sort="4" data-sort-number>Actual</button></span><span><button class="cash-sort" data-cash-sort="5">Status</button></span><span>Actions</span></div>${spendRows}</div></section></div></section><section data-tax-panel="sandbox" ${taxWorkspaceTab==="sandbox"?"":"hidden"}>${renderSandboxWorkspace()}</section></div>`;}
+const renderTaxWorkspaceBase=renderTaxWorkspace;renderTaxWorkspace=function(){const x=cashflowState(),s=cashflowSummary(x),source=s.taxDueOverridden?"Manual":workspaceMonthLabel(previousCashflowMonth(x.month)).split(" ")[0],outDue=s.fixedUnpaid+s.plannedUnpaid,netDue=s.incomeExpected-outDue,dueCard=`<div class="transactions-due"><span>Transactions due</span><strong class="${netDue<0?"negative":"positive"}">${netDue>=0?"+":"-"}${money.format(Math.abs(netDue))}</strong><small class="due-card-meta"><span><em>In</em><b>+${money.format(s.incomeExpected)}</b></span><span><em>Out</em><b>-${money.format(outDue)}</b></span></small></div>`,clearedCount=s.cleared+(x.income||[]).filter(i=>i.section==="fixed"&&i.status==="Received").length,totalCount=x.fixed.length+(x.income||[]).filter(i=>i.section==="fixed").length,fixedProgressCard=`<div class="fixed-progress"><span>Fixed outgoings</span><strong>${clearedCount}/${totalCount} cleared</strong><small class="due-card-meta" style="margin-top:4px;display:flex;gap:10px;"><span><em>Paid</em><b>${money.format(s.fixedPaid)}</b></span><span><em>Left</em><b>${money.format(s.fixedUnpaid)}</b></span></small></div>`;
+  let campCard = "";
+  const visibleCampaigns = (state.campaigns || []).filter(c => c.status !== 'archived');
+  if (visibleCampaigns.length > 0) {
+    if (typeof window.currentCampaignIndex === "undefined") {
+      const pIdx = visibleCampaigns.findIndex(c => c.isPrimary);
+      window.currentCampaignIndex = pIdx >= 0 ? pIdx : 0;
+    }
+    if (window.currentCampaignIndex >= visibleCampaigns.length) window.currentCampaignIndex = 0;
+    
+    const pc = visibleCampaigns[window.currentCampaignIndex];
+    const pcd = calculateCampaign(pc);
+    const estCompletion = pcd.estimatedCompletion ? new Date(pcd.estimatedCompletion).toLocaleDateString("en-GB", {month:"short", year:"numeric"}) : "N/A";
+    
+    const cycleFn = visibleCampaigns.length > 1 
+      ? "window.currentCampaignIndex = (window.currentCampaignIndex + 1) % " + visibleCampaigns.length + "; render();"
+      : "show('campaigns'); renderCampaignDetail('" + pcd.id + "');";
+      
+    campCard = '<div class="campaign-summary-card" style="border:1px solid #c084fc; background:#faf5ff; border-radius:10px; padding:14px; cursor:pointer; user-select:none; transition: background 0.2s;" onmousedown="this.style.background=\'#f3e8ff\'" onmouseup="this.style.background=\'#faf5ff\'" onmouseleave="this.style.background=\'#faf5ff\'" onclick="' + cycleFn + '"><span>Campaign ' + (window.currentCampaignIndex + 1) + ' of ' + visibleCampaigns.length + ' &mdash; ' + auditEscape(pcd.name) + '</span><strong style="color:#7e22ce;">' + money.format(pcd.balance) + '</strong><small style="display:flex; justify-content:space-between; margin-top:5px; color:#9333ea; font-size:10px; font-weight:700;"><span>Target: ' + money.format(pcd.target) + '</span><span>Prog: ' + Math.round(pcd.progress) + '%</span><span>Est: ' + estCompletion + '</span></small></div>';
+  }
+  return renderTaxWorkspaceBase().replace('<div class="cashflow-cards">', '<div class="cashflow-cards">' + campCard)
+  .replace(`<div><span>Fixed costs still to leave</span><strong>${money.format(s.fixedUnpaid)}</strong></div>`,`${fixedProgressCard}${dueCard}`).replace(`<div><span>Planned spend left</span><strong>${money.format(s.plannedUnpaid)}</strong></div>`,"").replace(/<button class="ghost" data-cash-action="add-planned"[^>]*>Add planned expenditure<\/button>/,"").replace("Fixed-cost checklist","Fixed outgoings").replace(/<p>\d+ of \d+ items cleared - [^<]+ paid - [^<]+ still to leave<\/p>/,"").replace('<button class="ghost" data-cash-action="add-fixed"','<button class="ghost" data-cash-action="copy-previous-fixed">Copy prior costs &amp; rents</button><button class="ghost" data-cash-action="add-fixed"');};
 const renderTaxWorkspaceMileageBase=renderTaxWorkspace;renderTaxWorkspace=function(){return renderTaxWorkspaceMileageBase().replace(/<details class="payslip-expenses"><summary>Uber earned-period breakdown<\/summary>.*?<\/details>/,uberPayslipDetailHtml(uberPayslipForMonth(workspaceMonth())));};
 const renderTaxWorkspaceNavigationBase=renderTaxWorkspace;renderTaxWorkspace=function(){return renderTaxWorkspaceNavigationBase().replace(/<button[^>]*data-tax-tab="sandbox"[^>]*>Sandbox<\/button>/,"");};
 function refreshCashflowCardsInPlace(){taxWorkspaceTab="cashflow";renderDashboardSurface();}
@@ -481,7 +502,7 @@ function currentAccruedTaxPosition(){const inputs=actualDashboardInputs(),calcul
 function currentAccruedTaxHtml(){const p=currentAccruedTaxPosition(),result=p.shortfall>0?row("Current provision shortfall",money.format(p.shortfall),"total"):row("Provision surplus",money.format(p.surplus),"total");return`<section class="current-accrued-position"><p class="eyebrow">CURRENT-YEAR POSITION</p><h3>Current-year accrued tax position</h3>${row("Taxable income recorded to date",money.format(p.calculated.taxableIncome))}${row("Estimated tax accrued to date",money.format(p.accruedLiability))}${row("Current-year tax provision held",`(${money.format(p.provisionHeld)})`)}${row("Current-year HMRC payments / credits",`(${money.format(p.hmrcPayments)})`)}${result}<p class="source-note">Actual 2026/27 records through ${formatUKDate(p.cutoff)} only. Prior-year liabilities and remaining-year forecast assumptions are excluded.</p></section>`;}
 function monthlyFundingPosition(){const bundle=provisionForecastBundle(),h=current().hmrc,plan=FinancialControls.monthlyTaxFundingPlan({annualLiability:bundle.forecast.liability,catchupMonthly:h.catchupMonthly==null?300:h.catchupMonthly}),cutoff=dashboardDates().cutoff,catchupPaid=state.payments.filter(payment=>payment.date&&payment.date<=cutoff&&/catch.?up/i.test(`${payment.paymentType||""} ${payment.notes||""}`)).reduce((sum,payment)=>sum+num(payment.amount),0),catchupShortfall=Math.max(0,num(h.catchupShortfall)-catchupPaid),credits=Math.max(0,currentYearAllocatedPayments()),currentFunded=currentYearProvisionHeld()+credits;return{bundle,plan,catchupPaid,catchupShortfall,credits,currentFunded};}
 function monthlyFundingHtml(){const p=monthlyFundingPosition(),f=p.bundle.forecast;return`<section class="monthly-funding-position"><p class="eyebrow">MONTHLY HMRC FUNDING</p><h2>${money.format(p.plan.totalMonthly)} suggested monthly tax funding</h2>${row("Forecast annual 2026/27 tax liability",money.format(f.liability),"total")}${row("Calculated monthly share",money.format(p.plan.rawMonthly))}${row("Normal monthly funding target",money.format(p.plan.normalMonthly),"total")}${row("Catch-up target",`${money.format(p.plan.catchupMonthly)} / month`)}${row("Total suggested monthly tax funding",money.format(p.plan.totalMonthly),"total")}${row("Current-year tax paid / provisioned to date",money.format(p.currentFunded))}${row("Catch-up paid to date",money.format(p.catchupPaid))}${row("Remaining catch-up shortfall",money.format(p.catchupShortfall))}${row("HMRC credit / prepayments held",money.format(p.credits))}${row("Future HMRC payment on account",money.format(f.firstPaymentOnAccount))}<p class="source-note">The future payment on account is expected to be funded through ongoing monthly payments. It is not added to the ${money.format(p.plan.totalMonthly)} immediate monthly target.</p></section>`;}
-function renderCurrentAccruedTaxPosition(){if(state.year!=="2026-27")return;const calculation=by("#calculationOutput");if(calculation&&!calculation.querySelector(".monthly-funding-position"))calculation.querySelector(".reconciliation-head")?.insertAdjacentHTML("afterend",monthlyFundingHtml()+currentAccruedTaxHtml());const provision=by("#provisionDetail");if(provision&&!provision.querySelector(".monthly-funding-position"))provision.insertAdjacentHTML("afterbegin",monthlyFundingHtml()+currentAccruedTaxHtml());}
+function renderCurrentAccruedTaxPosition(){}
 function renderProvisionForecast(){if(state.year!=="2026-27")return;const output=by("#calculationOutput"),propertyDetail=output.querySelector("details.payslip-expenses")?.outerHTML||"",b=provisionForecastBundle(),a=b.actual,f=b.forecast,x=b.assumptions,label=b.mode==="stress"?"Stress provision":b.mode[0].toUpperCase()+b.mode.slice(1),differenceLabel=b.reserveDifference<0?"Forecast reserve gap":"Forecast reserve surplus";output.innerHTML=`<div class="reconciliation-head"><div><p class="eyebrow">TAX-PROVISION FORECAST</p><h2>2026/27 prudent full-year forecast</h2><p>Actual records and remaining-year assumptions are calculated separately.</p></div><i class="reconciliation-status ${b.mode==="expected"?"rounding":b.mode==="prudent"?"missing":"excess"}">${label}</i></div><div class="benchmark-grid"><div><h3>Actual position to date</h3>${row("Recorded taxable income",money.format(a.taxableIncome))}${row("Recorded liability",money.format(a.liability),"total")}${row("Tax deducted at source",money.format(a.taxAtSource))}</div><div><h3>Remaining-year assumptions</h3>${row("Uber income remaining",money.format(x.uberRemaining))}${row("Rental income remaining",money.format(x.rentRemaining))}${row("Property costs remaining",money.format(x.propertyExpenseRemaining))}${row("Finance costs remaining",money.format(x.financeRemaining))}${row("Pension income remaining",money.format(x.pensionRemaining))}${row("Tax deducted remaining",money.format(x.taxAtSourceRemaining))}</div></div>${propertyDetail}<h3>Prudent full-year reserve forecast</h3>${row("Forecast full-year liability",money.format(f.liability),"total")}${row("Payments on account",`(${money.format(x.paymentsOnAccount)})`)}${row("Projected balancing payment",money.format(b.projectedBalancing))}${row("Next first payment on account",money.format(f.firstPaymentOnAccount))}${row(`Safety buffer (${x.bufferPct.toFixed(1)}%)`,money.format(b.recommendedReserve-(b.projectedBalancing+f.firstPaymentOnAccount)))}${row("Forecast reserve needed by end of tax year",money.format(b.recommendedReserve),"total")}${row("Current reserve",money.format(b.currentReserve))}${row(differenceLabel,money.format(Math.abs(b.reserveDifference)),"total")}<p class="source-note">This is a forward-looking reserve target, not the amount currently behind. Forecast assumptions do not create or alter transactions.</p>`;}
 const renderProvisionForecastLabelsBase=renderProvisionForecast;renderProvisionForecast=function(){renderProvisionForecastLabelsBase();if(state.year!=="2026-27")return;for(const line of by("#calculationOutput")?.querySelectorAll(".tr")||[]){const label=line.firstElementChild;if(label?.textContent==="Next first payment on account")label.textContent="Future HMRC payment on account — funded through ongoing monthly payments";if(label?.textContent==="Forecast reserve needed by end of tax year")label.textContent="Prudent total reserve including future payment on account and safety buffer";}};
 function renderProvisionForecastSettings(){if(state.year!=="2026-27")return;const f=provisionForecastSettings(),propertyRows=state.properties.map(property=>{const a=f.propertyAssumptions[property.id];return`<label>${auditEscape(property.property)} monthly rent<input name="provision_property_rent_${property.id}" type="number" min="0" step="0.01" value="${num(a.monthlyRent)}"></label><label>${auditEscape(property.property)} vacancy months<input name="provision_property_vacancy_${property.id}" type="number" min="0" max="12" step="0.5" value="${num(a.vacancyMonths)}"></label>`;}).join("");by("#settingsContent")?.insertAdjacentHTML("beforeend",`<article class="card"><div class="card-head"><div><p class="eyebrow">2026/27 PROVISION MODEL</p><h2>Remaining-year assumptions</h2><p class="settings-section-note">These assumptions are stored separately and never create transactions.</p></div></div><div class="settings-grid"><label>Forecast mode<select name="provision_mode"><option value="expected" ${f.provisionMode==="expected"?"selected":""}>Expected</option><option value="prudent" ${f.provisionMode==="prudent"?"selected":""}>Prudent</option><option value="stress" ${f.provisionMode==="stress"?"selected":""}>Stress provision</option></select></label><label>Uber forecast basis<select name="provision_uber_basis"><option value="weekly" ${f.uberBasis==="weekly"?"selected":""}>Weekly earnings</option><option value="annual" ${f.uberBasis==="annual"?"selected":""}>Annual target</option></select></label>${field("Uber weekly earnings","provision_uber_weekly",f.uberWeeklyProvision)}${field("Uber annual target","provision_uber_annual",f.uberForecast)}${field("Uber annual allowable expenses","provision_uber_expenses",f.uberOtherExpenses)}${field("Pension annual income","provision_pension",f.pensionIncome||current().moduleData.pension.annual)}${propertyRows}${field("Management fee percentage","provision_management",f.managementRate)}${field("Annual insurance","provision_insurance",f.insuranceAnnual)}${field("Annual mortgage finance costs","provision_finance",f.financeCostsAnnual)}${field("Repairs contingency","provision_repairs",f.repairsContingency)}${field("Annual tax deducted at source","provision_tax_deducted",f.taxDeductedAnnual)}${field("Payments on account","provision_poa",f.paymentsOnAccount)}${field("Safety buffer percentage","provision_buffer",f.safetyBufferPct)}</div></article>`);}
@@ -493,4 +514,337 @@ function backfillCashflowManagementFees(){let propertyChanged=false;for(const x 
 function ensureFundingPaymentOptions(){const select=by('#paymentForm [name="paymentType"]');if(select&&![...select.options].some(option=>option.value==="Catch-up payment")){const option=document.createElement("option");option.value=option.textContent="Catch-up payment";select.insertBefore(option,[...select.options].find(item=>item.value==="Balancing payment")||null);}}
 const renderBase=render;render=function(){backfillCashflowManagementFees();renderBase();renderProvisionForecastSettings();renderTaxCalculationPropertyDisclosure();renderProvisionForecast();renderUberTable();renderMtd();augmentTaxPaymentSummary();renderDashboardSurface();renderCurrentAccruedTaxPosition();ensureFundingPaymentOptions();renderFinancialAuditDetailed();const reconciliation=renderHmrcReconciliation();appendHmrcReconciliationAudit(reconciliation);};
 window.TaxEngineReloadFromStorage=()=>{state=hydrateState();render();};
-render();})();
+dashboardView = "actual"; taxWorkspaceTab = "cashflow"; render();
+// Campaigns logic
+function initCampaignsState() {
+  if (!state.campaigns) state.campaigns = [];
+  if (!state.campaignTransactions) state.campaignTransactions = [];
+}
+
+function calculateCampaign(c) {
+  const txs = state.campaignTransactions.filter(t => t.campaignId === c.id).sort((a,b) => a.date.localeCompare(b.date));
+  let balance = num(c.startingBalance);
+  
+  txs.forEach(t => {
+    if (c.type === 'build_up') {
+      balance += t.direction === 'add' ? num(t.amount) : -num(t.amount);
+    } else {
+      balance += t.direction === 'add' ? -num(t.amount) : num(t.amount);
+    }
+  });
+
+  const target = num(c.target);
+  let progress = 0;
+  let remaining = 0;
+  
+  if (c.type === 'build_up') {
+    remaining = Math.max(0, target - balance);
+    progress = target > 0 ? Math.min(100, Math.max(0, (balance / target) * 100)) : 0;
+  } else {
+    remaining = Math.max(0, balance - target);
+    const start = num(c.startingBalance);
+    if (start > target) {
+      progress = Math.min(100, Math.max(0, ((start - balance) / (start - target)) * 100));
+    } else {
+      progress = balance <= target ? 100 : 0;
+    }
+  }
+
+  // Calculate monthly requirement and estimate
+  let requiredMonthly = null;
+  let estimatedCompletion = null;
+
+  if (c.targetDate && remaining > 0) {
+    const today = new Date();
+    const targetD = new Date(c.targetDate);
+    let months = (targetD.getFullYear() - today.getFullYear()) * 12 + (targetD.getMonth() - today.getMonth());
+    if (months <= 0) months = 1;
+    requiredMonthly = remaining / months;
+  }
+
+  if (txs.length > 0 && remaining > 0) {
+    const firstDate = new Date(txs[0].date);
+    const today = new Date();
+    const days = (today - firstDate) / (1000 * 60 * 60 * 24);
+    if (days > 14) {
+      const progressAmount = (c.type === 'build_up') ? (balance - num(c.startingBalance)) : (num(c.startingBalance) - balance);
+      if (progressAmount > 0) {
+        const ratePerDay = progressAmount / days;
+        const daysLeft = remaining / ratePerDay;
+        const estDate = new Date(today.getTime() + daysLeft * 24 * 60 * 60 * 1000);
+        estimatedCompletion = estDate.toISOString().slice(0, 10);
+      }
+    }
+  }
+
+  return { ...c, balance, txs, remaining, progress, requiredMonthly, estimatedCompletion };
+}
+
+function renderCampaignsList() {
+  const out = by("#campaignsListOutput");
+  if (!out) return;
+  initCampaignsState();
+  
+  if (!state.campaigns.length) {
+    out.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding: 40px; color: var(--muted); border: 1px dashed var(--line); border-radius: 10px;">No campaigns created yet. Click "Create campaign" to start tracking a financial goal.</div>`;
+    return;
+  }
+
+  const html = state.campaigns.map(c => {
+    const data = calculateCampaign(c);
+    const badges = [];
+    if (data.isPrimary) badges.push('<span class="badge primary">Primary</span>');
+    if (data.status === 'completed') badges.push('<span class="badge" style="background:#dcfce7;color:#047857;">Completed</span>');
+    else if (data.status === 'paused') badges.push('<span class="badge" style="background:#fef9c3;color:#854d0e;">Paused</span>');
+    else if (data.status === 'archived') badges.push('<span class="badge" style="background:#fee2e2;color:#991b1b;">Archived</span>');
+
+    return `
+      <div class="campaign-card" data-campaign-id="${data.id}">
+        <div class="campaign-card-head">
+          <h3>${auditEscape(data.name)}</h3>
+          <div style="display:flex;gap:4px;">${badges.join('')}</div>
+        </div>
+        <div class="campaign-metrics">
+          <div class="campaign-metric">
+            <span>Current Balance</span>
+            <strong>${money.format(data.balance)}</strong>
+          </div>
+          <div class="campaign-metric">
+            <span>Target</span>
+            <strong>${money.format(data.target)}</strong>
+          </div>
+        </div>
+        <div class="campaign-progress-bar">
+          <div class="campaign-progress-fill ${data.type.replace('_','-')}" style="width: ${data.progress}%"></div>
+        </div>
+        <div class="campaign-progress-text">
+          <span>${Math.round(data.progress)}%</span>
+          <span>${money.format(data.remaining)} left</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+  out.innerHTML = html;
+}
+
+window.renderCampaignDetail = renderCampaignDetail;
+function renderCampaignDetail(id) {
+  const out = by("#campaignDetailOutput");
+  const list = by("#campaignsListOutput");
+  const intro = by(".view[data-panel='campaigns'] .section-intro");
+  
+  if (!id) {
+    out.hidden = true;
+    list.hidden = false;
+    intro.hidden = false;
+    return;
+  }
+
+  const raw = state.campaigns.find(c => c.id === id);
+  if (!raw) { renderCampaignsList(); renderCampaignDetail(null); return; }
+  
+  const data = calculateCampaign(raw);
+  
+  out.hidden = false;
+  list.hidden = true;
+  intro.hidden = true;
+
+  // Build basic chart data (balance over time)
+  let currentBal = num(data.startingBalance);
+  const chartPoints = [{ label: 'Start', bal: currentBal }];
+  
+  // Group by month
+  const monthGroups = {};
+  data.txs.forEach(t => {
+    const m = t.date.slice(0, 7);
+    if (!monthGroups[m]) monthGroups[m] = [];
+    monthGroups[m].push(t);
+  });
+  
+  Object.keys(monthGroups).sort().forEach(m => {
+    monthGroups[m].forEach(t => {
+      if (data.type === 'build_up') {
+        currentBal += t.direction === 'add' ? num(t.amount) : -num(t.amount);
+      } else {
+        currentBal += t.direction === 'add' ? -num(t.amount) : num(t.amount);
+      }
+    });
+    const d = new Date(m + "-01");
+    chartPoints.push({ label: d.toLocaleDateString('en-GB', { month:'short', year:'2-digit' }), bal: currentBal });
+  });
+
+  const maxBal = Math.max(num(data.startingBalance), num(data.target), ...chartPoints.map(p => p.bal));
+  const minBal = Math.min(num(data.startingBalance), num(data.target), ...chartPoints.map(p => p.bal), 0);
+  const range = (maxBal - minBal) || 1;
+
+  const chartHtml = chartPoints.map(p => {
+    const pct = Math.max(2, ((p.bal - minBal) / range) * 100);
+    return `
+      <div class="campaign-chart-bar-wrap">
+        <div class="campaign-chart-bar" style="height: ${pct}%" title="${p.label}: ${money.format(p.bal)}"></div>
+        <div class="campaign-chart-label">${p.label}</div>
+      </div>
+    `;
+  }).join('');
+
+  const estHtml = data.estimatedCompletion ? new Date(data.estimatedCompletion).toLocaleDateString('en-GB', {month:'short', year:'numeric'}) : 'Need more data';
+  const reqHtml = data.requiredMonthly ? money.format(data.requiredMonthly) + '/mo' : 'N/A';
+  const targetDateHtml = data.targetDate ? new Date(data.targetDate).toLocaleDateString('en-GB', {month:'short', year:'numeric'}) : 'None';
+
+  out.innerHTML = `
+    <div class="campaign-detail-header">
+      <div class="campaign-detail-title">
+        <button class="ghost" onclick="renderCampaignDetail(null)" style="padding:0; margin-bottom:10px; font-weight:700;">&larr; Back to Campaigns</button>
+        <h2>${auditEscape(data.name)}</h2>
+        <p>${data.type === 'build_up' ? 'Build up goal' : 'Pay down goal'} ${data.isPrimary ? ' � Primary Campaign' : ''}</p>
+      </div>
+      <div class="campaign-detail-actions">
+        <button class="ghost" onclick="editCampaign('${data.id}')">Edit settings</button>
+      </div>
+    </div>
+
+    <div class="campaign-stats-grid">
+      <div class="campaign-stat-box"><span>Current Balance</span><strong>${money.format(data.balance)}</strong></div>
+      <div class="campaign-stat-box"><span>Target Amount</span><strong>${money.format(data.target)}</strong></div>
+      <div class="campaign-stat-box"><span>Remaining</span><strong>${money.format(data.remaining)}</strong></div>
+      <div class="campaign-stat-box"><span>Progress</span><strong>${Math.round(data.progress)}%</strong></div>
+      <div class="campaign-stat-box"><span>Target Date</span><strong>${targetDateHtml}</strong></div>
+      <div class="campaign-stat-box"><span>Required Rate</span><strong>${reqHtml}</strong></div>
+      <div class="campaign-stat-box"><span>Est. Completion</span><strong>${estHtml}</strong></div>
+    </div>
+
+    <div class="campaign-chart-container">
+      <p class="eyebrow" style="margin-top:0;">PROGRESS HISTORY</p>
+      <div class="campaign-chart">${chartHtml}</div>
+    </div>
+
+    <div class="campaign-ledger">
+      <div class="pane-head" style="padding: 16px 16px 0;">
+        <h3>Transaction ledger</h3>
+        <div class="cashflow-actions">
+          <button class="ghost" onclick="openCampaignTx('${data.id}', 'remove')">Remove money</button>
+          <button class="primary" onclick="openCampaignTx('${data.id}', 'add')">Add money</button>
+        </div>
+      </div>
+      <div class="tax-workspace-table spending-table" style="max-height: 400px; border:none; border-top:1px solid var(--line); border-radius:0; margin-top:16px;">
+        <div class="tax-workspace-row header" style="grid-template-columns: 100px 1fr 100px 80px;">
+          <span>Date</span><span>Note</span><span>Amount</span><span>Actions</span>
+        </div>
+        ${data.txs.length ? data.txs.map(t => `
+          <div class="tax-workspace-row" style="grid-template-columns: 100px 1fr 100px 80px;">
+            <span>${new Date(t.date).toLocaleDateString('en-GB')}</span>
+            <span>${auditEscape(t.note) || (t.direction === 'add' ? 'Added funds' : 'Removed funds')}</span>
+            <strong class="${t.direction === 'add' ? 'positive' : 'negative'}">${t.direction === 'add' ? '+' : '-'}${money.format(t.amount)}</strong>
+            <span class="cash-row-actions"><button class="ghost danger" onclick="deleteCampaignTx('${t.id}')">Delete</button></span>
+          </div>
+        `).reverse().join('') : '<div style="padding:20px; text-align:center; color:var(--muted); font-size:12px;">No transactions recorded.</div>'}
+      </div>
+    </div>
+  `;
+}
+
+// Global functions for inline HTML event handlers
+window.editCampaign = (id) => {
+  const c = state.campaigns.find(x => x.id === id);
+  if (!c) return;
+  const form = by("#campaignForm");
+  form.id.value = c.id;
+  form.name.value = c.name;
+  form.type.value = c.type;
+  form.target.value = c.target;
+  form.startingBalance.value = c.startingBalance;
+  form.targetDate.value = c.targetDate || '';
+  form.status.value = c.status;
+  form.isPrimary.checked = c.isPrimary;
+  form.note.value = c.note || '';
+  by("#campaignDialogTitle").textContent = "Edit campaign";
+  by("#campaignDialog").showModal();
+};
+
+window.openCampaignTx = (id, defaultDir) => {
+  const form = by("#campaignTransactionForm");
+  form.reset();
+  form.campaignId.value = id;
+  form.date.value = new Date().toISOString().slice(0, 10);
+  form.direction.value = defaultDir;
+  by("#campaignTransactionDialog").showModal();
+};
+
+window.deleteCampaignTx = (id) => {
+  if (!confirm("Delete this transaction?")) return;
+  state.campaignTransactions = state.campaignTransactions.filter(t => t.id !== id);
+  save();
+  const c = state.campaigns.find(x => x.id === by("#campaignTransactionForm").campaignId.value) || state.campaigns[0];
+  if(by("#campaignDetailOutput").hidden === false && by("#campaignDetailOutput").innerHTML.includes("campaign-detail-header")) {
+     // Re-render detail if open
+     const activeId = state.campaignTransactions.find(t => t.id === id)?.campaignId; // Actually we just deleted it so we can't find it.
+     renderCampaignDetail(state.campaigns.find(c => by("#campaignDetailOutput").innerHTML.includes(auditEscape(c.name)))?.id);
+  }
+};
+
+document.addEventListener("DOMContentLoaded", () => {
+  by("#createCampaignBtn")?.addEventListener("click", () => {
+    by("#campaignForm").reset();
+    by("#campaignForm").id.value = "";
+    by("#campaignDialogTitle").textContent = "Create campaign";
+    by("#campaignDialog").showModal();
+  });
+
+  by("#campaignForm")?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    initCampaignsState();
+    const form = e.target;
+    if (form.isPrimary.checked) {
+      state.campaigns.forEach(c => c.isPrimary = false);
+    }
+    const c = {
+      id: form.id.value || crypto.randomUUID(),
+      name: form.name.value,
+      type: form.type.value,
+      target: num(form.target.value),
+      startingBalance: num(form.startingBalance.value),
+      targetDate: form.targetDate.value,
+      status: form.status.value,
+      isPrimary: form.isPrimary.checked,
+      note: form.note.value,
+      createdAt: new Date().toISOString()
+    };
+    if (form.id.value) {
+      Object.assign(state.campaigns.find(x => x.id === c.id), c);
+    } else {
+      state.campaigns.push(c);
+    }
+    by("#campaignDialog").close();
+    save();
+    renderCampaignsList();
+    if(!by("#campaignDetailOutput").hidden) renderCampaignDetail(c.id);
+    render(); // Update dashboard
+  });
+
+  by("#campaignTransactionForm")?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    initCampaignsState();
+    const form = e.target;
+    const cid = form.campaignId.value;
+    state.campaignTransactions.push({
+      id: crypto.randomUUID(),
+      campaignId: cid,
+      date: form.date.value,
+      amount: num(form.amount.value),
+      direction: form.direction.value,
+      note: form.note.value,
+      createdAt: new Date().toISOString()
+    });
+    by("#campaignTransactionDialog").close();
+    save();
+    renderCampaignDetail(cid);
+    render(); // Update dashboard
+  });
+
+  by("#campaignsListOutput")?.addEventListener("click", e => {
+    const card = e.target.closest(".campaign-card");
+    if (card) renderCampaignDetail(card.dataset.campaignId);
+  });
+});
+
+})();

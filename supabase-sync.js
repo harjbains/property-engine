@@ -1,5 +1,5 @@
-(()=>{"use strict";
-const SUPABASE_URL="https://ixhxsylbdscfapmsjhlb.supabase.co";
+﻿(()=>{"use strict";
+const READ_ONLY_MODE = true; const SUPABASE_URL="https://ixhxsylbdscfapmsjhlb.supabase.co";
 const SUPABASE_KEY="sb_publishable_JBlVdOh59UhN0MNbvvibAg_So1n4Myz";
 const SESSION_KEY="tax-engine-supabase-session",SYNC_PREFIX="tax-engine-";
 const by=s=>document.querySelector(s),all=s=>[...document.querySelectorAll(s)];
@@ -40,7 +40,7 @@ async function signIn(create=false){
   renderAuthState();
   await initialCloudSync();
 }
-async function pushAll(reason="saved"){
+async function pushAll(reason="saved"){ if(READ_ONLY_MODE){ status("Read-only mode: local changes not pushed."); return; }
   const s=await ensureSession();if(!s?.access_token)return;
   const records=localRecords().map(r=>({...r,user_id:s.user.id}));
   if(!records.length)return;
@@ -52,7 +52,7 @@ async function pushAll(reason="saved"){
   lastLocalWriteAt=0;
   status(`Synced ${new Date(lastPushAt).toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})}.`);
 }
-function schedulePush(){
+function schedulePush(){ if(READ_ONLY_MODE) return;
   if(applyingRemote||!session()?.access_token)return;
   lastLocalWriteAt=Date.now();
   clearTimeout(pushTimer);
@@ -100,6 +100,7 @@ function installAutoPush(){
   Storage.prototype.setItem.__taxEngineSyncWrapped=true;
 }
 function bind(){
+  
   installAutoPush();
   by("#syncSignIn")?.addEventListener("click",()=>signIn(false).catch(e=>status(`Sign in failed: ${e.message}`)));
   by("#syncCreateAccount")?.addEventListener("click",()=>signIn(true).catch(e=>status(`Create account failed: ${e.message}`)));
