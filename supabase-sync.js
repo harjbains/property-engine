@@ -6,6 +6,15 @@ const by=s=>document.querySelector(s),all=s=>[...document.querySelectorAll(s)];
 let applyingRemote=false,pushTimer=null,lastPushAt=0,lastPullAt=0,lastLocalWriteAt=0;
 const cloudAudit={checkedAt:"",localOnly:[],cloudOnly:[],different:[],matched:0,prePull:{localOnly:0,cloudOnly:0,different:0}};
 window.TaxEngineCloudAudit=cloudAudit;
+
+function logToUI(msg) {
+  const div = document.createElement("div");
+  div.style = "position:fixed; top:10px; right:10px; background:rgba(0,0,0,0.8); color:white; padding:10px; z-index:9999; border-radius:5px; font-family:monospace; max-width:400px; word-wrap:break-word; margin-bottom:5px;";
+  div.textContent = msg;
+  document.body.appendChild(div);
+  setTimeout(() => div.remove(), 10000);
+}
+
 const nativeSetItem=Storage.prototype.setItem;
 const status=text=>{all("[data-sync-status]").forEach(x=>x.textContent=text);};
 function session(){try{return JSON.parse(localStorage.getItem(SESSION_KEY)||"null");}catch{return null;}}
@@ -58,7 +67,7 @@ function schedulePush(){ if(READ_ONLY_MODE) return;
   clearTimeout(pushTimer);
   pushTimer=setTimeout(()=>pushAll().catch(e => {
       status(`Sync failed: ${e.message}`);
-      alert(`Cloud Sync Failed! Error: ${e.message}`);
+      logToUI(`Cloud Sync Failed! Error: ${e.message}`);
     }),900);
 }
 async function pullAll({reload=true}={}){
