@@ -1,5 +1,5 @@
 ﻿(()=>{"use strict";
-const READ_ONLY_MODE = true; const SUPABASE_URL="https://ixhxsylbdscfapmsjhlb.supabase.co";
+const READ_ONLY_MODE = false; const SUPABASE_URL="https://ixhxsylbdscfapmsjhlb.supabase.co";
 const SUPABASE_KEY="sb_publishable_JBlVdOh59UhN0MNbvvibAg_So1n4Myz";
 const SESSION_KEY="tax-engine-supabase-session",SYNC_PREFIX="tax-engine-";
 const by=s=>document.querySelector(s),all=s=>[...document.querySelectorAll(s)];
