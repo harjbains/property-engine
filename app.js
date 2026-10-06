@@ -373,7 +373,7 @@ const renderTaxWorkspaceBase=renderTaxWorkspace;renderTaxWorkspace=function(){co
       ? "window.currentCampaignIndex = (window.currentCampaignIndex + 1) % " + visibleCampaigns.length + "; render();"
       : "show('campaigns'); renderCampaignDetail('" + pcd.id + "');";
       
-    campCard = '<div class="campaign-summary-card" style="border:1px solid #c084fc; background:#faf5ff; border-radius:10px; padding:14px; cursor:pointer; user-select:none; transition: background 0.2s;" onmousedown="this.style.background=\'#f3e8ff\'" onmouseup="this.style.background=\'#faf5ff\'" onmouseleave="this.style.background=\'#faf5ff\'" onclick="' + cycleFn + '"><span>Campaign ' + (window.currentCampaignIndex + 1) + ' of ' + visibleCampaigns.length + ' &mdash; ' + auditEscape(pcd.name) + '</span><strong style="color:#7e22ce;">' + money.format(pcd.balance) + '</strong><small style="display:flex; justify-content:space-between; margin-top:5px; color:#9333ea; font-size:10px; font-weight:700;"><span>Target: ' + money.format(pcd.target) + '</span><span>Prog: ' + Math.round(pcd.progress) + '%</span><span>Est: ' + estCompletion + '</span></small></div>';
+    campCard = '<div class="campaign-summary-card" style="border:1px solid #c084fc; background:#faf5ff; border-radius:10px; padding:14px; cursor:pointer; user-select:none; transition: background 0.2s;" onmousedown="this.style.background=\'#f3e8ff\'" onmouseup="this.style.background=\'#faf5ff\'" onmouseleave="this.style.background=\'#faf5ff\'" data-campaign-action="cycle"><span>Campaign ' + (window.currentCampaignIndex + 1) + ' of ' + visibleCampaigns.length + ' &mdash; ' + auditEscape(pcd.name) + '</span><strong style="color:#7e22ce;">' + money.format(pcd.balance) + '</strong><small style="display:flex; justify-content:space-between; margin-top:5px; color:#9333ea; font-size:10px; font-weight:700;"><span>Target: ' + money.format(pcd.target) + '</span><span>Prog: ' + Math.round(pcd.progress) + '%</span><span>Est: ' + estCompletion + '</span></small></div>';
   }
   return renderTaxWorkspaceBase().replace('<div class="cashflow-cards">', '<div class="cashflow-cards">' + campCard)
   .replace(`<div><span>Fixed costs still to leave</span><strong>${money.format(s.fixedUnpaid)}</strong></div>`,`${fixedProgressCard}${dueCard}`).replace(`<div><span>Planned spend left</span><strong>${money.format(s.plannedUnpaid)}</strong></div>`,"").replace(/<button class="ghost" data-cash-action="add-planned"[^>]*>Add planned expenditure<\/button>/,"").replace("Fixed-cost checklist","Fixed outgoings").replace(/<p>\d+ of \d+ items cleared - [^<]+ paid - [^<]+ still to leave<\/p>/,"").replace('<button class="ghost" data-cash-action="add-fixed"','<button class="ghost" data-cash-action="copy-previous-fixed">Copy prior costs &amp; rents</button><button class="ghost" data-cash-action="add-fixed"');};
@@ -790,7 +790,7 @@ window.deleteCampaignTx = (id) => {
     by("#campaignDialog").showModal();
   });
 
-  by("#campaignForm")?.addEventListener("submit", (e) => {
+  document.addEventListener("submit", (e) => { if (e.target.id === "campaignForm") {
     e.preventDefault();
     initCampaignsState();
     const form = e.target;
@@ -819,9 +819,9 @@ window.deleteCampaignTx = (id) => {
     renderCampaignsList();
     if(!by("#campaignDetailOutput").hidden) renderCampaignDetail(c.id);
     render(); // Update dashboard
-  });
+  }});
 
-  by("#campaignTransactionForm")?.addEventListener("submit", (e) => {
+  document.addEventListener("submit", (e) => { if (e.target.id === "campaignTransactionForm") {
     e.preventDefault();
     initCampaignsState();
     const form = e.target;
@@ -839,7 +839,7 @@ window.deleteCampaignTx = (id) => {
     save();
     renderCampaignDetail(cid);
     render(); // Update dashboard
-  });
+  }});
 
   by("#campaignsListOutput")?.addEventListener("click", e => {
     const card = e.target.closest(".campaign-card");
@@ -854,7 +854,16 @@ document.addEventListener("click", e => {
   const action = btn.dataset.campaignAction;
   const id = btn.dataset.id;
   
-  if (action === "back") {
+  if (action === "cycle") {
+    const visibleCampaigns = (state.campaigns || []).filter(c => c.status !== 'archived');
+    if (visibleCampaigns.length > 1) {
+      window.currentCampaignIndex = (window.currentCampaignIndex + 1) % visibleCampaigns.length;
+      render();
+    } else if (visibleCampaigns.length === 1) {
+      show('campaigns');
+      renderCampaignDetail(visibleCampaigns[0].id);
+    }
+  } else if (action === "back") {
     renderCampaignDetail(null);
   } else if (action === "edit") {
     if (typeof window.editCampaign === "function") window.editCampaign(id);
