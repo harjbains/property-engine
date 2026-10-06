@@ -70,7 +70,12 @@ async function pullAll({reload=true}={}){
   const beforeLocalOnly=[...localBefore.keys()].filter(k=>!cloudBefore.has(k)),beforeCloudOnly=[...cloudBefore.keys()].filter(k=>!localBefore.has(k)),beforeDifferent=[...cloudBefore.keys()].filter(k=>localBefore.has(k)&&localBefore.get(k)!==cloudBefore.get(k));cloudAudit.checkedAt=new Date().toISOString();cloudAudit.prePull={localOnly:beforeLocalOnly.length,cloudOnly:beforeCloudOnly.length,different:beforeDifferent.length};
   let changed=0;applyingRemote=true;
   try{
-    rows.forEach(r=>{const value=String(r.payload?.value??"");if(localStorage.getItem(r.record_key)!==value){nativeSetItem.call(localStorage,r.record_key,value);changed++;}});
+    rows.forEach(r=>{const value=String(r.payload?.value??"");if(localStorage.getItem(r.record_key)!==value){
+      nativeSetItem.call(localStorage,r.record_key,value);
+      changed++;
+    }
+    // Always store the updated_at so we have a reliable baseline for optimistic concurrency
+    nativeSetItem.call(localStorage, r.record_key + "_last_updated_at", r.updated_at);});
     const localAfter=new Map(localRecords().map(r=>[r.record_key,String(r.payload?.value??"")]));cloudAudit.localOnly=[...localAfter.keys()].filter(k=>!cloudBefore.has(k));cloudAudit.cloudOnly=[...cloudBefore.keys()].filter(k=>!localAfter.has(k));cloudAudit.different=[...cloudBefore.keys()].filter(k=>localAfter.has(k)&&localAfter.get(k)!==cloudBefore.get(k));cloudAudit.matched=[...cloudBefore.keys()].filter(k=>localAfter.get(k)===cloudBefore.get(k)).length;
     if(changed&&reload)window.TaxEngineReloadFromStorage?.();
   }
