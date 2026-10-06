@@ -71,7 +71,7 @@ async function pullAll({reload=true}={}){
   let changed=0;applyingRemote=true;
   try{
     rows.forEach(r=>{const value=String(r.payload?.value??"");if(localStorage.getItem(r.record_key)!==value){
-      nativeSetItem.call(localStorage,r.record_key,value);
+      nativeSetItem.call(localStorage,r.record_key,value); nativeSetItem.call(localStorage, r.record_key + "_last_updated_at", r.updated_at);
       changed++;
     }
     // Always store the updated_at so we have a reliable baseline for optimistic concurrency
