@@ -919,7 +919,7 @@ document.addEventListener("click", e => {
     const visibleCampaigns = (state.campaigns || []).filter(c => c.status !== 'archived');
     if (visibleCampaigns.length > 1) {
       window.currentCampaignIndex = (window.currentCampaignIndex + 1) % visibleCampaigns.length;
-      render();
+        renderDashboardSurface();
     } else if (visibleCampaigns.length === 1) {
       show('campaigns');
       renderCampaignDetail(visibleCampaigns[0].id);
