@@ -56,7 +56,10 @@ function schedulePush(){ if(READ_ONLY_MODE) return;
   if(applyingRemote||!session()?.access_token)return;
   lastLocalWriteAt=Date.now();
   clearTimeout(pushTimer);
-  pushTimer=setTimeout(()=>pushAll().catch(e=>status(`Sync failed: ${e.message}`)),900);
+  pushTimer=setTimeout(()=>pushAll().catch(e => {
+      status(`Sync failed: ${e.message}`);
+      alert(`Cloud Sync Failed! Error: ${e.message}`);
+    }),900);
 }
 async function pullAll({reload=true}={}){
   const s=await ensureSession();if(!s?.access_token)return 0;
