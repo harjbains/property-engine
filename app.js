@@ -694,12 +694,12 @@ function renderCampaignDetail(id) {
   out.innerHTML = `
     <div class="campaign-detail-header">
       <div class="campaign-detail-title">
-        <button class="ghost" onclick="renderCampaignDetail(null)" style="padding:0; margin-bottom:10px; font-weight:700;">&larr; Back to Campaigns</button>
+        <button class="ghost" data-campaign-action="back" style="padding:0; margin-bottom:10px; font-weight:700;">&larr; Back to Campaigns</button>
         <h2>${auditEscape(data.name)}</h2>
         <p>${data.type === 'build_up' ? 'Build up goal' : 'Pay down goal'} ${data.isPrimary ? ' � Primary Campaign' : ''}</p>
       </div>
       <div class="campaign-detail-actions">
-        <button class="ghost" onclick="editCampaign('${data.id}')">Edit settings</button>
+        <button class="ghost" data-campaign-action="edit" data-id="${data.id}">Edit settings</button>
       </div>
     </div>
 
@@ -722,8 +722,8 @@ function renderCampaignDetail(id) {
       <div class="pane-head" style="padding: 16px 16px 0;">
         <h3>Transaction ledger</h3>
         <div class="cashflow-actions">
-          <button class="ghost" onclick="openCampaignTx('${data.id}', 'remove')">Remove money</button>
-          <button class="primary" onclick="openCampaignTx('${data.id}', 'add')">Add money</button>
+          <button class="ghost" data-campaign-action="remove-tx" data-id="${data.id}">Remove money</button>
+          <button class="primary" data-campaign-action="add-tx" data-id="${data.id}">Add money</button>
         </div>
       </div>
       <div class="tax-workspace-table spending-table" style="max-height: 400px; border:none; border-top:1px solid var(--line); border-radius:0; margin-top:16px;">
@@ -735,7 +735,7 @@ function renderCampaignDetail(id) {
             <span>${new Date(t.date).toLocaleDateString('en-GB')}</span>
             <span>${auditEscape(t.note) || (t.direction === 'add' ? 'Added funds' : 'Removed funds')}</span>
             <strong class="${t.direction === 'add' ? 'positive' : 'negative'}">${t.direction === 'add' ? '+' : '-'}${money.format(t.amount)}</strong>
-            <span class="cash-row-actions"><button class="ghost danger" onclick="deleteCampaignTx('${t.id}')">Delete</button></span>
+            <span class="cash-row-actions"><button class="ghost danger" data-campaign-action="delete-tx" data-id="${t.id}">Delete</button></span>
           </div>
         `).reverse().join('') : '<div style="padding:20px; text-align:center; color:var(--muted); font-size:12px;">No transactions recorded.</div>'}
       </div>
@@ -782,7 +782,7 @@ window.deleteCampaignTx = (id) => {
   }
 };
 
-document.addEventListener("DOMContentLoaded", () => {
+// removed DOMContentLoaded
   by("#createCampaignBtn")?.addEventListener("click", () => {
     by("#campaignForm").reset();
     by("#campaignForm").id.value = "";
@@ -845,6 +845,5 @@ document.addEventListener("DOMContentLoaded", () => {
     const card = e.target.closest(".campaign-card");
     if (card) renderCampaignDetail(card.dataset.campaignId);
   });
-});
 
 })();
