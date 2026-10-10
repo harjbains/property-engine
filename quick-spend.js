@@ -1,4 +1,12 @@
 ﻿(function(){
+const SESSION_KEY="tax-engine-supabase-session";
+try {
+  if (!localStorage.getItem(SESSION_KEY)) {
+    window.location.href = "index.html";
+    return;
+  }
+} catch (e) {}
+
 const CASHFLOW_KEY_PREFIX="tax-engine-cashflow-", KEY="tax-engine-april-2026", TAX_WORKSPACE_MONTH="2026-04", DEFAULT_BANK_ACCOUNT="zempler";
 const by=s=>document.querySelector(s),num=v=>Math.max(0,Number(v)||0),uid=()=>crypto.randomUUID?crypto.randomUUID():`${Date.now()}-${Math.random().toString(16).slice(2)}`;
 const money=new Intl.NumberFormat("en-GB",{style:"currency",currency:"GBP"});
