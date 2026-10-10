@@ -2,98 +2,133 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Quick Spend</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+  <title>Mobile Cashflow</title>
   <meta name="theme-color" content="#111827">
-  <link rel="stylesheet" href="styles.css?v=90">
+  <link rel="stylesheet" href="styles.css?v=91">
+  <style>
+    body.mobile-cashflow { background: #f3f4f6; color: #111827; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
+    .mobile-header { background: #111827; color: white; padding: 1rem; position: sticky; top: 0; z-index: 10; display: flex; justify-content: space-between; align-items: center; }
+    .mobile-header h1 { margin: 0; font-size: 1.1rem; font-weight: 600; }
+    .mobile-header a { color: #9ca3af; text-decoration: none; font-size: 0.85rem; }
+    .mobile-month-bar { background: #1f2937; padding: 0.75rem 1rem; display: flex; gap: 0.5rem; }
+    .mobile-month-bar input[type="month"] { flex: 1; padding: 0.5rem; border-radius: 0.375rem; border: none; font-size: 1rem; background: #374151; color: white; }
+    .mobile-balances { display: flex; gap: 0.5rem; padding: 1rem; overflow-x: auto; }
+    .mobile-balance-card { flex: 1; min-width: 120px; background: white; padding: 1rem; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .mobile-balance-card p { margin: 0; font-size: 0.75rem; color: #6b7280; text-transform: uppercase; font-weight: 600; }
+    .mobile-balance-card h3 { margin: 0.25rem 0 0 0; font-size: 1.25rem; color: #111827; }
+    
+    .mobile-section { padding: 0 1rem 1.5rem 1rem; }
+    .mobile-section h2 { font-size: 0.875rem; color: #4b5563; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 0.75rem 0; font-weight: 600; }
+    
+    .mobile-list { display: flex; flex-direction: column; gap: 0.5rem; }
+    .mobile-item { background: white; padding: 1rem; border-radius: 0.5rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; }
+    .mobile-item-info { flex: 1; min-width: 0; }
+    .mobile-item-title { font-weight: 500; font-size: 1rem; margin-bottom: 0.25rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .mobile-item-meta { font-size: 0.8rem; color: #6b7280; display: flex; gap: 0.5rem; }
+    .mobile-item-amount { font-weight: 600; font-size: 1.1rem; text-align: right; }
+    .mobile-item-amount.income { color: #059669; }
+    
+    .mobile-action-btn { background: #4f46e5; color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 500; font-size: 0.875rem; cursor: pointer; }
+    .mobile-action-btn.done { background: #e5e7eb; color: #6b7280; }
+    .mobile-action-btn:active { opacity: 0.8; }
+
+    .mobile-add-spend { background: white; padding: 1rem; border-radius: 0.5rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+    .mobile-form-group { margin-bottom: 1rem; }
+    .mobile-form-group label { display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.25rem; }
+    .mobile-form-group input, .mobile-form-group select { width: 100%; box-sizing: border-box; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 1rem; background: #fff; }
+    .mobile-submit { width: 100%; background: #111827; color: white; padding: 0.875rem; border: none; border-radius: 0.375rem; font-size: 1rem; font-weight: 600; cursor: pointer; }
+    .mobile-submit:active { background: #374151; }
+    
+    .mobile-badge { display: inline-block; padding: 0.1rem 0.4rem; border-radius: 1rem; font-size: 0.7rem; font-weight: 600; background: #f3f4f6; color: #4b5563; }
+    .mobile-badge.zempler { background: #e0e7ff; color: #3730a3; }
+    .mobile-badge.lloyds { background: #dcfce7; color: #166534; }
+  </style>
 </head>
-<body class="quick-body">
-  <main class="quick-shell">
-    <header class="quick-top">
-      <div>
-        <p class="eyebrow">CASHFLOW CAPTURE</p>
-        <h1>Quick spend</h1>
-      </div>
-      <div class="quick-top-links"><a href="index.html">Main app</a></div>
-    </header>
+<body class="mobile-cashflow">
+  <header class="mobile-header">
+    <h1>Mobile Cashflow</h1>
+    <a href="index.html">Desktop App &rarr;</a>
+  </header>
+  
+  <div class="mobile-month-bar">
+    <input type="month" id="mobileMonth">
+  </div>
 
-    <section class="quick-card">
-      <p class="eyebrow">SUPABASE SYNC</p>
-      <div class="quick-sync" data-sync-signed-out>
-        <input id="syncEmail" type="email" autocomplete="email" placeholder="Email">
-        <input id="syncPassword" type="password" autocomplete="current-password" placeholder="Password">
-        <button id="syncSignIn" type="button">Sign in</button>
-        <button id="syncCreateAccount" type="button">Create</button>
-      </div>
-      <div class="quick-sync-actions" data-sync-signed-in hidden>
-        <button type="button" data-sync-signout>Sign out</button>
-      </div>
-      <div class="quick-status" data-sync-status>Sign in once to enable automatic sync.</div>
-    </section>
+  <div class="mobile-balances">
+    <div class="mobile-balance-card">
+      <p>Zempler</p>
+      <h3 id="balZempler">£0.00</h3>
+    </div>
+    <div class="mobile-balance-card">
+      <p>Lloyds</p>
+      <h3 id="balLloyds">£0.00</h3>
+    </div>
+  </div>
 
-    <section class="quick-card">
-      <form class="quick-form" id="quickSpendForm">
-        <div class="quick-two">
-          <label>Month
-            <input id="quickMonth" name="month" type="month" required>
-          </label>
-          <label>Date
-            <input id="quickDate" name="date" type="date" required>
-          </label>
+  <section class="mobile-section">
+    <h2>Pending Checklist</h2>
+    <div class="mobile-list" id="mobileChecklist">
+      <!-- Injected -->
+    </div>
+  </section>
+
+  <section class="mobile-section">
+    <h2>Record Expenditure</h2>
+    <form class="mobile-add-spend" id="mobileSpendForm">
+      <div class="mobile-form-group">
+        <label>Description</label>
+        <input type="text" name="description" required placeholder="What did you buy?">
+      </div>
+      <div style="display: flex; gap: 0.75rem;">
+        <div class="mobile-form-group" style="flex: 1;">
+          <label>Amount (£)</label>
+          <input type="number" name="amount" step="0.01" min="0" required placeholder="0.00">
         </div>
-        <label>What was it?
-          <input name="description" autocomplete="off" placeholder="Fuel, parking, supplies..." required>
-        </label>
-        <div class="quick-two">
-          <label>Amount
-            <input name="amount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00" required>
-          </label>
-          <label>Status
-            <select name="status">
-              <option>Paid</option>
-              <option>Part-paid</option>
-              <option>Unplanned</option>
-              <option>Planned</option>
-            </select>
-          </label>
+        <div class="mobile-form-group" style="flex: 1;">
+          <label>Date</label>
+          <input type="date" name="date" id="spendDay" required>
         </div>
-        <div class="quick-two">
-          <label>Category
-            <select name="category">
-              <option>Fuel</option>
-              <option>Parking</option>
-              <option>Vehicle</option>
-              <option>Property</option>
-              <option>Legal</option>
-              <option>Living</option>
-              <option>Other</option>
-            </select>
-          </label>
-          <label>Account
-            <select name="account">
-              <option value="zempler">Zempler</option>
-              <option value="lloyds">Lloyds</option>
-            </select>
-          </label>
-        </div>
-        <label>Property
-          <select name="propertyId" id="quickProperty">
-            <option value="">No property link</option>
+      </div>
+      <div style="display: flex; gap: 0.75rem;">
+        <div class="mobile-form-group" style="flex: 1;">
+          <label>Category</label>
+          <select name="category">
+            <option>Fuel</option>
+            <option>Parking</option>
+            <option>Vehicle</option>
+            <option>Property</option>
+            <option>Legal</option>
+            <option>Living</option>
+            <option>Other</option>
           </select>
-        </label>
-        <label>Notes
-          <textarea name="notes" placeholder="Optional detail"></textarea>
-        </label>
-        <button class="quick-save" type="submit">Add spending</button>
-        <div class="quick-status" id="quickStatus" role="status"></div>
-      </form>
-    </section>
+        </div>
+        <div class="mobile-form-group" style="flex: 1;">
+          <label>Account</label>
+          <select name="account">
+            <option value="zempler">Zempler</option>
+            <option value="lloyds">Lloyds</option>
+          </select>
+        </div>
+      </div>
+      <div class="mobile-form-group">
+        <label>Property (optional)</label>
+        <select name="propertyId" id="spendProperty">
+          <option value="">None</option>
+        </select>
+      </div>
+      <button type="submit" class="mobile-submit">Add Expenditure</button>
+    </form>
+  </section>
 
-    <section class="quick-card">
-      <p class="eyebrow">LAST EXPENSES</p>
-      <div class="quick-list" id="quickRecent"></div>
-    </section>
-  </main>
-  <script src="quick-spend.js?v=5"></script><script src="supabase-sync.js?v=4"></script>
+  <section class="mobile-section">
+    <h2>Recent Activity</h2>
+    <div class="mobile-list" id="mobileRecent">
+      <!-- Injected -->
+    </div>
+  </section>
+
+  <script src="quick-spend.js?v=91"></script>
+  <script src="supabase-sync.js?v=5"></script>
 </body>
 </html>
