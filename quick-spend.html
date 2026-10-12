@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -13,36 +13,60 @@
     .mobile-header a { color: #9ca3af; text-decoration: none; font-size: 0.85rem; }
     .mobile-month-bar { background: #1f2937; padding: 0.75rem 1rem; display: flex; gap: 0.5rem; }
     .mobile-month-bar input[type="month"] { flex: 1; padding: 0.5rem; border-radius: 0.375rem; border: none; font-size: 1rem; background: #374151; color: white; }
-    .mobile-balances { display: flex; gap: 0.5rem; padding: 1rem; overflow-x: auto; }
-    .mobile-balance-card { flex: 1; min-width: 120px; background: white; padding: 1rem; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .mobile-balance-card p { margin: 0; font-size: 0.75rem; color: #6b7280; text-transform: uppercase; font-weight: 600; }
-    .mobile-balance-card h3 { margin: 0.25rem 0 0 0; font-size: 1.25rem; color: #111827; }
     
-    .mobile-section { padding: 0 1rem 1.5rem 1rem; }
-    .mobile-section h2 { font-size: 0.875rem; color: #4b5563; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 0.75rem 0; font-weight: 600; }
+    .mobile-balances { display: flex; gap: 0.5rem; padding: 0.75rem 1rem 0.25rem 1rem; overflow-x: auto; }
+    .mobile-balance-card { flex: 1; min-width: 130px; background: white; padding: 0.85rem 1rem; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .mobile-balance-card p { margin: 0; font-size: 0.72rem; color: #6b7280; text-transform: uppercase; font-weight: 700; letter-spacing: 0.03em; }
+    .mobile-balance-card h3 { margin: 0.2rem 0 0 0; font-size: 1.25rem; color: #111827; font-weight: 700; }
+    .mobile-balance-card .card-sub { font-size: 0.72rem; color: #9ca3af; margin-top: 0.2rem; display: block; font-weight: 500; }
+    
+    .card-expense { border-left: 3.5px solid #ef4444; }
+    .card-expense h3 { color: #b91c1c; }
+    .card-income { border-left: 3.5px solid #10b981; }
+    .card-income h3 { color: #047857; }
+    .card-zempler { border-left: 3.5px solid #4f46e5; }
+    .card-lloyds { border-left: 3.5px solid #0284c7; }
+    
+    .mobile-section { padding: 0.75rem 1rem 1.5rem 1rem; }
+    .section-head-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
+    .section-head-bar h2 { font-size: 0.875rem; color: #4b5563; text-transform: uppercase; letter-spacing: 0.05em; margin: 0; font-weight: 700; }
+    
+    .filter-pills { display: inline-flex; background: #e5e7eb; padding: 2px; border-radius: 0.375rem; gap: 2px; }
+    .filter-pill { border: none; background: transparent; font-size: 0.75rem; font-weight: 600; padding: 0.3rem 0.6rem; border-radius: 0.25rem; color: #4b5563; cursor: pointer; }
+    .filter-pill.active { background: white; color: #111827; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+    
+    .group-container { margin-bottom: 1rem; }
+    .group-header { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0.25rem; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+    .group-header.income-head { color: #059669; }
+    .group-header.expense-head { color: #dc2626; }
     
     .mobile-list { display: flex; flex-direction: column; gap: 0.5rem; }
-    .mobile-item { background: white; padding: 1rem; border-radius: 0.5rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; }
+    .mobile-item { background: white; padding: 0.85rem 1rem; border-radius: 0.5rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; }
     .mobile-item-info { flex: 1; min-width: 0; }
-    .mobile-item-title { font-weight: 500; font-size: 1rem; margin-bottom: 0.25rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .mobile-item-meta { font-size: 0.8rem; color: #6b7280; display: flex; gap: 0.5rem; }
-    .mobile-item-amount { font-weight: 600; font-size: 1.1rem; text-align: right; }
+    .mobile-item-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #111827; }
+    .mobile-item-meta { font-size: 0.78rem; color: #6b7280; display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+    .mobile-item-amount { font-weight: 700; font-size: 1.05rem; text-align: right; white-space: nowrap; }
     .mobile-item-amount.income { color: #059669; }
+    .mobile-item-amount.expense { color: #374151; }
     
-    .mobile-action-btn { background: #4f46e5; color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 500; font-size: 0.875rem; cursor: pointer; }
-    .mobile-action-btn.done { background: #e5e7eb; color: #6b7280; }
-    .mobile-action-btn:active { opacity: 0.8; }
+    .mobile-action-btn { border: none; padding: 0.45rem 0.85rem; border-radius: 0.375rem; font-weight: 600; font-size: 0.825rem; cursor: pointer; white-space: nowrap; }
+    .mobile-action-btn.btn-pay { background: #111827; color: white; }
+    .mobile-action-btn.btn-pay:active { background: #374151; }
+    .mobile-action-btn.btn-receive { background: #059669; color: white; }
+    .mobile-action-btn.btn-receive:active { background: #047857; }
+    .mobile-action-btn:active { transform: scale(0.97); }
 
     .mobile-add-spend { background: white; padding: 1rem; border-radius: 0.5rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-    .mobile-form-group { margin-bottom: 1rem; }
-    .mobile-form-group label { display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.25rem; }
-    .mobile-form-group input, .mobile-form-group select { width: 100%; box-sizing: border-box; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 1rem; background: #fff; }
-    .mobile-submit { width: 100%; background: #111827; color: white; padding: 0.875rem; border: none; border-radius: 0.375rem; font-size: 1rem; font-weight: 600; cursor: pointer; }
+    .mobile-form-group { margin-bottom: 0.85rem; }
+    .mobile-form-group label { display: block; font-size: 0.8rem; font-weight: 600; color: #4b5563; margin-bottom: 0.25rem; }
+    .mobile-form-group input, .mobile-form-group select { width: 100%; box-sizing: border-box; padding: 0.65rem 0.75rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.95rem; background: #fff; }
+    .mobile-submit { width: 100%; background: #111827; color: white; padding: 0.8rem; border: none; border-radius: 0.375rem; font-size: 0.95rem; font-weight: 600; cursor: pointer; }
     .mobile-submit:active { background: #374151; }
     
-    .mobile-badge { display: inline-block; padding: 0.1rem 0.4rem; border-radius: 1rem; font-size: 0.7rem; font-weight: 600; background: #f3f4f6; color: #4b5563; }
+    .mobile-badge { display: inline-block; padding: 0.1rem 0.4rem; border-radius: 0.25rem; font-size: 0.7rem; font-weight: 600; background: #f3f4f6; color: #4b5563; }
     .mobile-badge.zempler { background: #e0e7ff; color: #3730a3; }
-    .mobile-badge.lloyds { background: #dcfce7; color: #166534; }
+    .mobile-badge.lloyds { background: #e0f2fe; color: #0369a1; }
+    .date-chip { font-weight: 600; color: #4b5563; }
   </style>
 </head>
 <body class="mobile-cashflow">
@@ -55,46 +79,94 @@
     <input type="month" id="mobileMonth">
   </div>
 
-    <section class="mobile-section" style="padding-top: 1rem;">
-    <div style="background: white; padding: 1rem; border-radius: 0.5rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-        <span style="font-size: 0.75rem; font-weight: 700; color: #6b7280; text-transform: uppercase;">Cloud Sync</span>
-        <span style="font-size: 0.8rem; color: #4b5563;" data-sync-status>Not signed in</span>
+  <section class="mobile-section" style="padding-top: 0.75rem; padding-bottom: 0;">
+    <div style="background: white; padding: 0.75rem 1rem; border-radius: 0.5rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+        <span style="font-size: 0.72rem; font-weight: 700; color: #6b7280; text-transform: uppercase;">Cloud Sync</span>
+        <span style="font-size: 0.75rem; color: #4b5563;" data-sync-status>Not signed in</span>
       </div>
-      <div class="quick-sync" data-sync-signed-out style="display: flex; flex-direction: column; gap: 0.5rem;">
-        <input id="syncEmail" type="email" placeholder="Email" style="width: 100%; box-sizing: border-box; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem;">
-        <input id="syncPassword" type="password" placeholder="Password" style="width: 100%; box-sizing: border-box; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem;">
+      <div class="quick-sync" data-sync-signed-out style="display: flex; flex-direction: column; gap: 0.4rem;">
+        <input id="syncEmail" type="email" placeholder="Email" style="width: 100%; box-sizing: border-box; padding: 0.45rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.85rem;">
+        <input id="syncPassword" type="password" placeholder="Password" style="width: 100%; box-sizing: border-box; padding: 0.45rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.85rem;">
         <div style="display: flex; gap: 0.5rem;">
-          <button id="syncSignIn" type="button" style="flex: 1; padding: 0.5rem; background: #111827; color: white; border: none; border-radius: 0.375rem; font-weight: 600;">Sign in</button>
-          <button id="syncCreateAccount" type="button" style="flex: 1; padding: 0.5rem; background: #e5e7eb; color: #374151; border: none; border-radius: 0.375rem; font-weight: 600;">Create</button>
+          <button id="syncSignIn" type="button" style="flex: 1; padding: 0.45rem; background: #111827; color: white; border: none; border-radius: 0.375rem; font-weight: 600; font-size: 0.85rem;">Sign in</button>
+          <button id="syncCreateAccount" type="button" style="flex: 1; padding: 0.45rem; background: #e5e7eb; color: #374151; border: none; border-radius: 0.375rem; font-weight: 600; font-size: 0.85rem;">Create</button>
         </div>
       </div>
       <div class="quick-sync-actions" data-sync-signed-in hidden style="display: flex; justify-content: space-between; align-items: center;">
-        <span style="font-size: 0.85rem; color: #059669; font-weight: 600;">Connected to Cloud</span>
-        <button type="button" data-sync-signout style="padding: 0.4rem 0.75rem; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.8rem;">Sign out</button>
+        <span style="font-size: 0.825rem; color: #059669; font-weight: 600;">✓ Connected to Cloud</span>
+        <button type="button" data-sync-signout style="padding: 0.3rem 0.6rem; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.75rem;">Sign out</button>
       </div>
     </div>
   </section>
+
+  <!-- Bank Account Summaries -->
   <div class="mobile-balances">
-    <div class="mobile-balance-card">
+    <div class="mobile-balance-card card-zempler">
       <p>Zempler</p>
-      <h3 id="balZempler">Â£0.00</h3>
+      <h3 id="balZempler">£0.00</h3>
+      <span class="card-sub">Current balance</span>
     </div>
-    <div class="mobile-balance-card">
+    <div class="mobile-balance-card card-lloyds">
       <p>Lloyds</p>
-      <h3 id="balLloyds">Â£0.00</h3>
+      <h3 id="balLloyds">£0.00</h3>
+      <span class="card-sub">Current balance</span>
     </div>
   </div>
 
+  <!-- Pending Payment Summaries -->
+  <div class="mobile-balances" style="padding-top: 0.25rem;">
+    <div class="mobile-balance-card card-expense">
+      <p>Pending Expenses</p>
+      <h3 id="totalPendingExpenses">£0.00</h3>
+      <span class="card-sub" id="countPendingExpenses">0 items pending</span>
+    </div>
+    <div class="mobile-balance-card card-income">
+      <p>Pending Income</p>
+      <h3 id="totalPendingIncome">£0.00</h3>
+      <span class="card-sub" id="countPendingIncome">0 items pending</span>
+    </div>
+  </div>
+
+  <!-- Pending Checklist / Transactions -->
   <section class="mobile-section">
-    <h2>Pending Checklist</h2>
-    <div class="mobile-list" id="mobileChecklist">
-      <!-- Injected -->
+    <div class="section-head-bar">
+      <h2>Pending Transactions</h2>
+      <div class="filter-pills">
+        <button type="button" class="filter-pill active" data-type-filter="all">All</button>
+        <button type="button" class="filter-pill" data-type-filter="income">Income</button>
+        <button type="button" class="filter-pill" data-type-filter="expense">Expenses</button>
+      </div>
+    </div>
+
+    <!-- Pending Income Container -->
+    <div class="group-container" id="containerPendingIncome">
+      <div class="group-header income-head">
+        <span>Income & Rents Expected</span>
+        <span id="subtotalPendingIncome">£0.00</span>
+      </div>
+      <div class="mobile-list" id="listPendingIncome">
+        <!-- Injected -->
+      </div>
+    </div>
+
+    <!-- Pending Expenses Container -->
+    <div class="group-container" id="containerPendingExpenses">
+      <div class="group-header expense-head">
+        <span>Expenses & Outgoings Due</span>
+        <span id="subtotalPendingExpenses">£0.00</span>
+      </div>
+      <div class="mobile-list" id="listPendingExpenses">
+        <!-- Injected -->
+      </div>
     </div>
   </section>
 
+  <!-- Add Spend Form -->
   <section class="mobile-section">
-    <h2>Record Expenditure</h2>
+    <div class="section-head-bar">
+      <h2>Record Expenditure</h2>
+    </div>
     <form class="mobile-add-spend" id="mobileSpendForm">
       <div class="mobile-form-group">
         <label>Description</label>
@@ -102,7 +174,7 @@
       </div>
       <div style="display: flex; gap: 0.75rem;">
         <div class="mobile-form-group" style="flex: 1;">
-          <label>Amount (Â£)</label>
+          <label>Amount (£)</label>
           <input type="number" name="amount" step="0.01" min="0" required placeholder="0.00">
         </div>
         <div class="mobile-form-group" style="flex: 1;">
@@ -141,15 +213,17 @@
     </form>
   </section>
 
+  <!-- Recent Activity -->
   <section class="mobile-section">
-    <h2>Recent Activity</h2>
+    <div class="section-head-bar">
+      <h2>Recent Activity (Paid / Received)</h2>
+    </div>
     <div class="mobile-list" id="mobileRecent">
       <!-- Injected -->
     </div>
   </section>
 
-  <script src="quick-spend.js?v=91"></script>
-  <script src="supabase-sync.js?v=5"></script>
+  <script src="quick-spend.js?v=92"></script>
+  <script src="supabase-sync.js?v=23"></script>
 </body>
 </html>
-
