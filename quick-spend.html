@@ -71,7 +71,13 @@
 </head>
 <body class="mobile-cashflow">
   <header class="mobile-header">
-    <h1>Mobile Cashflow</h1>
+    <div style="display: flex; align-items: center; gap: 0.5rem;">
+      <h1>Mobile Cashflow</h1>
+      <button id="syncStatusBadge" type="button" class="sync-badge" title="Tap to toggle sync details" style="display: none; align-items: center; gap: 0.35rem; border: none; background: #064e3b; color: #a7f3d0; font-size: 0.72rem; font-weight: 700; padding: 0.2rem 0.55rem; border-radius: 999px; cursor: pointer;">
+        <span class="sync-dot" style="width: 6px; height: 6px; border-radius: 50%; background: #34d399;"></span>
+        <span id="syncBadgeText">Synced</span>
+      </button>
+    </div>
     <a href="index.html">Desktop App &rarr;</a>
   </header>
   
@@ -79,10 +85,10 @@
     <input type="month" id="mobileMonth">
   </div>
 
-  <section class="mobile-section" style="padding-top: 0.75rem; padding-bottom: 0;">
-    <div style="background: white; padding: 0.75rem 1rem; border-radius: 0.5rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+  <section class="mobile-section" id="cloudSyncSection" data-sync-section style="padding-top: 0.75rem; padding-bottom: 0;">
+    <div style="background: white; padding: 0.75rem 1rem; border-radius: 0.5rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05); border: 1px solid #fed7aa;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
-        <span style="font-size: 0.72rem; font-weight: 700; color: #6b7280; text-transform: uppercase;">Cloud Sync</span>
+        <span style="font-size: 0.72rem; font-weight: 700; color: #9a3412; text-transform: uppercase;">Cloud Sync</span>
         <span style="font-size: 0.75rem; color: #4b5563;" data-sync-status>Not signed in</span>
       </div>
       <div class="quick-sync" data-sync-signed-out style="display: flex; flex-direction: column; gap: 0.4rem;">
@@ -213,17 +219,24 @@
     </form>
   </section>
 
-  <!-- Recent Activity -->
+  <!-- Past / Completed Transactions -->
   <section class="mobile-section">
     <div class="section-head-bar">
-      <h2>Recent Activity (Paid / Received)</h2>
+      <div>
+        <h2 id="pastTransactionsTitle">Completed Transactions</h2>
+        <span id="pastTransactionsSub" style="font-size: 0.72rem; color: #6b7280; font-weight: 500;">0 items</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <span id="pastTransactionsTotal" style="font-size: 0.85rem; font-weight: 700; color: #111827;">£0.00</span>
+        <button type="button" id="btnSortPast" class="filter-pill" style="border: 1px solid #d1d5db; background: white;" title="Toggle sort order">Date ↓</button>
+      </div>
     </div>
     <div class="mobile-list" id="mobileRecent">
       <!-- Injected -->
     </div>
   </section>
 
-  <script src="quick-spend.js?v=92"></script>
-  <script src="supabase-sync.js?v=23"></script>
+  <script src="quick-spend.js?v=93"></script>
+  <script src="supabase-sync.js?v=24"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-﻿(()=>{"use strict";
+(()=>{"use strict";
 const READ_ONLY_MODE = false; const SUPABASE_URL="https://ixhxsylbdscfapmsjhlb.supabase.co";
 const SUPABASE_KEY="sb_publishable_JBlVdOh59UhN0MNbvvibAg_So1n4Myz";
 const SESSION_KEY="tax-engine-supabase-session",SYNC_PREFIX="tax-engine-";
@@ -105,6 +105,22 @@ function renderAuthState(){
   const s=session(),signed=!!s?.access_token;
   all("[data-sync-signed-in]").forEach(x=>x.hidden=!signed);
   all("[data-sync-signed-out]").forEach(x=>x.hidden=signed);
+  all("[data-sync-section]").forEach(x=>{ x.hidden=signed; });
+  const badge=by("#syncStatusBadge"), badgeText=by("#syncBadgeText"), badgeDot=by(".sync-dot");
+  if(badge){
+    badge.style.display="inline-flex";
+    if(signed){
+      badge.style.background="#064e3b";
+      badge.style.color="#a7f3d0";
+      if(badgeDot)badgeDot.style.background="#34d399";
+      if(badgeText)badgeText.textContent="Synced";
+    }else{
+      badge.style.background="#78350f";
+      badge.style.color="#fde68a";
+      if(badgeDot)badgeDot.style.background="#f59e0b";
+      if(badgeText)badgeText.textContent="Not Synced";
+    }
+  }
   if(signed)status(`Auto sync on as ${s.user?.email||"user"}.`);
 }
 function installAutoPush(){
@@ -117,11 +133,13 @@ function installAutoPush(){
   Storage.prototype.setItem.__taxEngineSyncWrapped=true;
 }
 function bind(){
-  
   installAutoPush();
   by("#syncSignIn")?.addEventListener("click",()=>signIn(false).catch(e=>status(`Sign in failed: ${e.message}`)));
   by("#syncCreateAccount")?.addEventListener("click",()=>signIn(true).catch(e=>status(`Create account failed: ${e.message}`)));
   all("[data-sync-signout]").forEach(b=>b.addEventListener("click",signOut));
+  by("#syncStatusBadge")?.addEventListener("click",()=>{
+    all("[data-sync-section]").forEach(x=>x.hidden=!x.hidden);
+  });
   renderAuthState();
   if(session()?.access_token)initialCloudSync().catch(e=>status(`Sync failed: ${e.message}`));
   document.addEventListener("visibilitychange",()=>{if(!document.hidden&&session()?.access_token&&Date.now()-lastPullAt>5000)pullAll({reload:true}).catch(e=>status(`Sync failed: ${e.message}`));});

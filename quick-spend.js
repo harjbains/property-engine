@@ -65,6 +65,18 @@ function isPendingStatus(status) {
 
 let currentMonth = monthIso();
 let activeTypeFilter = "all";
+let pastSortOrder = "desc";
+
+function completedDateSort(a, b) {
+  const dayA = extractDayNumber(a);
+  const dayB = extractDayNumber(b);
+  if (dayA !== dayB) {
+    return pastSortOrder === "desc" ? dayB - dayA : dayA - dayB;
+  }
+  return pastSortOrder === "desc"
+    ? String(b.due || b.date || "").localeCompare(String(a.due || a.date || "")) || String(b.createdAt || b.id || "").localeCompare(String(a.createdAt || a.id || ""))
+    : String(a.due || a.date || "").localeCompare(String(b.due || b.date || "")) || String(a.createdAt || a.id || "").localeCompare(String(b.createdAt || b.id || ""));
+}
 
 function renderItem(i, isPending) {
   const isIncome = i._type === 'income';
@@ -158,12 +170,24 @@ function render(){
     ? pendingCosts.map(i => renderItem(i, true)).join("")
     : `<div style="padding: 0.85rem; color: #9ca3af; font-size: 0.825rem; text-align: center; background: white; border-radius: 0.5rem;">No pending expenses for this month.</div>`;
 
-  // Recent Activity (Sorted latest first)
+  // Completed Transactions (Sorted by date, showing ALL items)
   const allItems = [...allCosts, ...allIncome];
-  const recent = allItems.filter(i => !isPendingStatus(i.status)).reverse().slice(0, 15);
-  by("#mobileRecent").innerHTML = recent.length
-    ? recent.map(i => renderItem(i, false)).join("")
-    : `<div style="padding: 0.85rem; color: #9ca3af; font-size: 0.825rem; text-align: center; background: white; border-radius: 0.5rem;">No completed items yet.</div>`;
+  const completed = allItems.filter(i => !isPendingStatus(i.status)).sort(completedDateSort);
+
+  const totalCompletedCost = completed.filter(i => i._type === 'cost').reduce((sum, i) => sum + num(i.actual ?? i.expected ?? i.payment ?? i.planned), 0);
+  const totalCompletedIncome = completed.filter(i => i._type === 'income').reduce((sum, i) => sum + num(i.actual ?? i.expected), 0);
+
+  const pastSub = by("#pastTransactionsSub");
+  if (pastSub) pastSub.textContent = `${completed.length} item${completed.length === 1 ? '' : 's'} (${money.format(totalCompletedIncome)} in, ${money.format(totalCompletedCost)} out)`;
+  const pastTotal = by("#pastTransactionsTotal");
+  if (pastTotal) {
+    pastTotal.textContent = money.format(totalCompletedIncome - totalCompletedCost);
+    pastTotal.style.color = (totalCompletedIncome - totalCompletedCost) >= 0 ? "#059669" : "#374151";
+  }
+
+  by("#mobileRecent").innerHTML = completed.length
+    ? completed.map(i => renderItem(i, false)).join("")
+    : `<div style="padding: 0.85rem; color: #9ca3af; font-size: 0.825rem; text-align: center; background: white; border-radius: 0.5rem;">No completed items yet for this month.</div>`;
 }
 
 window.checkOff = function(id, type) {
@@ -216,6 +240,12 @@ function init(){
       activeTypeFilter = e.target.dataset.typeFilter;
       render();
     });
+  });
+
+  by("#btnSortPast")?.addEventListener("click", e => {
+    pastSortOrder = pastSortOrder === "desc" ? "asc" : "desc";
+    e.target.textContent = pastSortOrder === "desc" ? "Date ↓" : "Date ↑";
+    render();
   });
 
   by("#mobileSpendForm").addEventListener("submit", event => {
