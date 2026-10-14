@@ -51,76 +51,22 @@ function getPrimaryCampaign(){
   return camps.find(c=>c.isPrimary)||camps[0]||null;
 }
 
-function estimateReserve1to7(x){
-  const custom=localStorage.getItem("quick-spend-custom-reserve");
-  if(custom!==null&&custom.trim()!==""&&!isNaN(Number(custom))){
-    return Math.max(0,Number(custom));
+function getSafetyBuffer(){
+  const direct=localStorage.getItem("tax-engine-safety-buffer");
+  if(direct!==null&&direct.trim()!==""&&!isNaN(Number(direct))){
+    return Math.max(0,Number(direct));
   }
-
-  // 1. First 7 days direct debits & regular payments
-  let debits1to7=(x.fixed||[]).filter(i=>{
-    const d=extractDayNumber(i);
-    return d>=1&&d<=7;
-  }).reduce((sum,i)=>sum+num(i.expected??i.payment??i.actual),0);
-
-  // If active month fixed costs are not populated on mobile, scan prior months in localStorage
-  if(debits1to7<1500){
-    try{
-      const keys=Object.keys(localStorage).filter(k=>k.startsWith(CASHFLOW_KEY_PREFIX));
-      keys.sort().reverse();
-      for(const k of keys){
-        const saved=JSON.parse(localStorage.getItem(k)||"null");
-        if(saved&&Array.isArray(saved.fixed)&&saved.fixed.length){
-          const s=saved.fixed.filter(i=>{
-            const d=extractDayNumber(i);
-            return d>=1&&d<=7;
-          }).reduce((acc,i)=>acc+num(i.expected??i.payment??i.actual),0);
-          if(s>=1500){
-            debits1to7=s;
-            break;
-          }
-        }
-      }
-    }catch{}
-  }
-  if(debits1to7<1500){
-    debits1to7=2991.55; // Standard 17 recurring direct debits baseline in days 1-7
-  }
-
-  // 2. First 7 days regular income: Rooms, 35 Leslie Road, 5 Ranelagh Road, 5a Ranelagh Road, Uber
-  let rooms=0, leslie=0, ranelagh5=0, ranelagh5a=0, uber=0;
-  const activeIncome=(x.income||[]).filter(i=>{
-    const d=extractDayNumber(i);
-    return d>=1&&d<=7;
-  });
-  for(const i of activeIncome){
-    const txt=`${i.description||""} ${i.notes||""} ${i.category||""}`.toLowerCase();
-    const val=num(i.expected??i.actual);
-    if(/metro|room/.test(txt)) rooms=Math.max(rooms,val);
-    else if(/leslie/.test(txt)) leslie=Math.max(leslie,val);
-    else if(/5a\s*ranelagh/.test(txt)) ranelagh5a=Math.max(ranelagh5a,val);
-    else if(/5\s*ranelagh|sava/.test(txt)) ranelagh5=Math.max(ranelagh5,val);
-    else if(/uber/.test(txt)) uber=Math.max(uber,val);
-  }
-
-  // Regular recurring amounts baseline if not in active month
-  if(!rooms) rooms=70.83;
-  if(!leslie) leslie=900.00;
-  if(!ranelagh5) ranelagh5=600.00;
-  if(!ranelagh5a) ranelagh5a=550.00;
-  if(!uber){
-    try{
-      const s=loadAppState();
-      const yr=s.settingsByYear?.[s.year]||s.settingsByYear?.["2026-27"]||{};
-      uber=num(yr.forecast?.uberWeeklyProvision)||560.00;
-    }catch{
-      uber=560.00;
+  try{
+    const s=loadAppState();
+    const yr=s.settingsByYear?.[s.year]||s.settingsByYear?.["2026-27"]||{};
+    if(yr.banking?.safetyBuffer!=null&&!isNaN(Number(yr.banking.safetyBuffer))){
+      return Math.max(0,Number(yr.banking.safetyBuffer));
     }
-  }
-
-  const income1to7=rooms+leslie+ranelagh5+ranelagh5a+uber;
-  const netReserve=Math.max(0,debits1to7-income1to7);
-  return netReserve>0?netReserve:310.72;
+    if(s.banking?.safetyBuffer!=null&&!isNaN(Number(s.banking.safetyBuffer))){
+      return Math.max(0,Number(s.banking.safetyBuffer));
+    }
+  }catch{}
+  return 2000;
 }
 
 function propertyOptions(){
@@ -256,11 +202,12 @@ function render(){
   by("#countPendingIncome").textContent=`${pendingIncome.length} item${pendingIncome.length===1?'':'s'} pending`;
   by("#subtotalPendingIncome").textContent=money.format(totalPendingIncomeAmount);
 
-  // Campaign Fund calculation: Bank balance + Pending Income - Pending Expenses - Reserve
+  // Campaign Fund calculation: Current Balance + remaining income - remaining expenses - safety buffer
   const currentBank=getBankBalance(x);
-  const forecastEndBalance=currentBank+totalPendingIncomeAmount-totalPendingCostsAmount;
-  const reserveRequired=estimateReserve1to7(x);
-  const campaignSurplus=forecastEndBalance-reserveRequired;
+  const remainingIncome=totalPendingIncomeAmount;
+  const remainingExpenses=totalPendingCostsAmount;
+  const safetyBuffer=getSafetyBuffer();
+  const campaignSurplus=currentBank+remainingIncome-remainingExpenses-safetyBuffer;
 
   const surplusEl=by("#balCampaignSurplus");
   if(surplusEl){
@@ -270,8 +217,8 @@ function render(){
 
   const subEl=by("#campaignFundSub");
   if(subEl){
-    subEl.textContent=`Reserve: ${money.format(reserveRequired)}`;
-    subEl.title=`Estimated Day 1-7 reserve: ${money.format(reserveRequired)}. Tap to inspect breakdown or customize.`;
+    subEl.textContent=`Reserve: ${money.format(safetyBuffer)}`;
+    subEl.title=`Safety Buffer: ${money.format(safetyBuffer)} (Current balance ${money.format(currentBank)} + remaining income ${money.format(remainingIncome)} - remaining expenses ${money.format(remainingExpenses)} - buffer = ${money.format(campaignSurplus)}). Tap to edit.`;
   }
 
   const primaryCamp=getPrimaryCampaign();
@@ -622,20 +569,23 @@ function init(){
   });
 
   by("#campaignFundSub")?.addEventListener("click",()=>{
-    const currentReserve=estimateReserve1to7(loadCashflow(currentMonth));
-    const custom=localStorage.getItem("quick-spend-custom-reserve");
-    const msg=`Estimated First 7 Days Reserve Buffer: £${currentReserve.toFixed(2)}\n\n`+
-      `• Direct debits & regular payments (Days 1–7): ~£2,991.55\n`+
-      `• Regular income (Rooms, 35 Leslie, 5 & 5a Ranelagh, Uber): ~£2,680.83\n`+
-      `• Net 7-day cash reserve buffer: £310.72\n\n`+
-      `Enter a custom reserve in £, or leave blank to reset to the calculated estimate:`;
-    const input=window.prompt(msg,custom||"");
+    const currentBuffer=getSafetyBuffer();
+    const input=window.prompt(`Safety Buffer:\nEnter safety buffer amount in £ (default £2,000.00):`,String(currentBuffer));
     if(input!==null){
       const val=input.trim().replace(/[^0-9.-]/g,"");
       if(val===""||isNaN(Number(val))){
-        localStorage.removeItem("quick-spend-custom-reserve");
+        localStorage.removeItem("tax-engine-safety-buffer");
       }else{
-        localStorage.setItem("quick-spend-custom-reserve",Math.max(0,Number(val)).toFixed(2));
+        const numVal=Math.max(0,Number(val));
+        localStorage.setItem("tax-engine-safety-buffer",String(numVal));
+        try{
+          const s=loadAppState();
+          s.banking=s.banking||{};
+          s.banking.safetyBuffer=numVal;
+          const yr=s.settingsByYear?.[s.year]||s.settingsByYear?.["2026-27"];
+          if(yr){ yr.banking=yr.banking||{}; yr.banking.safetyBuffer=numVal; }
+          localStorage.setItem("tax-engine-v3",JSON.stringify(s));
+        }catch{}
       }
       render();
     }
