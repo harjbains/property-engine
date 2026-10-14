@@ -120,14 +120,12 @@
       <span class="card-sub">Current balance</span>
     </div>
     <div class="mobile-balance-card card-campaign" style="flex: 1;">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <p style="margin: 0;">Campaign Fund</p>
-        <select id="campaignFundSelect" title="Select campaign" style="font-size: 0.68rem; font-weight: 700; color: #7e22ce; background: #faf5ff; border: 1px solid #e9d5ff; border-radius: 0.35rem; padding: 0.05rem 0.3rem; max-width: 95px; outline: none; cursor: pointer; text-overflow: ellipsis; white-space: nowrap;">
-          <option value="">Primary</option>
-        </select>
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.25rem;">
+        <p style="margin: 0; white-space: nowrap;">Campaign Fund</p>
+        <span id="primaryCampaignName" style="font-size: 0.68rem; font-weight: 700; color: #7e22ce; background: #faf5ff; border: 1px solid #e9d5ff; border-radius: 0.35rem; padding: 0.05rem 0.35rem; max-width: 105px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="Primary Campaign">Primary</span>
       </div>
       <h3 id="balCampaignSurplus">£0.00</h3>
-      <span class="card-sub" id="campaignFundSub">Reserve: £0.00</span>
+      <span class="card-sub" id="campaignFundSub" style="cursor: pointer;" title="Tap to view or adjust Day 1-7 reserve">Reserve: £0.00</span>
     </div>
   </div>
 
@@ -308,7 +306,7 @@
     </form>
   </dialog>
 
-  <script src="quick-spend.js?v=96"></script>
+  <script src="quick-spend.js?v=97"></script>
   <script src="supabase-sync.js?v=25"></script>
 </body>
 </html>
