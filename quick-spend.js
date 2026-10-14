@@ -348,6 +348,7 @@ function init(){
     const amount=num(form.get("amount"));
     const category=form.get("category")||"Living";
     const propertyId=form.get("propertyId")||"";
+    const isTaxReserve=/tax reserve|tax provision/i.test(category);
 
     const x=loadCashflow(currentMonth);
     const item={
@@ -359,9 +360,11 @@ function init(){
       planned:null,
       actual:amount,
       status:"Paid",
-      treatment:propertyId?"property_expense":"cashflow",
-      propertyId,
-      notes:"",
+      treatment:isTaxReserve?"cashflow":(propertyId?"property_expense":"cashflow"),
+      propertyId:isTaxReserve?"":propertyId,
+      isTransfer:isTaxReserve?true:false,
+      reason:isTaxReserve?"tax_provision":"general",
+      notes:isTaxReserve?"Tax Reserve transfer":"",
       account:DEFAULT_BANK_ACCOUNT
     };
 
@@ -397,6 +400,7 @@ function init(){
     const newCat=by("#editCategory").value;
     const newProp=by("#editProperty").value;
     const newNotes=by("#editNotes").value.trim();
+    const isTaxReserve=/tax reserve|tax provision/i.test(newCat);
 
     const isIncome=collection==='income';
     const oldImpact=isIncome
@@ -444,8 +448,15 @@ function init(){
     }
 
     item.status=newStatus;
-    item.propertyId=newProp;
-    item.treatment=newProp?(isIncome?"property_income":"property_expense"):"cashflow";
+    item.propertyId=isTaxReserve?"":newProp;
+    item.treatment=isTaxReserve?"cashflow":(newProp?(isIncome?"property_income":"property_expense"):"cashflow");
+    if(isTaxReserve){
+      item.isTransfer=true;
+      item.reason="tax_provision";
+    }else if(item.reason==="tax_provision"){
+      delete item.isTransfer;
+      delete item.reason;
+    }
     item.notes=newNotes;
     item.account=DEFAULT_BANK_ACCOUNT;
 
