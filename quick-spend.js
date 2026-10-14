@@ -33,15 +33,33 @@ function monthName(m){
   }
 }
 
+function loadAppState(){
+  try{
+    return JSON.parse(localStorage.getItem("tax-engine-v3")||localStorage.getItem(KEY)||"{}");
+  }catch{
+    return {};
+  }
+}
+
+function getCampaigns(){
+  const s=loadAppState();
+  return (s.campaigns||[]).filter(c=>c&&c.status!=='archived');
+}
+
+function getPrimaryCampaign(){
+  const camps=getCampaigns();
+  return camps.find(c=>c.isPrimary)||camps[0]||null;
+}
+
 function propertyOptions(){
   let properties=[];
-  try{properties=JSON.parse(localStorage.getItem(KEY)||"{}").properties||[];}catch{}
+  try{properties=loadAppState().properties||[];}catch{}
   return `<option value="">None</option>${properties.map(p=>`<option value="${p.id}">${p.property||p.property_name||"Property"}</option>`).join("")}`;
 }
 
 function propertyName(id){
   if(!id)return"";
-  try{const p=(JSON.parse(localStorage.getItem(KEY)||"{}").properties||[]).find(x=>x.id===id);return p?.property||p?.property_name||"";}catch{return"";}
+  try{const p=(loadAppState().properties||[]).find(x=>x.id===id);return p?.property||p?.property_name||"";}catch{return"";}
 }
 
 function dateLabel(dateStr){
@@ -165,6 +183,51 @@ function render(){
   by("#totalPendingIncome").textContent=money.format(totalPendingIncomeAmount);
   by("#countPendingIncome").textContent=`${pendingIncome.length} item${pendingIncome.length===1?'':'s'} pending`;
   by("#subtotalPendingIncome").textContent=money.format(totalPendingIncomeAmount);
+
+  // Campaign Fund calculation: Projected end balance minus Day 1-7 reserve
+  const currentBank=getBankBalance(x);
+  const forecastEndBalance=currentBank+totalPendingIncomeAmount-totalPendingCostsAmount;
+
+  const fixed1to7=x.fixed.filter(i=>{
+    const d=extractDayNumber(i);
+    return d>=1&&d<=7;
+  }).reduce((sum,i)=>sum+num(i.expected??i.payment??i.actual),0);
+
+  const income1to7=(x.income||[]).filter(i=>{
+    const d=extractDayNumber(i);
+    return d>=1&&d<=7;
+  }).reduce((sum,i)=>sum+num(i.expected??i.actual),0);
+
+  const reserveRequired=Math.max(0,fixed1to7-income1to7);
+  const campaignSurplus=forecastEndBalance-reserveRequired;
+
+  const surplusEl=by("#balCampaignSurplus");
+  if(surplusEl){
+    surplusEl.textContent=money.format(campaignSurplus);
+    surplusEl.style.color=campaignSurplus>=0?"#7e22ce":"#b91c1c";
+  }
+
+  const subEl=by("#campaignFundSub");
+  if(subEl){
+    subEl.textContent=`Reserve: ${money.format(reserveRequired)} · End: ${money.format(forecastEndBalance)}`;
+    subEl.title=`Projected end balance ${money.format(forecastEndBalance)} minus Day 1-7 reserve ${money.format(reserveRequired)} (Fixed ${money.format(fixed1to7)} - Income ${money.format(income1to7)}) = Surplus ${money.format(campaignSurplus)}`;
+  }
+
+  const campSelect=by("#campaignFundSelect");
+  if(campSelect){
+    const camps=getCampaigns();
+    const primaryCamp=getPrimaryCampaign();
+    const savedCampId=localStorage.getItem("quick-spend-selected-campaign");
+    const currentCamp=camps.find(c=>c.id===savedCampId)||primaryCamp;
+
+    if(camps.length>0){
+      campSelect.innerHTML=camps.map(c=>
+        `<option value="${c.id}" ${c.id===(currentCamp?.id)?'selected':''}>${c.name||'Campaign'}${c.isPrimary?' ★':''}</option>`
+      ).join("");
+    }else{
+      campSelect.innerHTML=`<option value="">Primary</option>`;
+    }
+  }
 
   // Render Pending Containers based on Filter
   const containerIncome=by("#containerPendingIncome");
@@ -506,6 +569,13 @@ function init(){
     by("#mobileEditDialog")?.close();
   });
 
+  by("#campaignFundSelect")?.addEventListener("change",e=>{
+    localStorage.setItem("quick-spend-selected-campaign",e.target.value);
+    render();
+  });
+
+  window.TaxEngineReloadFromStorage=render;
+  window.addEventListener("storage",render);
   window.addEventListener("pageshow",render);
   window.addEventListener("focus",render);
 }
