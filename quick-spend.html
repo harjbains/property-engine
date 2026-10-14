@@ -24,8 +24,7 @@
     .card-expense h3 { color: #b91c1c; }
     .card-income { border-left: 3.5px solid #10b981; }
     .card-income h3 { color: #047857; }
-    .card-zempler { border-left: 3.5px solid #4f46e5; }
-    .card-lloyds { border-left: 3.5px solid #0284c7; }
+    .card-bank { border-left: 3.5px solid #0284c7; }
     
     .mobile-section { padding: 0.75rem 1rem 1.5rem 1rem; }
     .section-head-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
@@ -43,7 +42,9 @@
     .mobile-list { display: flex; flex-direction: column; gap: 0.5rem; }
     .mobile-item { background: white; padding: 0.85rem 1rem; border-radius: 0.5rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; }
     .mobile-item-info { flex: 1; min-width: 0; }
-    .mobile-item-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #111827; }
+    .mobile-item-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #111827; cursor: pointer; }
+    .mobile-item-title:hover { color: #4f46e5; }
+    .mobile-item-title:active { opacity: 0.7; }
     .mobile-item-meta { font-size: 0.78rem; color: #6b7280; display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
     .mobile-item-amount { font-weight: 700; font-size: 1.05rem; text-align: right; white-space: nowrap; }
     .mobile-item-amount.income { color: #059669; }
@@ -56,6 +57,9 @@
     .mobile-action-btn.btn-receive:active { background: #047857; }
     .mobile-action-btn:active { transform: scale(0.97); }
 
+    .mobile-edit-btn { background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; padding: 0.18rem 0.5rem; border-radius: 0.25rem; font-size: 0.72rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.2rem; }
+    .mobile-edit-btn:active { background: #e5e7eb; transform: scale(0.97); }
+
     .mobile-add-spend { background: white; padding: 1rem; border-radius: 0.5rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
     .mobile-form-group { margin-bottom: 0.85rem; }
     .mobile-form-group label { display: block; font-size: 0.8rem; font-weight: 600; color: #4b5563; margin-bottom: 0.25rem; }
@@ -63,10 +67,10 @@
     .mobile-submit { width: 100%; background: #111827; color: white; padding: 0.8rem; border: none; border-radius: 0.375rem; font-size: 0.95rem; font-weight: 600; cursor: pointer; }
     .mobile-submit:active { background: #374151; }
     
-    .mobile-badge { display: inline-block; padding: 0.1rem 0.4rem; border-radius: 0.25rem; font-size: 0.7rem; font-weight: 600; background: #f3f4f6; color: #4b5563; }
-    .mobile-badge.zempler { background: #e0e7ff; color: #3730a3; }
-    .mobile-badge.lloyds { background: #e0f2fe; color: #0369a1; }
     .date-chip { font-weight: 600; color: #4b5563; }
+
+    dialog#mobileEditDialog { border: none; border-radius: 0.75rem; padding: 0; max-width: 92vw; width: 420px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.25), 0 10px 10px -5px rgba(0,0,0,0.1); background: white; }
+    dialog#mobileEditDialog::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(2px); }
   </style>
 </head>
 <body class="mobile-cashflow">
@@ -106,16 +110,11 @@
     </div>
   </section>
 
-  <!-- Bank Account Summaries -->
+  <!-- Bank Account Summary -->
   <div class="mobile-balances">
-    <div class="mobile-balance-card card-zempler">
-      <p>Zempler</p>
-      <h3 id="balZempler">£0.00</h3>
-      <span class="card-sub">Current balance</span>
-    </div>
-    <div class="mobile-balance-card card-lloyds">
-      <p>Lloyds</p>
-      <h3 id="balLloyds">£0.00</h3>
+    <div class="mobile-balance-card card-bank" style="flex: 1;">
+      <p>Bank Balance</p>
+      <h3 id="balBank">£0.00</h3>
       <span class="card-sub">Current balance</span>
     </div>
   </div>
@@ -188,26 +187,17 @@
           <input type="date" name="date" id="spendDay" required>
         </div>
       </div>
-      <div style="display: flex; gap: 0.75rem;">
-        <div class="mobile-form-group" style="flex: 1;">
-          <label>Category</label>
-          <select name="category">
-            <option>Fuel</option>
-            <option>Parking</option>
-            <option>Vehicle</option>
-            <option>Property</option>
-            <option>Legal</option>
-            <option>Living</option>
-            <option>Other</option>
-          </select>
-        </div>
-        <div class="mobile-form-group" style="flex: 1;">
-          <label>Account</label>
-          <select name="account">
-            <option value="zempler">Zempler</option>
-            <option value="lloyds">Lloyds</option>
-          </select>
-        </div>
+      <div class="mobile-form-group">
+        <label>Category</label>
+        <select name="category" id="spendCategory">
+          <option value="Living" selected>Living</option>
+          <option value="Fuel">Fuel</option>
+          <option value="Parking">Parking</option>
+          <option value="Vehicle">Vehicle</option>
+          <option value="Property">Property</option>
+          <option value="Legal">Legal</option>
+          <option value="Other">Other</option>
+        </select>
       </div>
       <div class="mobile-form-group">
         <label>Property (optional)</label>
@@ -236,7 +226,75 @@
     </div>
   </section>
 
-  <script src="quick-spend.js?v=93"></script>
+  <!-- Edit Transaction Modal -->
+  <dialog id="mobileEditDialog">
+    <div style="background: #111827; color: white; padding: 1rem 1.25rem; display: flex; justify-content: space-between; align-items: center;">
+      <h3 style="margin: 0; font-size: 1.05rem; font-weight: 600;">Edit Transaction</h3>
+      <button type="button" id="closeEditDialog" style="background: none; border: none; color: #9ca3af; font-size: 1.5rem; line-height: 1; cursor: pointer; padding: 0;">&times;</button>
+    </div>
+    <form id="mobileEditForm" style="padding: 1.25rem;">
+      <input type="hidden" id="editItemId">
+      <input type="hidden" id="editItemType">
+      
+      <div class="mobile-form-group">
+        <label for="editDescription">Description</label>
+        <input type="text" id="editDescription" required placeholder="Description / name">
+      </div>
+
+      <div style="display: flex; gap: 0.75rem;">
+        <div class="mobile-form-group" style="flex: 1;">
+          <label for="editAmount">Amount (£)</label>
+          <input type="number" id="editAmount" step="0.01" min="0" required placeholder="0.00">
+        </div>
+        <div class="mobile-form-group" style="flex: 1;">
+          <label for="editDate">Date</label>
+          <input type="date" id="editDate" required>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 0.75rem;">
+        <div class="mobile-form-group" style="flex: 1;">
+          <label for="editStatus">Status</label>
+          <select id="editStatus">
+            <!-- Populated dynamically based on item type -->
+          </select>
+        </div>
+        <div class="mobile-form-group" style="flex: 1;" id="editCategoryGroup">
+          <label for="editCategory">Category</label>
+          <select id="editCategory">
+            <option value="Living">Living</option>
+            <option value="Fuel">Fuel</option>
+            <option value="Parking">Parking</option>
+            <option value="Vehicle">Vehicle</option>
+            <option value="Property">Property</option>
+            <option value="Legal">Legal</option>
+            <option value="Fixed">Fixed</option>
+            <option value="Income">Income</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="mobile-form-group" id="editPropertyGroup">
+        <label for="editProperty">Property (optional)</label>
+        <select id="editProperty">
+          <option value="">None</option>
+        </select>
+      </div>
+
+      <div class="mobile-form-group">
+        <label for="editNotes">Notes (optional)</label>
+        <input type="text" id="editNotes" placeholder="Optional notes">
+      </div>
+
+      <div style="display: flex; gap: 0.5rem; margin-top: 1.25rem;">
+        <button type="submit" class="mobile-submit" style="flex: 2; padding: 0.75rem;">Save Changes</button>
+        <button type="button" id="btnDeleteTransaction" style="flex: 1; background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; border-radius: 0.375rem; font-weight: 600; font-size: 0.9rem; cursor: pointer;">Delete</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="quick-spend.js?v=94"></script>
   <script src="supabase-sync.js?v=24"></script>
 </body>
 </html>
