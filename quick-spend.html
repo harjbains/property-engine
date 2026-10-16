@@ -216,6 +216,12 @@
           <option value="">None</option>
         </select>
       </div>
+      <div class="mobile-form-group">
+        <label>Campaign (optional)</label>
+        <select name="campaignId" id="spendCampaign">
+          <option value="">None</option>
+        </select>
+      </div>
       <button type="submit" class="mobile-submit">Add Expenditure</button>
     </form>
   </section>
@@ -294,6 +300,13 @@
         </select>
       </div>
 
+      <div class="mobile-form-group" id="editCampaignGroup">
+        <label for="editCampaign">Campaign (optional)</label>
+        <select id="editCampaign">
+          <option value="">None</option>
+        </select>
+      </div>
+
       <div class="mobile-form-group">
         <label for="editNotes">Notes (optional)</label>
         <input type="text" id="editNotes" placeholder="Optional notes">
@@ -306,7 +319,7 @@
     </form>
   </dialog>
 
-  <script src="quick-spend.js?v=98"></script>
+  <script src="quick-spend.js?v=99"></script>
   <script src="supabase-sync.js?v=25"></script>
 </body>
 </html>

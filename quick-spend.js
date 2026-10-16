@@ -80,6 +80,64 @@ function propertyName(id){
   try{const p=(loadAppState().properties||[]).find(x=>x.id===id);return p?.property||p?.property_name||"";}catch{return"";}
 }
 
+function campaignOptions(selected=""){
+  let campaigns=[];
+  try{campaigns=getCampaigns()||[];}catch{}
+  return `<option value="">None</option>${campaigns.map(c=>`<option value="${c.id}" ${c.id===selected?"selected":""}>${c.name}</option>`).join("")}`;
+}
+
+function campaignName(id){
+  if(!id)return"";
+  try{const c=getCampaigns().find(x=>x.id===id);return c?.name||"";}catch{return"";}
+}
+
+function syncMobileCampaignTx(item, isDeleted=false){
+  if(!item) return;
+  try{
+    const s = loadAppState();
+    s.campaignTransactions = s.campaignTransactions || [];
+    const txId = `expense-${item.id}`;
+    const shouldHaveTx = !isDeleted && Boolean(item.campaignId) && (item.status === "Paid" || item.status === "Part-paid");
+    const existingIdx = s.campaignTransactions.findIndex(t => t.sourceExpenseId === item.id || t.id === txId);
+
+    if(shouldHaveTx){
+      const amount = num(item.actual ?? item.expected ?? item.payment ?? item.planned);
+      const dateVal = toInputDate(item.due || item.date, currentMonth);
+      const noteVal = (item.description || item.payment || "Expense payment").trim();
+
+      if(existingIdx >= 0){
+        s.campaignTransactions[existingIdx] = {
+          ...s.campaignTransactions[existingIdx],
+          campaignId: item.campaignId,
+          amount: amount,
+          date: dateVal,
+          direction: 'add',
+          note: noteVal,
+          sourceExpenseId: item.id
+        };
+      }else{
+        s.campaignTransactions.push({
+          id: txId,
+          campaignId: item.campaignId,
+          date: dateVal,
+          amount: amount,
+          direction: 'add',
+          note: noteVal,
+          sourceExpenseId: item.id,
+          createdAt: new Date().toISOString()
+        });
+      }
+    }else{
+      if(existingIdx >= 0){
+        s.campaignTransactions.splice(existingIdx, 1);
+      }
+    }
+    localStorage.setItem("tax-engine-v3", JSON.stringify(s));
+  }catch(e){
+    console.error("Failed to sync mobile campaign transaction:", e);
+  }
+}
+
 function dateLabel(dateStr){
   if(!dateStr)return "";
   if(/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return new Date(dateStr).toLocaleDateString("en-GB",{day:"2-digit",month:"short"});
@@ -139,10 +197,12 @@ function renderItem(i,isPending){
   const amount=num(i.actual??i.expected??i.payment??i.planned);
   const title=i.description||i.payment||i.notes||"Item";
   const prop=propertyName(i.propertyId);
+  const camp=campaignName(i.campaignId);
   const dateStr=dateLabel(i.due||i.date);
   const meta=[
     dateStr?`<span class="date-chip">📅 ${dateStr}</span>`:"",
     prop?`<span>🏠 ${prop}</span>`:(i.category?`<span>${i.category}</span>`:""),
+    camp?`<span style="color:#7e22ce;font-weight:600;">🎯 ${camp}</span>`:"",
     `<button type="button" class="mobile-edit-btn" onclick="event.stopPropagation(); openEditModal('${i.id}', '${i._type}')">✏️ Edit</button>`
   ].filter(Boolean).join(" &middot; ");
 
@@ -270,6 +330,12 @@ function render(){
   by("#mobileRecent").innerHTML=completed.length
     ? completed.map(i=>renderItem(i,false)).join("")
     : `<div style="padding: 0.85rem; color: #9ca3af; font-size: 0.825rem; text-align: center; background: white; border-radius: 0.5rem;">No completed items yet for this month.</div>`;
+
+  const spendCamp=by("#spendCampaign");
+  if(spendCamp){
+    const curVal=spendCamp.value;
+    spendCamp.innerHTML=campaignOptions(curVal);
+  }
 }
 
 window.checkOff=function(id,type){
@@ -301,6 +367,7 @@ window.checkOff=function(id,type){
   x.bankAccounts.lloyds=num(x.bankAccounts.lloyds)-oldImpact+newImpact;
 
   saveCashflow(x);
+  if(type==='cost') syncMobileCampaignTx(item, false);
   render();
 };
 
@@ -365,6 +432,17 @@ window.openEditModal=function(id,type){
   propSelect.innerHTML=propertyOptions();
   propSelect.value=item.propertyId||"";
 
+  // Campaign
+  const campSelect=by("#editCampaign");
+  if(campSelect){
+    campSelect.innerHTML=campaignOptions(item.campaignId);
+    campSelect.value=item.campaignId||"";
+  }
+  const campGroup=by("#editCampaignGroup");
+  if(campGroup){
+    campGroup.style.display=collection==='income'?'none':'';
+  }
+
   // Notes
   by("#editNotes").value=item.notes||"";
 
@@ -378,6 +456,7 @@ function init(){
   by("#mobileMonth").value=currentMonth;
   by("#spendDay").value=todayIso();
   by("#spendProperty").innerHTML=propertyOptions();
+  if(by("#spendCampaign")) by("#spendCampaign").innerHTML=campaignOptions();
   const spendCat=by("#spendCategory");
   if(spendCat)spendCat.value="Living";
 
@@ -410,6 +489,7 @@ function init(){
     const amount=num(form.get("amount"));
     const category=form.get("category")||"Living";
     const propertyId=form.get("propertyId")||"";
+    const campaignId=form.get("campaignId")||"";
     const isTaxReserve=/tax reserve|tax provision/i.test(category);
 
     const x=loadCashflow(currentMonth);
@@ -424,6 +504,7 @@ function init(){
       status:"Paid",
       treatment:isTaxReserve?"cashflow":(propertyId?"property_expense":"cashflow"),
       propertyId:isTaxReserve?"":propertyId,
+      campaignId:isTaxReserve?"":campaignId,
       isTransfer:isTaxReserve?true:false,
       reason:isTaxReserve?"tax_provision":"general",
       notes:isTaxReserve?"Tax Reserve transfer":"",
@@ -434,10 +515,13 @@ function init(){
     x.bankAccounts=x.bankAccounts||{zempler:0,lloyds:0};
     x.bankAccounts.lloyds=num(x.bankAccounts.lloyds)-amount;
     saveCashflow(x);
+    syncMobileCampaignTx(item, false);
 
     event.currentTarget.reset();
     by("#spendDay").value=todayIso();
     if(by("#spendCategory"))by("#spendCategory").value="Living";
+    if(by("#spendProperty"))by("#spendProperty").value="";
+    if(by("#spendCampaign"))by("#spendCampaign").value="";
     render();
   });
 
@@ -461,6 +545,7 @@ function init(){
     const newStatus=by("#editStatus").value;
     const newCat=by("#editCategory").value;
     const newProp=by("#editProperty").value;
+    const newCampaign=by("#editCampaign")?by("#editCampaign").value:"";
     const newNotes=by("#editNotes").value.trim();
     const isTaxReserve=/tax reserve|tax provision/i.test(newCat);
 
@@ -511,6 +596,7 @@ function init(){
 
     item.status=newStatus;
     item.propertyId=isTaxReserve?"":newProp;
+    item.campaignId=isTaxReserve?"":newCampaign;
     item.treatment=isTaxReserve?"cashflow":(newProp?(isIncome?"property_income":"property_expense"):"cashflow");
     if(isTaxReserve){
       item.isTransfer=true;
@@ -526,6 +612,7 @@ function init(){
     x.bankAccounts.lloyds=num(x.bankAccounts.lloyds)-oldImpact+newImpact;
 
     saveCashflow(x);
+    if(collection!=='income') syncMobileCampaignTx(item, false);
     by("#mobileEditDialog")?.close();
     render();
   });
@@ -550,6 +637,8 @@ function init(){
     const oldImpact=isIncome
       ? ((item.status==="Received"||item.actual!=null)?num(item.actual):0)
       : ((item.status==="Paid"||item.status==="Part-paid"||item.actual!=null)?-num(item.actual):0);
+
+    if(collection!=='income') syncMobileCampaignTx(item, true);
 
     if(collection==='fixed')x.fixed=x.fixed.filter(i=>i.id!==id);
     else if(collection==='spending')x.spending=x.spending.filter(i=>i.id!==id);
