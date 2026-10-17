@@ -59,7 +59,7 @@ function materialiseHistoricalRentReceipts(base){
 }function ensureMtdSettings(base){for(const year of Object.keys(base.settingsByYear)){const s=base.settingsByYear[year];s.mtd={provider:"Unassigned",periods:defaultMtdPeriods(year),...(s.mtd||{})};if(!Array.isArray(s.mtd.periods)||!s.mtd.periods.length)s.mtd.periods=defaultMtdPeriods(year);}return base;}
 function ensureRecordMetadata(base){const now=new Date().toISOString(),decorate=(items,source,category)=>items.forEach(x=>{const year=Object.keys(TaxEngine.YEARS).find(y=>x.date&&dateInTaxYear(x.date,y))||x.taxYear||"";Object.assign(x,{taxYear:x.taxYear||year,accountingPeriod:x.accountingPeriod||x.date?.slice(0,7)||"",recordSource:x.recordSource||source,createdAt:x.createdAt||now,modifiedAt:x.modifiedAt||x.createdAt||now,includedInMtd:x.includedInMtd!==false,exportStatus:x.exportStatus||"Not exported"});if(category&&!x.transactionCategory)x.transactionCategory=typeof category==="function"?category(x):category;});decorate(base.uber,"Uber Driver Portal","Uber income");decorate(base.propertyIncome,"Property records","Rent income");decorate(base.propertyExpenses,"Property records",x=>x.category||"Property expense");decorate(base.employment,"PAYE records","Employment income");decorate(base.pension,"Pension records","Pension income");decorate(base.payments,"HMRC payment record","HMRC payment");return base;}
 function load(){try{const saved=JSON.parse(localStorage.getItem(KEY));if(saved)return materialiseHistoricalRentReceipts(removeLegacyGeneratedPropertyRows(ensurePropertyMasters(mergeState(saved))));const old=JSON.parse(localStorage.getItem(LEGACY_KEY));if(!old)return materialiseHistoricalRentReceipts(ensureRecurringPropertyExpenses(ensurePenn(ensureLeslie(demo()))));const base=demo(),ys=base.settingsByYear[old.year||base.year];base.year=old.year||base.year;base.uber=old.uber||[];base.properties=old.properties||base.properties;base.propertyIncome=old.propertyIncome||base.propertyIncome;base.propertyExpenses=old.propertyExpenses||base.propertyExpenses;base.rentChanges=old.rentChanges||[];base.pension=old.pension||base.pension;base.payments=old.payments||[];if(old.settings){ys.forecast.uberForecast=num(old.settings.uberForecast)||55000;ys.forecast.annualMiles=num(old.settings.annualMiles)||52000;ys.forecast.uberOtherExpenses=num(old.settings.uberOtherExpenses);ys.forecast.monthsRemaining=num(old.settings.monthsRemaining)||12;}return materialiseHistoricalRentReceipts(ensureRecurringPropertyExpenses(ensurePenn(ensureLeslie(ensureRanelagh(base)))));}catch{return materialiseHistoricalRentReceipts(ensureRecurringPropertyExpenses(ensurePenn(ensureLeslie(demo()))));}}
-function mergeState(saved){const base=demo();base.year=saved.year||base.year;base.migrations=saved.migrations||{};base.banking=saved.banking||{safetyBuffer:2000};base.settingsByYear={};for(const year of Object.keys(TaxEngine.YEARS)){const d=yearSettings(year),s=saved.settingsByYear?.[year]||{};base.settingsByYear[year]={...d,...s,rules:{...d.rules,...s.rules},modules:{...d.modules,...s.modules},forecast:{...d.forecast,...s.forecast},hmrc:{...d.hmrc,...s.hmrc},banking:{...d.banking,...(s.banking||{})},moduleData:{...d.moduleData,...s.moduleData}};for(const k of Object.keys(d.moduleData))base.settingsByYear[year].moduleData[k]={...d.moduleData[k],...s.moduleData?.[k]};}for(const k of["employment","uber","properties","propertyIncome","propertyExpenses","rentChanges","pension","payments","campaigns","campaignTransactions"])base[k]=saved[k]||[];base.propertyIncome=base.propertyIncome.filter(x=>x.notes!=="Annual planning income");base.propertyExpenses=base.propertyExpenses.filter(x=>x.notes!=="Annual planning expenses"&&x.notes!=="Annual finance costs");base.pension=base.pension.filter(x=>x.notes!=="Annual pension forecast");return base;}
+function mergeState(saved){const base=demo();base.year=saved.year||base.year;base.migrations=saved.migrations||{};base.banking=saved.banking||{safetyBuffer:2000};base.settingsByYear={};for(const year of Object.keys(TaxEngine.YEARS)){const d=yearSettings(year),s=saved.settingsByYear?.[year]||{};base.settingsByYear[year]={...d,...s,rules:{...d.rules,...s.rules},modules:{...d.modules,...s.modules},forecast:{...d.forecast,...s.forecast},hmrc:{...d.hmrc,...s.hmrc},banking:{...d.banking,...(s.banking||{})},moduleData:{...d.moduleData,...s.moduleData}};for(const k of Object.keys(d.moduleData))base.settingsByYear[year].moduleData[k]={...d.moduleData[k],...s.moduleData?.[k]};}for(const k of["employment","uber","properties","propertyIncome","propertyExpenses","rentChanges","pension","payments","campaigns","campaignTransactions"])base[k]=saved[k]||[];(base.campaigns||[]).forEach(c=>{if(c.type==='build_up'&&(num(c.target)<num(c.startingBalance)||num(c.target)===0)){c.type='pay_down';}});base.propertyIncome=base.propertyIncome.filter(x=>x.notes!=="Annual planning income");base.propertyExpenses=base.propertyExpenses.filter(x=>x.notes!=="Annual planning expenses"&&x.notes!=="Annual finance costs");base.pension=base.pension.filter(x=>x.notes!=="Annual pension forecast");return base;}
 function ensure2526PayeAndPension(base){const date="2026-03-31",year=base.settingsByYear["2025-26"];year.mode="actual";Object.assign(year.modules,{employment:true,pension:true,property:true,uber:false,savings:false,dividends:false,other:false});year.forecast.method="recorded";if(!base.employment.some(x=>x.date===date&&x.employer==="Automobile Association"))base.employment.push({id:uid(),date,employer:"Automobile Association",gross:21773.59,tax:4354.90,taxProvided:true,ni:933.08,net:16485.91,taxCode:"BR",payrollNumber:"822276",payeRef:"072/2268193",benefits:0,notes:"Payroll 822276  -  PAYE reference 072/2268193  -  Net pay £16,485.91"});if(!base.pension.some(x=>x.date===date&&x.provider==="BT Pension"))base.pension.push({id:uid(),date,provider:"BT Pension",amount:8295,tax:691.20,taxProvided:true,taxCode:"483L",pensionNumber:"0666724",notes:"Pension number 0666724"});return base;}
 function normaliseUberRecords(base){base.uber=(base.uber||[]).map(x=>({...x,date:x.date||x.weekEnd||x.week_end,weekStart:x.weekStart||x.week_start||"",weekEnd:x.weekEnd||x.week_end||x.date,customerPayments:x.customerPayments??x.customer_payments,governmentThirdPartyFees:x.governmentThirdPartyFees??x.government_third_party_fees,uberServiceFee:x.uberServiceFee??x.uber_service_fee,otherAdjustments:x.otherAdjustments??x.other_adjustments,netUberPayment:x.netUberPayment??x.net_uber_payment,businessMiles:x.businessMiles??x.business_miles??x.miles,miles:x.miles??x.businessMiles??x.business_miles,uberBreakdownStatus:x.uberBreakdownStatus||x.uber_breakdown_status}));return base;}
 function currentTaxYearKey(fallback="2026-27"){const now=new Date(),today=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;return Object.keys(TaxEngine.YEARS).find(year=>today>=TaxEngine.YEARS[year].start&&today<=TaxEngine.YEARS[year].end)||fallback;}
@@ -563,14 +563,24 @@ dashboardView = "actual"; taxWorkspaceTab = "cashflow"; render();
 function initCampaignsState() {
   if (!state.campaigns) state.campaigns = [];
   if (!state.campaignTransactions) state.campaignTransactions = [];
+  let changed = false;
+  state.campaigns.forEach(c => {
+    if (c.type === 'build_up' && (num(c.target) < num(c.startingBalance) || num(c.target) === 0)) {
+      c.type = 'pay_down';
+      changed = true;
+    }
+  });
+  if (changed && typeof save === 'function') save();
 }
 
 function calculateCampaign(c) {
-  const txs = state.campaignTransactions.filter(t => t.campaignId === c.id).sort((a,b) => a.date.localeCompare(b.date));
+  const isPayDown = c.type === 'pay_down' || num(c.target) < num(c.startingBalance) || (num(c.target) === 0 && num(c.startingBalance) > 0);
+  const effectiveType = isPayDown ? 'pay_down' : 'build_up';
+  const txs = (state.campaignTransactions || []).filter(t => t.campaignId === c.id).sort((a,b) => a.date.localeCompare(b.date));
   let balance = num(c.startingBalance);
   
   txs.forEach(t => {
-    if (c.type === 'build_up') {
+    if (effectiveType === 'build_up') {
       balance += t.direction === 'add' ? num(t.amount) : -num(t.amount);
     } else {
       balance += t.direction === 'add' ? -num(t.amount) : num(t.amount);
@@ -581,7 +591,7 @@ function calculateCampaign(c) {
   let progress = 0;
   let remaining = 0;
   
-  if (c.type === 'build_up') {
+  if (effectiveType === 'build_up') {
     remaining = Math.max(0, target - balance);
     progress = target > 0 ? Math.min(100, Math.max(0, (balance / target) * 100)) : 0;
   } else {
@@ -611,7 +621,7 @@ function calculateCampaign(c) {
     const today = new Date();
     const days = (today - firstDate) / (1000 * 60 * 60 * 24);
     if (days > 14) {
-      const progressAmount = (c.type === 'build_up') ? (balance - num(c.startingBalance)) : (num(c.startingBalance) - balance);
+      const progressAmount = (effectiveType === 'build_up') ? (balance - num(c.startingBalance)) : (num(c.startingBalance) - balance);
       if (progressAmount > 0) {
         const ratePerDay = progressAmount / days;
         const daysLeft = remaining / ratePerDay;
@@ -621,7 +631,7 @@ function calculateCampaign(c) {
     }
   }
 
-  return { ...c, balance, txs, remaining, progress, requiredMonthly, estimatedCompletion };
+  return { ...c, type: effectiveType, balance, txs, remaining, progress, requiredMonthly, estimatedCompletion };
 }
 
 function renderCampaignsList() {
@@ -795,12 +805,18 @@ function renderCampaignDetail(id) {
     if (form.isPrimary.checked) {
       state.campaigns.forEach(c => c.isPrimary = false);
     }
+    const target = num(form.target.value);
+    const startingBalance = num(form.startingBalance.value);
+    let type = form.type.value;
+    if (type === 'build_up' && (target < startingBalance || target === 0)) {
+      type = 'pay_down';
+    }
     const c = {
       id: form.id.value || crypto.randomUUID(),
       name: form.name.value,
-      type: form.type.value,
-      target: num(form.target.value),
-      startingBalance: num(form.startingBalance.value),
+      type,
+      target,
+      startingBalance,
       targetDate: form.targetDate.value,
       status: form.status.value,
       isPrimary: form.isPrimary.checked,
@@ -808,7 +824,12 @@ function renderCampaignDetail(id) {
       createdAt: new Date().toISOString()
     };
     if (form.id.value) {
-      Object.assign(state.campaigns.find(x => x.id === c.id), c);
+      const existing = state.campaigns.find(x => x.id === c.id);
+      if (existing) {
+        Object.assign(existing, c);
+      } else {
+        state.campaigns.push(c);
+      }
     } else {
       state.campaigns.push(c);
     }
@@ -846,7 +867,8 @@ window.editCampaign = (id) => {
   const form = by("#campaignForm");
   form.id.value = c.id;
   form.name.value = c.name;
-  form.type.value = c.type;
+  const effectiveType = (c.type === 'pay_down' || num(c.target) < num(c.startingBalance) || (num(c.target) === 0 && num(c.startingBalance) > 0)) ? 'pay_down' : 'build_up';
+  form.type.value = effectiveType;
   form.target.value = c.target;
   form.startingBalance.value = c.startingBalance;
   form.targetDate.value = c.targetDate || '';
@@ -886,56 +908,24 @@ window.deleteCampaignTx = (id) => {
     by("#campaignDialog").showModal();
   });
 
-  document.addEventListener("submit", (e) => { if (e.target.id === "campaignForm") {
-    e.preventDefault();
-    initCampaignsState();
-    const form = e.target;
-    if (form.isPrimary.checked) {
-      state.campaigns.forEach(c => c.isPrimary = false);
-    }
-    const c = {
-      id: form.id.value || crypto.randomUUID(),
-      name: form.name.value,
-      type: form.type.value,
-      target: num(form.target.value),
-      startingBalance: num(form.startingBalance.value),
-      targetDate: form.targetDate.value,
-      status: form.status.value,
-      isPrimary: form.isPrimary.checked,
-      note: form.note.value,
-      createdAt: new Date().toISOString()
+  const campForm = by("#campaignForm");
+  if (campForm) {
+    const targetInput = campForm.querySelector('[name="target"]');
+    const startInput = campForm.querySelector('[name="startingBalance"]');
+    const typeSelect = campForm.querySelector('[name="type"]');
+    const autoAdjustCampaignType = () => {
+      if (!targetInput || !startInput || !typeSelect) return;
+      const t = num(targetInput.value);
+      const s = num(startInput.value);
+      if (startInput.value !== "" && (t < s || (t === 0 && s > 0))) {
+        typeSelect.value = "pay_down";
+      } else if (targetInput.value !== "" && t > s) {
+        typeSelect.value = "build_up";
+      }
     };
-    if (form.id.value) {
-      Object.assign(state.campaigns.find(x => x.id === c.id), c);
-    } else {
-      state.campaigns.push(c);
-    }
-    by("#campaignDialog").close();
-    save();
-    renderCampaignsList();
-    if(!by("#campaignDetailOutput").hidden) renderCampaignDetail(c.id);
-    render(); // Update dashboard
-  }});
-
-  document.addEventListener("submit", (e) => { if (e.target.id === "campaignTransactionForm") {
-    e.preventDefault();
-    initCampaignsState();
-    const form = e.target;
-    const cid = form.campaignId.value;
-    state.campaignTransactions.push({
-      id: crypto.randomUUID(),
-      campaignId: cid,
-      date: form.date.value,
-      amount: num(form.amount.value),
-      direction: form.direction.value,
-      note: form.note.value,
-      createdAt: new Date().toISOString()
-    });
-    by("#campaignTransactionDialog").close();
-    save();
-    renderCampaignDetail(cid);
-    render(); // Update dashboard
-  }});
+    targetInput?.addEventListener("input", autoAdjustCampaignType);
+    startInput?.addEventListener("input", autoAdjustCampaignType);
+  }
 
   by("#campaignsListOutput")?.addEventListener("click", e => {
     const card = e.target.closest(".campaign-card");

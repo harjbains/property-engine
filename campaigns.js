@@ -3,14 +3,24 @@
 function initCampaignsState() {
   if (!state.campaigns) state.campaigns = [];
   if (!state.campaignTransactions) state.campaignTransactions = [];
+  let changed = false;
+  state.campaigns.forEach(c => {
+    if (c.type === 'build_up' && (num(c.target) < num(c.startingBalance) || num(c.target) === 0)) {
+      c.type = 'pay_down';
+      changed = true;
+    }
+  });
+  if (changed && typeof save === 'function') save();
 }
 
 function calculateCampaign(c) {
-  const txs = state.campaignTransactions.filter(t => t.campaignId === c.id).sort((a,b) => a.date.localeCompare(b.date));
+  const isPayDown = c.type === 'pay_down' || num(c.target) < num(c.startingBalance) || (num(c.target) === 0 && num(c.startingBalance) > 0);
+  const effectiveType = isPayDown ? 'pay_down' : 'build_up';
+  const txs = (state.campaignTransactions || []).filter(t => t.campaignId === c.id).sort((a,b) => a.date.localeCompare(b.date));
   let balance = num(c.startingBalance);
   
   txs.forEach(t => {
-    if (c.type === 'build_up') {
+    if (effectiveType === 'build_up') {
       balance += t.direction === 'add' ? num(t.amount) : -num(t.amount);
     } else {
       balance += t.direction === 'add' ? -num(t.amount) : num(t.amount);
@@ -21,7 +31,7 @@ function calculateCampaign(c) {
   let progress = 0;
   let remaining = 0;
   
-  if (c.type === 'build_up') {
+  if (effectiveType === 'build_up') {
     remaining = Math.max(0, target - balance);
     progress = target > 0 ? Math.min(100, Math.max(0, (balance / target) * 100)) : 0;
   } else {
@@ -51,7 +61,7 @@ function calculateCampaign(c) {
     const today = new Date();
     const days = (today - firstDate) / (1000 * 60 * 60 * 24);
     if (days > 14) {
-      const progressAmount = (c.type === 'build_up') ? (balance - num(c.startingBalance)) : (num(c.startingBalance) - balance);
+      const progressAmount = (effectiveType === 'build_up') ? (balance - num(c.startingBalance)) : (num(c.startingBalance) - balance);
       if (progressAmount > 0) {
         const ratePerDay = progressAmount / days;
         const daysLeft = remaining / ratePerDay;
@@ -61,7 +71,7 @@ function calculateCampaign(c) {
     }
   }
 
-  return { ...c, balance, txs, remaining, progress, requiredMonthly, estimatedCompletion };
+  return { ...c, type: effectiveType, balance, txs, remaining, progress, requiredMonthly, estimatedCompletion };
 }
 
 function renderCampaignsList() {
@@ -232,7 +242,8 @@ window.editCampaign = (id) => {
   const form = by("#campaignForm");
   form.id.value = c.id;
   form.name.value = c.name;
-  form.type.value = c.type;
+  const effectiveType = (c.type === 'pay_down' || num(c.target) < num(c.startingBalance) || (num(c.target) === 0 && num(c.startingBalance) > 0)) ? 'pay_down' : 'build_up';
+  form.type.value = effectiveType;
   form.target.value = c.target;
   form.startingBalance.value = c.startingBalance;
   form.targetDate.value = c.targetDate || '';
@@ -272,6 +283,25 @@ document.addEventListener("DOMContentLoaded", () => {
     by("#campaignDialog").showModal();
   });
 
+  const campForm = by("#campaignForm");
+  if (campForm) {
+    const targetInput = campForm.querySelector('[name="target"]');
+    const startInput = campForm.querySelector('[name="startingBalance"]');
+    const typeSelect = campForm.querySelector('[name="type"]');
+    const autoAdjustCampaignType = () => {
+      if (!targetInput || !startInput || !typeSelect) return;
+      const t = num(targetInput.value);
+      const s = num(startInput.value);
+      if (startInput.value !== "" && (t < s || (t === 0 && s > 0))) {
+        typeSelect.value = "pay_down";
+      } else if (targetInput.value !== "" && t > s) {
+        typeSelect.value = "build_up";
+      }
+    };
+    targetInput?.addEventListener("input", autoAdjustCampaignType);
+    startInput?.addEventListener("input", autoAdjustCampaignType);
+  }
+
   by("#campaignForm")?.addEventListener("submit", (e) => {
     e.preventDefault();
     initCampaignsState();
@@ -279,12 +309,18 @@ document.addEventListener("DOMContentLoaded", () => {
     if (form.isPrimary.checked) {
       state.campaigns.forEach(c => c.isPrimary = false);
     }
+    const target = num(form.target.value);
+    const startingBalance = num(form.startingBalance.value);
+    let type = form.type.value;
+    if (type === 'build_up' && (target < startingBalance || target === 0)) {
+      type = 'pay_down';
+    }
     const c = {
       id: form.id.value || crypto.randomUUID(),
       name: form.name.value,
-      type: form.type.value,
-      target: num(form.target.value),
-      startingBalance: num(form.startingBalance.value),
+      type,
+      target,
+      startingBalance,
       targetDate: form.targetDate.value,
       status: form.status.value,
       isPrimary: form.isPrimary.checked,
@@ -292,7 +328,12 @@ document.addEventListener("DOMContentLoaded", () => {
       createdAt: new Date().toISOString()
     };
     if (form.id.value) {
-      Object.assign(state.campaigns.find(x => x.id === c.id), c);
+      const existing = state.campaigns.find(x => x.id === c.id);
+      if (existing) {
+        Object.assign(existing, c);
+      } else {
+        state.campaigns.push(c);
+      }
     } else {
       state.campaigns.push(c);
     }
