@@ -54,6 +54,107 @@ function monthName(m){
   }
 }
 
+function cleanMerchantDesc(str){
+  return String(str||"")
+    .replace(/^[^a-zA-Z0-9]+/, "")
+    .replace(/[>›»]+$/, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function parseBankStatementText(rawText, baseMonth=currentMonth){
+  const lines=String(rawText||"").split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+  let detectedBalance=null;
+  const now=new Date();
+  let currentDate=`${now.getDate()} ${now.toLocaleString("en-GB",{month:"short"})}`;
+  const transactions=[];
+
+  function parseDateHeader(line){
+    const l=line.toLowerCase();
+    if(/^yesterday\b/.test(l)){
+      const d=new Date();
+      d.setDate(d.getDate()-1);
+      return `${d.getDate()} ${d.toLocaleString("en-GB",{month:"short"})}`;
+    }
+    if(/^today\b/.test(l)){
+      const d=new Date();
+      return `${d.getDate()} ${d.toLocaleString("en-GB",{month:"short"})}`;
+    }
+    const m=line.match(/(?:mon|tue|wed|thu|fri|sat|sun)?[a-z]*\s*(\d{1,2})\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*/i);
+    if(m){
+      const day=parseInt(m[1],10);
+      const mon=m[2].slice(0,3);
+      const capMon=mon.charAt(0).toUpperCase()+mon.slice(1).toLowerCase();
+      return `${day} ${capMon}`;
+    }
+    const numDate=line.match(/^(\d{1,2})[\/\.-](\d{1,2})(?:[\/\.-](\d{2,4}))?$/);
+    if(numDate){
+      const day=parseInt(numDate[1],10);
+      const moNum=parseInt(numDate[2],10);
+      const dObj=new Date(Date.UTC(2026,moNum-1,day));
+      const mStr=dObj.toLocaleString("en-GB",{month:"short",timeZone:"UTC"});
+      return `${day} ${mStr}`;
+    }
+    return null;
+  }
+
+  for(let i=0;i<Math.min(8,lines.length);i++){
+    const l=lines[i];
+    if(/(?:lloyds|basic|account|balance)/i.test(l)){
+      const combined=[l,lines[i+1]||'',lines[i+2]||''].join(' ');
+      const match=combined.match(/[£$€]?\s*([0-9,]+\.[0-9]{2})/);
+      if(match){
+        detectedBalance=parseFloat(match[1].replace(/,/g,''));
+        break;
+      }
+    }
+  }
+
+  let prevDesc='';
+  for(let i=0;i<lines.length;i++){
+    const l=lines[i];
+    const dh=parseDateHeader(l);
+    if(dh){
+      currentDate=dh;
+      prevDesc='';
+      continue;
+    }
+
+    if(/^(lloyds|october|all|in|out|search|home|apply|payments|cards)\b/i.test(l)){
+      continue;
+    }
+
+    const singleMatch=l.match(/^(.+?)\s+[-–—]?\s*[£$€]?\s*([0-9,]+\.[0-9]{2})(?:\s*>)?$/);
+    if(singleMatch&&!/^(balance|subtotal|lloyds)/i.test(singleMatch[1])){
+      const desc=cleanMerchantDesc(singleMatch[1]);
+      const amt=parseFloat(singleMatch[2].replace(/,/g,''));
+      if(desc&&amt>0){
+        transactions.push({date:currentDate,description:desc,amount:amt,category:"Living",propertyId:"",campaignId:""});
+        prevDesc='';
+        continue;
+      }
+    }
+
+    const amtMatch=l.match(/^[-–—]\s*[£$€]?\s*([0-9,]+\.[0-9]{2})/);
+    if(amtMatch&&prevDesc){
+      const amt=parseFloat(amtMatch[1].replace(/,/g,''));
+      transactions.push({date:currentDate,description:prevDesc,amount:amt,category:"Living",propertyId:"",campaignId:""});
+      prevDesc='';
+      continue;
+    }
+
+    if(/^[£$€]\s*[0-9,]+\.[0-9]{2}$/.test(l)){
+      continue;
+    }
+
+    if(l.length>=2&&!/^[0-9£$€\s.,-]+$/.test(l)){
+      prevDesc=cleanMerchantDesc(l);
+    }
+  }
+
+  return {detectedBalance,transactions};
+}
+
 function loadAppState(){
   try{
     return JSON.parse(localStorage.getItem("tax-engine-v3")||localStorage.getItem(KEY)||"{}");
@@ -695,6 +796,224 @@ function init(){
       render();
     }
   });
+
+  // Bank Scan Modal Logic
+  let currentScanData=null;
+
+  function openScanModal(){
+    const dialog=by("#bankScanDialog");
+    if(!dialog)return;
+    currentScanData=null;
+    if(by("#scanResultsContainer"))by("#scanResultsContainer").style.display="none";
+    if(by("#scanStatus"))by("#scanStatus").style.display="none";
+    if(by("#bankScreenshotInput"))by("#bankScreenshotInput").value="";
+    if(by("#bankRawTextInput"))by("#bankRawTextInput").value="";
+    switchScanTab("image");
+    dialog.showModal();
+  }
+
+  function closeScanModal(){
+    const dialog=by("#bankScanDialog");
+    if(dialog)dialog.close();
+    currentScanData=null;
+  }
+
+  function switchScanTab(tab){
+    const tabImg=by("#tabScanImage"),tabTxt=by("#tabScanText"),panelImg=by("#panelScanImage"),panelTxt=by("#panelScanText");
+    if(tab==="image"){
+      if(tabImg){tabImg.classList.add("active");tabImg.style.background="#111827";tabImg.style.color="white";}
+      if(tabTxt){tabTxt.classList.remove("active");tabTxt.style.background="white";tabTxt.style.color="#374151";}
+      if(panelImg)panelImg.style.display="block";
+      if(panelTxt)panelTxt.style.display="none";
+    }else{
+      if(tabTxt){tabTxt.classList.add("active");tabTxt.style.background="#111827";tabTxt.style.color="white";}
+      if(tabImg){tabImg.classList.remove("active");tabImg.style.background="white";tabImg.style.color="#374151";}
+      if(panelImg)panelImg.style.display="none";
+      if(panelTxt)panelTxt.style.display="block";
+    }
+  }
+
+  function renderScanResults(parsed){
+    currentScanData=parsed;
+    const container=by("#scanResultsContainer"),countSpan=by("#scanTxCount"),listEl=by("#scanTxList"),balCard=by("#scanBalanceCard"),balText=by("#scanDetectedBalance"),chkSync=by("#chkSyncBankBalance");
+    if(!container||!listEl)return;
+
+    if(parsed.detectedBalance!=null&&parsed.detectedBalance>0){
+      if(balCard)balCard.style.display="block";
+      if(balText)balText.textContent=money.format(parsed.detectedBalance);
+      if(chkSync)chkSync.checked=true;
+    }else{
+      if(balCard)balCard.style.display="none";
+      if(chkSync)chkSync.checked=false;
+    }
+
+    if(countSpan)countSpan.textContent=String(parsed.transactions.length);
+
+    if(!parsed.transactions.length){
+      listEl.innerHTML=`<div style="text-align:center; padding:1.5rem; color:#6b7280; font-size:0.85rem;">No debit transactions found. Check the text or try again.</div>`;
+      container.style.display="block";
+      return;
+    }
+
+    listEl.innerHTML=parsed.transactions.map((tx,idx)=>`
+      <div class="scan-tx-row" data-idx="${idx}" style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:0.5rem; padding:0.65rem 0.75rem; display:flex; flex-direction:column; gap:0.35rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <label style="display:flex; align-items:center; gap:0.5rem; margin:0; cursor:pointer; font-weight:600; font-size:0.9rem; color:#111827;">
+            <input type="checkbox" class="scan-tx-check" data-idx="${idx}" checked style="accent-color:#059669; width:16px; height:16px; cursor:pointer;">
+            <span>${tx.description}</span>
+          </label>
+          <div style="display:flex; align-items:center; gap:0.5rem;">
+            <span style="font-weight:700; color:#dc2626; font-size:0.95rem;">-${money.format(tx.amount)}</span>
+            <button type="button" class="scan-remove-btn" onclick="removeScanTx(${idx})" style="background:none; border:none; color:#9ca3af; font-size:1.15rem; cursor:pointer; padding:0 0.2rem;" title="Remove item">&times;</button>
+          </div>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:#6b7280;">
+          <span class="date-chip">📅 ${tx.date}</span>
+          <div style="display:flex; gap:0.35rem; align-items:center;">
+            <select class="scan-tx-category" data-idx="${idx}" style="font-size:0.75rem; padding:0.15rem 0.35rem; border:1px solid #d1d5db; border-radius:0.25rem; background:white;">
+              <option value="Living" ${tx.category==="Living"?"selected":""}>Living</option>
+              <option value="Fuel" ${tx.category==="Fuel"?"selected":""}>Fuel</option>
+              <option value="Property" ${tx.category==="Property"?"selected":""}>Property</option>
+              <option value="Vehicle" ${tx.category==="Vehicle"?"selected":""}>Vehicle</option>
+              <option value="Tax Reserve" ${tx.category==="Tax Reserve"?"selected":""}>Tax Reserve</option>
+              <option value="Legal" ${tx.category==="Legal"?"selected":""}>Legal</option>
+              <option value="Other" ${tx.category==="Other"?"selected":""}>Other</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    `).join("");
+
+    container.style.display="block";
+  }
+
+  window.removeScanTx=function(idx){
+    if(currentScanData&&currentScanData.transactions){
+      currentScanData.transactions.splice(idx,1);
+      renderScanResults(currentScanData);
+    }
+  };
+
+  async function scanBankScreenshot(file){
+    if(!file)return;
+    const statusEl=by("#scanStatus"),textEl=by("#scanStatusText"),barEl=by("#scanProgressBar");
+    if(statusEl)statusEl.style.display="block";
+    if(textEl)textEl.textContent="Scanning screenshot with OCR...";
+    if(barEl)barEl.style.width="15%";
+
+    try{
+      if(typeof Tesseract==="undefined"){
+        throw new Error("OCR library not loaded yet. Check your connection or use 'Paste Text' tab.");
+      }
+      const res=await Tesseract.recognize(file,"eng",{
+        logger:m=>{
+          if(m.status==="recognizing text"){
+            const p=Math.round((m.progress||0)*100);
+            if(textEl)textEl.textContent=`Recognizing text... ${p}%`;
+            if(barEl)barEl.style.width=`${p}%`;
+          }
+        }
+      });
+
+      if(statusEl)statusEl.style.display="none";
+      const raw=res?.data?.text||"";
+      if(by("#bankRawTextInput"))by("#bankRawTextInput").value=raw;
+      const parsed=parseBankStatementText(raw,currentMonth);
+      renderScanResults(parsed);
+    }catch(err){
+      console.error("OCR Error:",err);
+      if(statusEl)statusEl.style.display="block";
+      if(textEl)textEl.innerHTML=`<span style="color:#dc2626;">Scan failed: ${err.message}. Switch to 'Paste Text' tab to paste manually.</span>`;
+    }
+  }
+
+  function confirmBankAllocation(){
+    if(!currentScanData||!currentScanData.transactions.length)return;
+    const x=loadCashflow(currentMonth);
+    const rows=all(".scan-tx-row");
+    let allocatedCount=0;
+    let totalAllocatedAmount=0;
+
+    rows.forEach(row=>{
+      const idx=parseInt(row.dataset.idx,10);
+      const chk=row.querySelector(".scan-tx-check");
+      if(!chk||!chk.checked)return;
+
+      const tx=currentScanData.transactions[idx];
+      if(!tx)return;
+
+      const catSelect=row.querySelector(".scan-tx-category");
+      const chosenCat=catSelect?catSelect.value:(tx.category||"Living");
+      const isTaxReserve=/tax reserve|tax provision/i.test(chosenCat);
+
+      const item={
+        id:uid(),
+        createdAt:new Date().toISOString(),
+        date:formatCashDate(tx.date,currentMonth),
+        description:tx.description,
+        category:chosenCat,
+        planned:null,
+        actual:tx.amount,
+        status:"Paid",
+        treatment:isTaxReserve?"cashflow":(tx.propertyId?"property_expense":"cashflow"),
+        propertyId:isTaxReserve?"":(tx.propertyId||""),
+        campaignId:isTaxReserve?"":(tx.campaignId||""),
+        isTransfer:isTaxReserve?true:false,
+        reason:isTaxReserve?"tax_provision":"general",
+        notes:isTaxReserve?"Tax Reserve transfer":"Auto-allocated from bank activity",
+        account:DEFAULT_BANK_ACCOUNT
+      };
+
+      x.spending.push(item);
+      allocatedCount++;
+      totalAllocatedAmount+=tx.amount;
+      if(item.campaignId)syncMobileCampaignTx(item,false);
+    });
+
+    if(!allocatedCount){
+      alert("No transactions were selected to allocate.");
+      return;
+    }
+
+    const chkSync=by("#chkSyncBankBalance");
+    if(chkSync&&chkSync.checked&&currentScanData.detectedBalance!=null){
+      x.bankAccounts=x.bankAccounts||{zempler:0,lloyds:0};
+      x.bankAccounts.lloyds=currentScanData.detectedBalance;
+    }else{
+      x.bankAccounts=x.bankAccounts||{zempler:0,lloyds:0};
+      x.bankAccounts.lloyds=num(x.bankAccounts.lloyds)-totalAllocatedAmount;
+    }
+
+    saveCashflow(x);
+    closeScanModal();
+    render();
+
+    const balMsg=chkSync&&chkSync.checked&&currentScanData.detectedBalance!=null
+      ?` and Lloyds balance updated to ${money.format(currentScanData.detectedBalance)}`
+      :"";
+    alert(`✓ Allocated ${allocatedCount} expenditure item(s) into cashflow${balMsg}.`);
+  }
+
+  by("#btnOpenScanModal")?.addEventListener("click",openScanModal);
+  by("#closeScanDialog")?.addEventListener("click",closeScanModal);
+  by("#tabScanImage")?.addEventListener("click",()=>switchScanTab("image"));
+  by("#tabScanText")?.addEventListener("click",()=>switchScanTab("text"));
+  by("#bankScreenshotInput")?.addEventListener("change",e=>{
+    const file=e.target.files?.[0];
+    if(file)scanBankScreenshot(file);
+  });
+  by("#btnParseText")?.addEventListener("click",()=>{
+    const raw=by("#bankRawTextInput")?.value||"";
+    const parsed=parseBankStatementText(raw,currentMonth);
+    renderScanResults(parsed);
+  });
+  by("#btnLoadSample")?.addEventListener("click",()=>{
+    const sample=`Lloyds Basic Acct\n£3,071.28\nYesterday\nTesla Inc.\n- £12.36\n£3,071.28\nTesla Inc.\n- £7.75\n£3,083.64\nTesla Inc.\n- £5.11\n£3,091.39\nFASTHOSTS\n- £0.24\n£3,096.50\nFri 16 October\nARGOS PAY\n- £100.00\n£3,096.74\nSCREWFIX\n- £17.89\n£3,196.74\nThu 15 October\nABRATAX\n- £6.00\n£3,214.63`;
+    if(by("#bankRawTextInput"))by("#bankRawTextInput").value=sample;
+    const parsed=parseBankStatementText(sample,currentMonth);
+    renderScanResults(parsed);
+  });
+  by("#btnConfirmAllocation")?.addEventListener("click",confirmBankAllocation);
 
   window.TaxEngineReloadFromStorage=render;
   window.addEventListener("storage",render);
