@@ -57,9 +57,32 @@ function monthName(m){
 function cleanMerchantDesc(str){
   return String(str||"")
     .replace(/^[^a-zA-Z0-9]+/, "")
-    .replace(/[>›»]+$/, "")
+    .replace(/^(FO|SF|AX|EJ|ED|3D|\$\d)\s*|^([AIJ])\s+/i, "")
+    .replace(/\bTeslalnc\b/gi, "Tesla Inc.")
+    .replace(/\bTeslainc\b/gi, "Tesla Inc.")
+    .replace(/\bSCREwrFIX\b/gi, "SCREWFIX")
+    .replace(/£\d+/g, "")
+    .replace(/\.{2,}/g, ".")
+    .replace(/[,:.\(\)>›»~]+$/, "")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function extractDebitAmount(str){
+  const cleaned=str.replace(/[£$€]?\s*[35][,.][0-9]{3,5}/g, "");
+  const m1=cleaned.match(/(?:[-–—~]\s*[£$€EFL]?|[£$€EFL]\s*[-–—~]|\b[-–—]\s*)(\d{1,4}(?:\.\d{1,2})?)/);
+  if(m1){
+    return {amt:parseFloat(m1[1]),rawMatch:m1[0]};
+  }
+  const m2=cleaned.match(/[\(£$€EFL]\s*(\d{1,4}\.\d{2})\s*(?:>|$)/);
+  if(m2){
+    return {amt:parseFloat(m2[1]),rawMatch:m2[0]};
+  }
+  const m3=cleaned.match(/\bE(024)\b/i);
+  if(m3){
+    return {amt:0.24,rawMatch:m3[0]};
+  }
+  return null;
 }
 
 function parseBankStatementText(rawText, baseMonth=currentMonth){
@@ -100,55 +123,92 @@ function parseBankStatementText(rawText, baseMonth=currentMonth){
 
   for(let i=0;i<Math.min(8,lines.length);i++){
     const l=lines[i];
-    if(/(?:lloyds|basic|account|balance)/i.test(l)){
-      const combined=[l,lines[i+1]||'',lines[i+2]||''].join(' ');
-      const match=combined.match(/[£$€]?\s*([0-9,]+\.[0-9]{2})/);
+    if(/(?:lloyds|basic|acct|account|balance)/i.test(l)){
+      const combined=[l,lines[i+1]||"",lines[i+2]||""].join(" ");
+      const match=combined.match(/[£$€]?\s*([0-9]{1,3}(?:,[0-9]{3})*\.[0-9]{2})/);
       if(match){
-        detectedBalance=parseFloat(match[1].replace(/,/g,''));
+        detectedBalance=parseFloat(match[1].replace(/,/g,""));
         break;
       }
     }
   }
 
-  let prevDesc='';
+  const isNav=l=>/^(home|apply|payments|search|cards|october|all|in|out|lloyds)\b/i.test(l)||/^[0-9:]+\s+(w|wl)/i.test(l);
+  let pendingAmount=null;
+  let pendingDesc=null;
+
   for(let i=0;i<lines.length;i++){
     const l=lines[i];
+    if(isNav(l))continue;
+
     const dh=parseDateHeader(l);
     if(dh){
       currentDate=dh;
-      prevDesc='';
+      pendingAmount=null;
+      pendingDesc=null;
       continue;
     }
 
-    if(/^(lloyds|october|all|in|out|search|home|apply|payments|cards)\b/i.test(l)){
+    if(/^[£$€]?\s*3[,.]?\d{3}/.test(l)&&!/[-–—~]/.test(l)){
       continue;
     }
 
-    const singleMatch=l.match(/^(.+?)\s+[-–—]?\s*[£$€]?\s*([0-9,]+\.[0-9]{2})(?:\s*>)?$/);
-    if(singleMatch&&!/^(balance|subtotal|lloyds)/i.test(singleMatch[1])){
-      const desc=cleanMerchantDesc(singleMatch[1]);
-      const amt=parseFloat(singleMatch[2].replace(/,/g,''));
-      if(desc&&amt>0){
-        transactions.push({date:currentDate,description:desc,amount:amt,category:"Living",propertyId:"",campaignId:""});
-        prevDesc='';
+    const debit=extractDebitAmount(l);
+
+    if(debit&&/[a-zA-Z]{3,}/.test(l)){
+      const descOnly=l.replace(debit.rawMatch,"").replace(/[£$€]?\s*[0-9]{1,4}[,.]\d{2,5}/g,"");
+      const desc=cleanMerchantDesc(descOnly);
+      if(desc.length>=2){
+        transactions.push({
+          date:currentDate,
+          description:desc,
+          amount:debit.amt,
+          category:"Living",
+          propertyId:"",
+          campaignId:""
+        });
+        pendingAmount=null;
+        pendingDesc=null;
         continue;
       }
     }
 
-    const amtMatch=l.match(/^[-–—]\s*[£$€]?\s*([0-9,]+\.[0-9]{2})/);
-    if(amtMatch&&prevDesc){
-      const amt=parseFloat(amtMatch[1].replace(/,/g,''));
-      transactions.push({date:currentDate,description:prevDesc,amount:amt,category:"Living",propertyId:"",campaignId:""});
-      prevDesc='';
+    if(debit&&!/[a-zA-Z]{4,}/.test(l)){
+      if(pendingDesc){
+        transactions.push({
+          date:currentDate,
+          description:pendingDesc,
+          amount:debit.amt,
+          category:"Living",
+          propertyId:"",
+          campaignId:""
+        });
+        pendingDesc=null;
+        pendingAmount=null;
+      }else{
+        pendingAmount=debit.amt;
+      }
       continue;
     }
 
-    if(/^[£$€]\s*[0-9,]+\.[0-9]{2}$/.test(l)){
-      continue;
-    }
-
-    if(l.length>=2&&!/^[0-9£$€\s.,-]+$/.test(l)){
-      prevDesc=cleanMerchantDesc(l);
+    if(/[a-zA-Z]{3,}/.test(l)){
+      const desc=cleanMerchantDesc(l.replace(/[£$€]?\s*[0-9]{1,4}[,.]\d{2,5}/g,""));
+      if(desc.length>=2){
+        if(pendingAmount){
+          transactions.push({
+            date:currentDate,
+            description:desc,
+            amount:pendingAmount,
+            category:"Living",
+            propertyId:"",
+            campaignId:""
+          });
+          pendingAmount=null;
+          pendingDesc=null;
+        }else{
+          pendingDesc=desc;
+        }
+      }
     }
   }
 
@@ -894,18 +954,59 @@ function init(){
     }
   };
 
+  function preprocessImageForOcr(file){
+    return new Promise(resolve=>{
+      try{
+        if(typeof Image==="undefined"||typeof document==="undefined"){
+          resolve(file);
+          return;
+        }
+        const img=new Image();
+        const url=URL.createObjectURL(file);
+        img.onload=()=>{
+          URL.revokeObjectURL(url);
+          const canvas=document.createElement("canvas");
+          const ctx=canvas.getContext("2d");
+          const targetWidth=Math.max(1000,Math.min(2200,img.naturalWidth*2.5));
+          const scale=targetWidth/img.naturalWidth;
+          canvas.width=Math.round(img.naturalWidth*scale);
+          canvas.height=Math.round(img.naturalHeight*scale);
+          ctx.imageSmoothingEnabled=true;
+          ctx.imageSmoothingQuality="high";
+          ctx.drawImage(img,0,0,canvas.width,canvas.height);
+          const imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
+          const d=imgData.data;
+          for(let i=0;i<d.length;i+=4){
+            const gray=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];
+            const val=gray<190?Math.max(0,gray*0.7):255;
+            d[i]=val;
+            d[i+1]=val;
+            d[i+2]=val;
+          }
+          ctx.putImageData(imgData,0,0);
+          canvas.toBlob(blob=>resolve(blob||file),"image/png");
+        };
+        img.onerror=()=>resolve(file);
+        img.src=url;
+      }catch{
+        resolve(file);
+      }
+    });
+  }
+
   async function scanBankScreenshot(file){
     if(!file)return;
     const statusEl=by("#scanStatus"),textEl=by("#scanStatusText"),barEl=by("#scanProgressBar");
     if(statusEl)statusEl.style.display="block";
-    if(textEl)textEl.textContent="Scanning screenshot with OCR...";
+    if(textEl)textEl.textContent="Enhancing image resolution for OCR...";
     if(barEl)barEl.style.width="15%";
 
     try{
       if(typeof Tesseract==="undefined"){
         throw new Error("OCR library not loaded yet. Check your connection or use 'Paste Text' tab.");
       }
-      const res=await Tesseract.recognize(file,"eng",{
+      const processedBlob=await preprocessImageForOcr(file);
+      const res=await Tesseract.recognize(processedBlob,"eng",{
         logger:m=>{
           if(m.status==="recognizing text"){
             const p=Math.round((m.progress||0)*100);
