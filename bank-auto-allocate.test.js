@@ -136,3 +136,79 @@ ABRATAX - £6.00
   assert.equal(parsed.transactions[2].description, "ABRATAX");
   assert.equal(parsed.transactions[2].amount, 6);
 });
+
+test("bank-auto-allocate: two-column OCR parser parses mobile screenshots accurately", () => {
+  const code = fs.readFileSync("quick-spend.js", "utf8");
+
+  const context = {
+    currentMonth: "2026-10",
+    Date,
+    String,
+    Number,
+    parseInt,
+    parseFloat,
+    Math,
+    Array
+  };
+  vm.createContext(context);
+
+  const cleanMatch = code.match(/function cleanMerchantDesc[\s\S]*?\.trim\(\);\s*\}/);
+  const amtMatch = code.match(/function parseAmountsColumn[\s\S]*?return\s*\{debits,\s*balances\};\s*\}/);
+  const merchMatch = code.match(/function parseMerchantsColumn[\s\S]*?return items;\s*\}/);
+
+  assert.ok(cleanMatch, "cleanMerchantDesc function must exist");
+  assert.ok(amtMatch, "parseAmountsColumn function must exist");
+  assert.ok(merchMatch, "parseMerchantsColumn function must exist");
+
+  vm.runInContext(`
+    ${cleanMatch[0]}
+    function cleanMerchantName(str){ return cleanMerchantDesc(str); }
+    ${amtMatch[0]}
+    ${merchMatch[0]}
+  `, context);
+
+  const amountsOcr = `
+Q
+-£12.36
+£3,071.28
+-€7.75
+£3,083.64
+- £5.11
+£3,091.39 ?
+-£0.24
+£3,096.50
+-£100.00
+£3,096.74
+-£17.89
+£3,196.74
+-£6.00
+£3,214.63
+`;
+
+  const merchantsOcr = `
+October All
+Yesterday
+[2 Teslalnec.
+[J Tesla Inc.
+| Tesla Inc.
+[FJ FASTHOSTS
+Fri 16 October
+AQ ARGOS PAY
+SF SCREWFIX
+Thu 15 October
+[2 ABRATAX
+`;
+
+  const { debits, balances } = context.parseAmountsColumn(amountsOcr);
+  assert.deepEqual([...debits], [12.36, 7.75, 5.11, 0.24, 100, 17.89, 6]);
+  assert.equal(balances[0], 3071.28);
+
+  const merchants = context.parseMerchantsColumn(merchantsOcr, "2026-10");
+  assert.equal(merchants.length, 7);
+  assert.equal(merchants[0].description, "Tesla Inc");
+  assert.equal(merchants[3].description, "FASTHOSTS");
+  assert.equal(merchants[4].description, "ARGOS PAY");
+  assert.equal(merchants[5].description, "SCREWFIX");
+  assert.equal(merchants[6].description, "ABRATAX");
+});
+

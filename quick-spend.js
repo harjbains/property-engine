@@ -57,15 +57,20 @@ function monthName(m){
 function cleanMerchantDesc(str){
   return String(str||"")
     .replace(/^[^a-zA-Z0-9]+/, "")
-    .replace(/^(FO|SF|AX|EJ|ED|3D|\$\d)\s*|^([AIJ])\s+/i, "")
+    .replace(/^([A-Z]{1,2}|3D|\$?\d)\s+/i, "")
+    .replace(/\bTeslalnec\b/gi, "Tesla Inc.")
     .replace(/\bTeslalnc\b/gi, "Tesla Inc.")
     .replace(/\bTeslainc\b/gi, "Tesla Inc.")
     .replace(/\bSCREwrFIX\b/gi, "SCREWFIX")
-    .replace(/£\d+/g, "")
-    .replace(/\.{2,}/g, ".")
+    .replace(/\bScrRewrix\b/gi, "SCREWFIX")
     .replace(/[,:.\(\)>›»~]+$/, "")
+    .replace(/^[^a-zA-Z]+/, "")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function cleanMerchantName(str){
+  return cleanMerchantDesc(str);
 }
 
 function extractDebitAmount(str){
@@ -83,6 +88,102 @@ function extractDebitAmount(str){
     return {amt:0.24,rawMatch:m3[0]};
   }
   return null;
+}
+
+function parseAmountsColumn(text){
+  const lines=String(text||"").split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+  const debits=[];
+  const balances=[];
+
+  for(const l of lines){
+    const mDebit=l.match(/[-–—~]\s*[£$€EFL]?\s*(\d{1,4}(?:[.,]\d{1,2})?)/i)||
+                 l.match(/[£$€EFL]\s*[-–—~]\s*(\d{1,4}(?:[.,]\d{1,2})?)/i);
+    if(mDebit){
+      let raw=mDebit[1].replace(",", ".");
+      if(!raw.includes(".") && raw.length===3){
+        raw=raw[0]+"."+raw.slice(1);
+      }
+      const val=parseFloat(raw);
+      if(val>0 && val<2000){
+        debits.push(val);
+        continue;
+      }
+    }
+
+    const mBal=l.match(/[£$€]?\s*([0-9]{1,3}(?:,[0-9]{3})*\.[0-9]{2})/);
+    if(mBal){
+      balances.push(parseFloat(mBal[1].replace(/,/g,"")));
+    }
+  }
+
+  return {debits, balances};
+}
+
+function parseMerchantsColumn(text, baseMonth=currentMonth){
+  const lines=String(text||"").split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+  const items=[];
+  const now=new Date();
+  let currentDate=`${now.getDate()} ${now.toLocaleString("en-GB",{month:"short"})}`;
+
+  function parseDateHeader(l){
+    const s=l.toLowerCase();
+    if(s.includes("yesterday")){
+      const d=new Date();
+      d.setDate(d.getDate()-1);
+      return `${d.getDate()} ${d.toLocaleString("en-GB",{month:"short"})}`;
+    }
+    if(s.includes("today")){
+      const d=new Date();
+      return `${d.getDate()} ${d.toLocaleString("en-GB",{month:"short"})}`;
+    }
+    const m=s.match(/(?:mon|tue|wed|thu|fri|sat|sun)?\s*([0-9]{1,2})\s*(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/);
+    if(m){
+      const day=parseInt(m[1],10);
+      const mon=m[2].charAt(0).toUpperCase()+m[2].slice(1,3).toLowerCase();
+      return `${day} ${mon}`;
+    }
+    return null;
+  }
+
+  for(let i=0;i<lines.length;i++){
+    const l=lines[i];
+    if(/^(october|all|in|out|search|home|apply|payments|cards)\b/i.test(l))continue;
+    const dh=parseDateHeader(l);
+    if(dh){
+      currentDate=dh;
+      continue;
+    }
+    if(/^screw\b/i.test(l)&&items.length&&items[items.length-1].description.includes("SCREWFIX")){
+      continue;
+    }
+    const cleaned=cleanMerchantName(l);
+    if(cleaned.length>=3&&!/^[0-9£$.,-]+$/.test(cleaned)){
+      items.push({date:currentDate,description:cleaned});
+    }
+  }
+
+  return items;
+}
+
+function sliceImageToBlob(img, xPct, yPct, wPct, hPct, scale=3.0){
+  return new Promise(resolve=>{
+    try{
+      const canvas=document.createElement("canvas");
+      const sx=Math.round(img.naturalWidth*xPct);
+      const sy=Math.round(img.naturalHeight*yPct);
+      const sw=Math.round(img.naturalWidth*wPct);
+      const sh=Math.round(img.naturalHeight*hPct);
+      canvas.width=Math.round(sw*scale);
+      canvas.height=Math.round(sh*scale);
+      const ctx=canvas.getContext("2d");
+      ctx.imageSmoothingEnabled=true;
+      ctx.imageSmoothingQuality="high";
+      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob(blob=>resolve(blob),"image/png");
+    }catch(err){
+      resolve(null);
+    }
+  });
 }
 
 function parseBankStatementText(rawText, baseMonth=currentMonth){
@@ -954,72 +1055,91 @@ function init(){
     }
   };
 
-  function preprocessImageForOcr(file){
-    return new Promise(resolve=>{
-      try{
-        if(typeof Image==="undefined"||typeof document==="undefined"){
-          resolve(file);
-          return;
-        }
-        const img=new Image();
-        const url=URL.createObjectURL(file);
-        img.onload=()=>{
-          URL.revokeObjectURL(url);
-          const canvas=document.createElement("canvas");
-          const ctx=canvas.getContext("2d");
-          const targetWidth=Math.max(1000,Math.min(2200,img.naturalWidth*2.5));
-          const scale=targetWidth/img.naturalWidth;
-          canvas.width=Math.round(img.naturalWidth*scale);
-          canvas.height=Math.round(img.naturalHeight*scale);
-          ctx.imageSmoothingEnabled=true;
-          ctx.imageSmoothingQuality="high";
-          ctx.drawImage(img,0,0,canvas.width,canvas.height);
-          const imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
-          const d=imgData.data;
-          for(let i=0;i<d.length;i+=4){
-            const gray=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];
-            const val=gray<190?Math.max(0,gray*0.7):255;
-            d[i]=val;
-            d[i+1]=val;
-            d[i+2]=val;
-          }
-          ctx.putImageData(imgData,0,0);
-          canvas.toBlob(blob=>resolve(blob||file),"image/png");
-        };
-        img.onerror=()=>resolve(file);
-        img.src=url;
-      }catch{
-        resolve(file);
-      }
-    });
-  }
-
   async function scanBankScreenshot(file){
     if(!file)return;
     const statusEl=by("#scanStatus"),textEl=by("#scanStatusText"),barEl=by("#scanProgressBar");
     if(statusEl)statusEl.style.display="block";
-    if(textEl)textEl.textContent="Enhancing image resolution for OCR...";
-    if(barEl)barEl.style.width="15%";
+    if(textEl)textEl.textContent="Preparing image for OCR...";
+    if(barEl)barEl.style.width="10%";
 
     try{
       if(typeof Tesseract==="undefined"){
         throw new Error("OCR library not loaded yet. Check your connection or use 'Paste Text' tab.");
       }
-      const processedBlob=await preprocessImageForOcr(file);
-      const res=await Tesseract.recognize(processedBlob,"eng",{
-        logger:m=>{
-          if(m.status==="recognizing text"){
-            const p=Math.round((m.progress||0)*100);
-            if(textEl)textEl.textContent=`Recognizing text... ${p}%`;
-            if(barEl)barEl.style.width=`${p}%`;
-          }
-        }
+
+      const img=await new Promise((resolve,reject)=>{
+        const image=new Image();
+        const url=URL.createObjectURL(file);
+        image.onload=()=>{ URL.revokeObjectURL(url); resolve(image); };
+        image.onerror=()=>{ URL.revokeObjectURL(url); reject(new Error("Could not load image")); };
+        image.src=url;
       });
 
-      if(statusEl)statusEl.style.display="none";
-      const raw=res?.data?.text||"";
+      const isMobileScreenshot=(img.naturalHeight/img.naturalWidth)>=1.2;
+
+      if(isMobileScreenshot){
+        // Step 1: Scan account balance header
+        if(textEl)textEl.textContent="Scanning account balance (1/3)...";
+        if(barEl)barEl.style.width="25%";
+        const blobH=await sliceImageToBlob(img,0.04,0.03,0.92,0.14,3.0);
+        const resH=blobH?await Tesseract.recognize(blobH,"eng"):null;
+        const mBal=resH?.data?.text?.match(/[£$€]?\s*([0-9]{1,3}(?:,[0-9]{3})*\.[0-9]{2})/);
+        let detectedBalance=mBal?parseFloat(mBal[1].replace(/,/g,"")):null;
+
+        // Step 2: Scan debit amounts column (right 45%)
+        if(textEl)textEl.textContent="Scanning debit amounts (2/3)...";
+        if(barEl)barEl.style.width="55%";
+        const blobA=await sliceImageToBlob(img,0.55,0.14,0.45,0.76,3.0);
+        const resA=blobA?await Tesseract.recognize(blobA,"eng"):null;
+        const {debits,balances}=parseAmountsColumn(resA?.data?.text||"");
+        if(detectedBalance==null&&balances.length){
+          detectedBalance=balances[0];
+        }
+
+        // Step 3: Scan merchants & dates column (left 65%)
+        if(textEl)textEl.textContent="Scanning merchants & dates (3/3)...";
+        if(barEl)barEl.style.width="85%";
+        const blobM=await sliceImageToBlob(img,0.0,0.14,0.62,0.76,3.0);
+        const resM=blobM?await Tesseract.recognize(blobM,"eng"):null;
+        const merchants=parseMerchantsColumn(resM?.data?.text||"",currentMonth);
+
+        const count=Math.min(merchants.length,debits.length);
+        if(count>0){
+          const transactions=[];
+          let structuredText=detectedBalance?`Account Balance: £${detectedBalance.toFixed(2)}\n\n`:"";
+          let lastDate="";
+          for(let i=0;i<count;i++){
+            if(merchants[i].date!==lastDate){
+              lastDate=merchants[i].date;
+              structuredText+=`${lastDate}\n`;
+            }
+            structuredText+=`${merchants[i].description} - £${debits[i].toFixed(2)}\n`;
+            transactions.push({
+              date:merchants[i].date,
+              description:merchants[i].description,
+              amount:debits[i],
+              category:"Living",
+              propertyId:"",
+              campaignId:""
+            });
+          }
+
+          if(by("#bankRawTextInput"))by("#bankRawTextInput").value=structuredText.trim();
+          if(statusEl)statusEl.style.display="none";
+          renderScanResults({detectedBalance,transactions});
+          return;
+        }
+      }
+
+      // Fallback for non-mobile or when column scan returned 0
+      if(textEl)textEl.textContent="Scanning full statement text...";
+      if(barEl)barEl.style.width="70%";
+      const fullBlob=await sliceImageToBlob(img,0,0,1,1,2.5);
+      const resFull=await Tesseract.recognize(fullBlob||file,"eng");
+      const raw=resFull?.data?.text||"";
       if(by("#bankRawTextInput"))by("#bankRawTextInput").value=raw;
       const parsed=parseBankStatementText(raw,currentMonth);
+      if(statusEl)statusEl.style.display="none";
       renderScanResults(parsed);
     }catch(err){
       console.error("OCR Error:",err);
