@@ -7,12 +7,33 @@ const todayIso=()=>new Date().toISOString().slice(0,10),monthIso=d=>String(d||to
 function cashflowKey(month){return`${CASHFLOW_KEY_PREFIX}${month}`;}
 function emptyCashflow(month){return{bank:0,bankAccounts:{zempler:0,lloyds:0},fixed:[],spending:[],income:[],month,lock:{status:"open",lockDay:null,lockedAt:""}};}
 
+function formatCashDate(dateStr, month=currentMonth){
+  const s=String(dateStr||"").trim();
+  if(!s)return"";
+  const isoMatch=s.match(/^(\d{4})-(\d{2})-(\d{1,2})/);
+  if(isoMatch){
+    const y=Number(isoMatch[1]),m=Number(isoMatch[2]),d=Number(isoMatch[3]);
+    const mStr=new Date(Date.UTC(y,m-1,1)).toLocaleString("en-GB",{month:"short",timeZone:"UTC"});
+    return `${d} ${mStr}`;
+  }
+  return s;
+}
+
 function loadCashflow(month){
   const saved=JSON.parse(localStorage.getItem(cashflowKey(month))||localStorage.getItem(month===TAX_WORKSPACE_MONTH?"tax-engine-april-2026-cashflow":"null")||"null");
   const base=saved&&typeof saved==="object"?{...emptyCashflow(month),...saved,month}:emptyCashflow(month);
   base.fixed=Array.isArray(base.fixed)?base.fixed:[];base.spending=Array.isArray(base.spending)?base.spending:[];base.income=Array.isArray(base.income)?base.income:[];
   base.bankAccounts=base.bankAccounts||{zempler:0,lloyds:num(base.bank)};
   base.bankAccounts.zempler=num(base.bankAccounts.zempler);base.bankAccounts.lloyds=num(base.bankAccounts.lloyds);
+  const normDate=item=>{
+    if(!item)return item;
+    if(item.date&&/^\d{4}-\d{2}-\d{1,2}/.test(String(item.date).trim()))item.date=formatCashDate(item.date,month);
+    if(item.due&&/^\d{4}-\d{2}-\d{1,2}/.test(String(item.due).trim()))item.due=formatCashDate(item.due,month);
+    return item;
+  };
+  base.fixed.forEach(normDate);
+  base.spending.forEach(normDate);
+  base.income.forEach(normDate);
   return base;
 }
 
@@ -140,19 +161,15 @@ function syncMobileCampaignTx(item, isDeleted=false){
 
 function dateLabel(dateStr){
   if(!dateStr)return "";
-  if(/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return new Date(dateStr).toLocaleDateString("en-GB",{day:"2-digit",month:"short"});
-  return dateStr;
+  return formatCashDate(dateStr, currentMonth);
 }
 
 function extractDayNumber(item){
-  const val=String(item.due||item.date||"").trim();
-  if(/^\d{4}-\d{2}-(\d{2})/.test(val)){
-    return parseInt(val.match(/^\d{4}-\d{2}-(\d{2})/)[1],10);
-  }
+  const val=String(item?.due||item?.date||"").trim();
+  const isoMatch=val.match(/^\d{4}-\d{2}-(\d{1,2})/);
+  if(isoMatch)return parseInt(isoMatch[1],10);
   const m=val.match(/\b\d{1,2}\b/);
-  if(m){
-    return parseInt(m[0],10);
-  }
+  if(m)return parseInt(m[0],10);
   return 99;
 }
 
@@ -496,7 +513,7 @@ function init(){
     const item={
       id:uid(),
       createdAt:new Date().toISOString(),
-      date:form.get("date"),
+      date:formatCashDate(form.get("date"), currentMonth),
       description:form.get("description").trim(),
       category:category,
       planned:null,
@@ -577,13 +594,12 @@ function init(){
 
     if(collection==='fixed'){
       item.payment=newDesc;
-      const day=parseInt(newDate.slice(8,10),10)||1;
-      item.due=`${day} ${monthName(currentMonth)}`;
+      item.due=formatCashDate(newDate, currentMonth);
       item.expected=newAmount;
       item.actual=newActual;
     }else{
       item.description=newDesc;
-      item.date=newDate;
+      item.date=formatCashDate(newDate, currentMonth);
       if(isIncome){
         item.expected=newAmount;
         item.actual=newActual;
