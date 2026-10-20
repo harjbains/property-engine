@@ -2,6 +2,7 @@
 const CASHFLOW_KEY_PREFIX="tax-engine-cashflow-", KEY="tax-engine-april-2026", TAX_WORKSPACE_MONTH="2026-04", DEFAULT_BANK_ACCOUNT="lloyds";
 const by=s=>document.querySelector(s),all=s=>[...document.querySelectorAll(s)],num=v=>Math.max(0,Number(v)||0),uid=()=>crypto.randomUUID?crypto.randomUUID():`${Date.now()}-${Math.random().toString(16).slice(2)}`;
 const money=new Intl.NumberFormat("en-GB",{style:"currency",currency:"GBP"});
+const escapeHtml=s=>String(s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
 const todayIso=()=>new Date().toISOString().slice(0,10),monthIso=d=>String(d||todayIso()).slice(0,7);
 
 function cashflowKey(month){return`${CASHFLOW_KEY_PREFIX}${month}`;}
@@ -61,8 +62,11 @@ function cleanMerchantDesc(str){
     .replace(/\bTeslalnec\b/gi, "Tesla Inc.")
     .replace(/\bTeslalnc\b/gi, "Tesla Inc.")
     .replace(/\bTeslainc\b/gi, "Tesla Inc.")
+    .replace(/\bTestaine\b/gi, "Tesla Inc.")
+    .replace(/\bTestalnc\b/gi, "Tesla Inc.")
     .replace(/\bSCREwrFIX\b/gi, "SCREWFIX")
     .replace(/\bScrRewrix\b/gi, "SCREWFIX")
+    .replace(/\bScrewfix\b/gi, "SCREWFIX")
     .replace(/[,:.\(\)>›»~]+$/, "")
     .replace(/^[^a-zA-Z]+/, "")
     .replace(/\s+/g, " ")
@@ -90,24 +94,30 @@ function extractDebitAmount(str){
   return null;
 }
 
+function parseDebitLine(str){
+  const mDebit=str.match(/[-–—~]\s*[£$€EFLe]?\s*(\d{1,4}(?:[.,]\d{1,2})?)/i)||
+               str.match(/[£$€EFLe]\s*[-–—~]\s*(\d{1,4}(?:[.,]\d{1,2})?)/i);
+  if(mDebit){
+    let raw=mDebit[1].replace(",", ".");
+    if(!raw.includes(".") && raw.length===3){
+      raw=raw[0]+"."+raw.slice(1);
+    }
+    const val=parseFloat(raw);
+    if(val>0 && val<2000) return val;
+  }
+  return null;
+}
+
 function parseAmountsColumn(text){
   const lines=String(text||"").split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
   const debits=[];
   const balances=[];
 
   for(const l of lines){
-    const mDebit=l.match(/[-–—~]\s*[£$€EFL]?\s*(\d{1,4}(?:[.,]\d{1,2})?)/i)||
-                 l.match(/[£$€EFL]\s*[-–—~]\s*(\d{1,4}(?:[.,]\d{1,2})?)/i);
-    if(mDebit){
-      let raw=mDebit[1].replace(",", ".");
-      if(!raw.includes(".") && raw.length===3){
-        raw=raw[0]+"."+raw.slice(1);
-      }
-      const val=parseFloat(raw);
-      if(val>0 && val<2000){
-        debits.push(val);
-        continue;
-      }
+    const amt=parseDebitLine(l);
+    if(amt!=null){
+      debits.push(amt);
+      continue;
     }
 
     const mBal=l.match(/[£$€]?\s*([0-9]{1,3}(?:,[0-9]{3})*\.[0-9]{2})/);
@@ -163,6 +173,52 @@ function parseMerchantsColumn(text, baseMonth=currentMonth){
   }
 
   return items;
+}
+
+function matchDebitsWithMerchants(debits, merchants, defaultDate=""){
+  const transactions=[];
+  const usedMerchants=new Set();
+
+  for(const d of debits){
+    let closest=null;
+    let minDiff=70;
+
+    for(let i=0;i<merchants.length;i++){
+      if(usedMerchants.has(i))continue;
+      const diff=Math.abs(d.y-merchants[i].y);
+      if(diff<minDiff){
+        minDiff=diff;
+        closest={idx:i,item:merchants[i]};
+      }
+    }
+
+    if(closest){
+      usedMerchants.add(closest.idx);
+      transactions.push({
+        date:closest.item.date,
+        description:closest.item.desc||closest.item.description,
+        amount:d.amt??d.amount,
+        category:"Living",
+        propertyId:"",
+        campaignId:""
+      });
+    }else{
+      let dDate=defaultDate;
+      for(const m of merchants){
+        if(m.y<=d.y)dDate=m.date;
+      }
+      transactions.push({
+        date:dDate,
+        description:"Bank Spend",
+        amount:d.amt??d.amount,
+        category:"Living",
+        propertyId:"",
+        campaignId:""
+      });
+    }
+  }
+
+  return transactions;
 }
 
 function sliceImageToBlob(img, xPct, yPct, wPct, hPct, scale=3.0){
@@ -1018,13 +1074,14 @@ function init(){
 
     listEl.innerHTML=parsed.transactions.map((tx,idx)=>`
       <div class="scan-tx-row" data-idx="${idx}" style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:0.5rem; padding:0.65rem 0.75rem; display:flex; flex-direction:column; gap:0.35rem;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <label style="display:flex; align-items:center; gap:0.5rem; margin:0; cursor:pointer; font-weight:600; font-size:0.9rem; color:#111827;">
-            <input type="checkbox" class="scan-tx-check" data-idx="${idx}" checked style="accent-color:#059669; width:16px; height:16px; cursor:pointer;">
-            <span>${tx.description}</span>
-          </label>
-          <div style="display:flex; align-items:center; gap:0.5rem;">
-            <span style="font-weight:700; color:#dc2626; font-size:0.95rem;">-${money.format(tx.amount)}</span>
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:0.5rem;">
+          <div style="display:flex; align-items:center; gap:0.5rem; flex:1; min-width:0;">
+            <input type="checkbox" class="scan-tx-check" data-idx="${idx}" checked style="accent-color:#059669; width:16px; height:16px; cursor:pointer; flex-shrink:0;">
+            <input type="text" class="scan-tx-desc" value="${escapeHtml(tx.description)}" style="font-weight:600; font-size:0.9rem; color:#111827; border:1px solid #e5e7eb; background:white; padding:0.25rem 0.4rem; border-radius:0.25rem; width:100%; min-width:110px;">
+          </div>
+          <div style="display:flex; align-items:center; gap:0.35rem; flex-shrink:0;">
+            <span style="font-weight:700; color:#dc2626; font-size:0.95rem;">-£</span>
+            <input type="number" step="0.01" class="scan-tx-amount" value="${Number(tx.amount).toFixed(2)}" style="font-weight:700; color:#dc2626; font-size:0.95rem; width:72px; text-align:right; border:1px solid #e5e7eb; background:white; padding:0.25rem 0.35rem; border-radius:0.25rem;">
             <button type="button" class="scan-remove-btn" onclick="removeScanTx(${idx})" style="background:none; border:none; color:#9ca3af; font-size:1.15rem; cursor:pointer; padding:0 0.2rem;" title="Remove item">&times;</button>
           </div>
         </div>
@@ -1078,56 +1135,113 @@ function init(){
       const isMobileScreenshot=(img.naturalHeight/img.naturalWidth)>=1.2;
 
       if(isMobileScreenshot){
-        // Step 1: Scan account balance header
-        if(textEl)textEl.textContent="Scanning account balance (1/3)...";
-        if(barEl)barEl.style.width="25%";
-        const blobH=await sliceImageToBlob(img,0.04,0.03,0.92,0.14,3.0);
-        const resH=blobH?await Tesseract.recognize(blobH,"eng"):null;
-        const mBal=resH?.data?.text?.match(/[£$€]?\s*([0-9]{1,3}(?:,[0-9]{3})*\.[0-9]{2})/);
-        let detectedBalance=mBal?parseFloat(mBal[1].replace(/,/g,"")):null;
+        const worker=await Tesseract.createWorker("eng");
 
-        // Step 2: Scan debit amounts column (right 45%)
-        if(textEl)textEl.textContent="Scanning debit amounts (2/3)...";
-        if(barEl)barEl.style.width="55%";
-        const blobA=await sliceImageToBlob(img,0.55,0.14,0.45,0.76,3.0);
-        const resA=blobA?await Tesseract.recognize(blobA,"eng"):null;
-        const {debits,balances}=parseAmountsColumn(resA?.data?.text||"");
-        if(detectedBalance==null&&balances.length){
-          detectedBalance=balances[0];
-        }
+        try{
+          // Step 1: Scan account balance header (top 14%)
+          if(textEl)textEl.textContent="Scanning account balance (1/3)...";
+          if(barEl)barEl.style.width="25%";
+          const blobH=await sliceImageToBlob(img,0.04,0.03,0.92,0.14,3.0);
+          const resH=blobH?await worker.recognize(blobH):null;
+          const mBal=resH?.data?.text?.match(/[£$€]?\s*([0-9]{1,3}(?:,[0-9]{3})*\.[0-9]{2})/);
+          let detectedBalance=mBal?parseFloat(mBal[1].replace(/,/g,"")):null;
 
-        // Step 3: Scan merchants & dates column (left 65%)
-        if(textEl)textEl.textContent="Scanning merchants & dates (3/3)...";
-        if(barEl)barEl.style.width="85%";
-        const blobM=await sliceImageToBlob(img,0.0,0.14,0.62,0.76,3.0);
-        const resM=blobM?await Tesseract.recognize(blobM,"eng"):null;
-        const merchants=parseMerchantsColumn(resM?.data?.text||"",currentMonth);
+          // Step 2: Scan debit amounts column (right 50%)
+          if(textEl)textEl.textContent="Scanning debit amounts (2/3)...";
+          if(barEl)barEl.style.width="55%";
+          const blobA=await sliceImageToBlob(img,0.50,0.12,0.50,0.80,3.0);
+          const resA=blobA?await worker.recognize(blobA,{},{blocks:true}):null;
+          const debitItems=[];
+          const runningBalances=[];
 
-        const count=Math.min(merchants.length,debits.length);
-        if(count>0){
-          const transactions=[];
-          let structuredText=detectedBalance?`Account Balance: £${detectedBalance.toFixed(2)}\n\n`:"";
-          let lastDate="";
-          for(let i=0;i<count;i++){
-            if(merchants[i].date!==lastDate){
-              lastDate=merchants[i].date;
-              structuredText+=`${lastDate}\n`;
+          for(const b of (resA?.data?.blocks||[])){
+            for(const p of b.paragraphs){
+              for(const l of p.lines){
+                const t=l.text.trim();
+                const amt=parseDebitLine(t);
+                if(amt!=null){
+                  debitItems.push({amt,y:l.bbox.y0,text:t});
+                }else{
+                  const mb=t.match(/[£$€]?\s*([0-9]{1,3}(?:,[0-9]{3})*\.[0-9]{2})/);
+                  if(mb){
+                    const v=parseFloat(mb[1].replace(/,/g,""));
+                    if(v>500)runningBalances.push({val:v,y:l.bbox.y0});
+                  }
+                }
+              }
             }
-            structuredText+=`${merchants[i].description} - £${debits[i].toFixed(2)}\n`;
-            transactions.push({
-              date:merchants[i].date,
-              description:merchants[i].description,
-              amount:debits[i],
-              category:"Living",
-              propertyId:"",
-              campaignId:""
-            });
           }
 
-          if(by("#bankRawTextInput"))by("#bankRawTextInput").value=structuredText.trim();
-          if(statusEl)statusEl.style.display="none";
-          renderScanResults({detectedBalance,transactions});
-          return;
+          if(detectedBalance==null&&runningBalances.length){
+            detectedBalance=runningBalances[0].val;
+          }
+
+          // Step 3: Scan merchants & dates column (left 65%)
+          if(textEl)textEl.textContent="Scanning merchants & dates (3/3)...";
+          if(barEl)barEl.style.width="85%";
+          const blobM=await sliceImageToBlob(img,0.0,0.12,0.65,0.80,3.0);
+          const resM=blobM?await worker.recognize(blobM,{},{blocks:true}):null;
+          const merchantItems=[];
+          const now=new Date();
+          let curDate=`${now.getDate()} ${now.toLocaleString("en-GB",{month:"short"})}`;
+
+          function parseDate(s){
+            const low=s.toLowerCase();
+            if(low.includes("yesterday")){
+              const d=new Date();d.setDate(d.getDate()-1);
+              return `${d.getDate()} ${d.toLocaleString("en-GB",{month:"short"})}`;
+            }
+            if(low.includes("today")){
+              const d=new Date();
+              return `${d.getDate()} ${d.toLocaleString("en-GB",{month:"short"})}`;
+            }
+            const m=s.match(/(?:mon|tue|wed|thu|fri|sat|sun)?\s*([0-9]{1,2})\s*(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/i);
+            if(m){
+              const day=parseInt(m[1],10);
+              const mon=m[2].charAt(0).toUpperCase()+m[2].slice(1,3).toLowerCase();
+              return `${day} ${mon}`;
+            }
+            return null;
+          }
+
+          for(const b of (resM?.data?.blocks||[])){
+            for(const p of b.paragraphs){
+              for(const l of p.lines){
+                const t=l.text.trim();
+                if(/^(october|all|in|out|search|home|apply|payments|cards)\b/i.test(t))continue;
+                const dh=parseDate(t);
+                if(dh){curDate=dh;continue;}
+                if(/^screw\b/i.test(t)&&merchantItems.length&&merchantItems[merchantItems.length-1].desc.includes("SCREWFIX"))continue;
+                const cleaned=cleanMerchantDesc(t);
+                if(cleaned.length>=3&&!/^[0-9£$.,-]+$/.test(cleaned)){
+                  merchantItems.push({desc:cleaned,date:curDate,y:l.bbox.y0});
+                }
+              }
+            }
+          }
+
+          await worker.terminate();
+
+          if(debitItems.length>0){
+            const transactions=matchDebitsWithMerchants(debitItems,merchantItems,curDate);
+            let structuredText=detectedBalance?`Account Balance: £${detectedBalance.toFixed(2)}\n\n`:"";
+            let lastDate="";
+            for(const tx of transactions){
+              if(tx.date!==lastDate){
+                lastDate=tx.date;
+                structuredText+=`${lastDate}\n`;
+              }
+              structuredText+=`${tx.description} - £${tx.amount.toFixed(2)}\n`;
+            }
+
+            if(by("#bankRawTextInput"))by("#bankRawTextInput").value=structuredText.trim();
+            if(statusEl)statusEl.style.display="none";
+            renderScanResults({detectedBalance,transactions});
+            return;
+          }
+        }catch(subErr){
+          try{await worker.terminate();}catch(e){}
+          console.warn("Mobile column scan failed, falling back to full-image OCR:",subErr);
         }
       }
 
@@ -1163,6 +1277,12 @@ function init(){
       const tx=currentScanData.transactions[idx];
       if(!tx)return;
 
+      const descInput=row.querySelector(".scan-tx-desc");
+      const amtInput=row.querySelector(".scan-tx-amount");
+      const chosenDesc=(descInput?.value?.trim())||tx.description||"Bank Spend";
+      const parsedAmt=amtInput?parseFloat(amtInput.value):tx.amount;
+      const chosenAmt=(!isNaN(parsedAmt)&&parsedAmt>0)?parsedAmt:tx.amount;
+
       const catSelect=row.querySelector(".scan-tx-category");
       const chosenCat=catSelect?catSelect.value:(tx.category||"Living");
       const isTaxReserve=/tax reserve|tax provision/i.test(chosenCat);
@@ -1171,10 +1291,10 @@ function init(){
         id:uid(),
         createdAt:new Date().toISOString(),
         date:formatCashDate(tx.date,currentMonth),
-        description:tx.description,
+        description:chosenDesc,
         category:chosenCat,
         planned:null,
-        actual:tx.amount,
+        actual:chosenAmt,
         status:"Paid",
         treatment:isTaxReserve?"cashflow":(tx.propertyId?"property_expense":"cashflow"),
         propertyId:isTaxReserve?"":(tx.propertyId||""),
@@ -1187,7 +1307,7 @@ function init(){
 
       x.spending.push(item);
       allocatedCount++;
-      totalAllocatedAmount+=tx.amount;
+      totalAllocatedAmount+=chosenAmt;
       if(item.campaignId)syncMobileCampaignTx(item,false);
     });
 

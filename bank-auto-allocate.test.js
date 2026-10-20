@@ -153,16 +153,19 @@ test("bank-auto-allocate: two-column OCR parser parses mobile screenshots accura
   vm.createContext(context);
 
   const cleanMatch = code.match(/function cleanMerchantDesc[\s\S]*?\.trim\(\);\s*\}/);
+  const debitLineMatch = code.match(/function parseDebitLine[\s\S]*?return null;\s*\}/);
   const amtMatch = code.match(/function parseAmountsColumn[\s\S]*?return\s*\{debits,\s*balances\};\s*\}/);
   const merchMatch = code.match(/function parseMerchantsColumn[\s\S]*?return items;\s*\}/);
 
   assert.ok(cleanMatch, "cleanMerchantDesc function must exist");
+  assert.ok(debitLineMatch, "parseDebitLine function must exist");
   assert.ok(amtMatch, "parseAmountsColumn function must exist");
   assert.ok(merchMatch, "parseMerchantsColumn function must exist");
 
   vm.runInContext(`
     ${cleanMatch[0]}
     function cleanMerchantName(str){ return cleanMerchantDesc(str); }
+    ${debitLineMatch[0]}
     ${amtMatch[0]}
     ${merchMatch[0]}
   `, context);
@@ -210,5 +213,85 @@ Thu 15 October
   assert.equal(merchants[4].description, "ARGOS PAY");
   assert.equal(merchants[5].description, "SCREWFIX");
   assert.equal(merchants[6].description, "ABRATAX");
+});
+
+test("bank-auto-allocate: matchDebitsWithMerchants correctly matches by vertical Y proximity and avoids index shift", () => {
+  const code = fs.readFileSync("quick-spend.js", "utf8");
+
+  const context = {
+    Set,
+    Math,
+    Array
+  };
+  vm.createContext(context);
+
+  const matchFn = code.match(/function matchDebitsWithMerchants[\s\S]*?return transactions;\s*\}/);
+  assert.ok(matchFn, "matchDebitsWithMerchants function must exist");
+  vm.runInContext(matchFn[0], context);
+
+  // Scenario 1: All 7 debits and 7 merchants present
+  const debits = [
+    { amt: 12.36, y: 514 },
+    { amt: 7.75, y: 660 },
+    { amt: 5.11, y: 803 },
+    { amt: 0.24, y: 953 },
+    { amt: 100.00, y: 1199 },
+    { amt: 17.89, y: 1346 },
+    { amt: 6.00, y: 1593 }
+  ];
+
+  const fullMerchants = [
+    { desc: "Tesla Inc", date: "19 Oct", y: 525 },
+    { desc: "Tesla Inc", date: "19 Oct", y: 671 },
+    { desc: "Tesla Inc", date: "19 Oct", y: 816 },
+    { desc: "FASTHOSTS", date: "19 Oct", y: 963 },
+    { desc: "ARGOS PAY", date: "16 Oct", y: 1203 },
+    { desc: "SCREWFIX", date: "16 Oct", y: 1348 },
+    { desc: "ABRATAX", date: "15 Oct", y: 1603 }
+  ];
+
+  const tx1 = context.matchDebitsWithMerchants(debits, fullMerchants, "19 Oct");
+  assert.equal(tx1.length, 7);
+  assert.equal(tx1[0].description, "Tesla Inc");
+  assert.equal(tx1[0].amount, 12.36);
+  assert.equal(tx1[3].description, "FASTHOSTS");
+  assert.equal(tx1[3].amount, 0.24);
+  assert.equal(tx1[4].description, "ARGOS PAY");
+  assert.equal(tx1[4].amount, 100.00);
+  assert.equal(tx1[5].description, "SCREWFIX");
+  assert.equal(tx1[5].amount, 17.89);
+  assert.equal(tx1[6].description, "ABRATAX");
+  assert.equal(tx1[6].amount, 6.00);
+
+  // Scenario 2: 2 Tesla rows dropped by OCR (5 merchants, 7 debits)
+  // CRITICAL: FastHosts must NOT take £7.75, Argos must NOT take £5.11!
+  const droppedMerchants = [
+    { desc: "Tesla Inc", date: "19 Oct", y: 525 },
+    { desc: "FASTHOSTS", date: "19 Oct", y: 963 },
+    { desc: "ARGOS PAY", date: "16 Oct", y: 1203 },
+    { desc: "SCREWFIX", date: "16 Oct", y: 1348 },
+    { desc: "ABRATAX", date: "15 Oct", y: 1603 }
+  ];
+
+  const tx2 = context.matchDebitsWithMerchants(debits, droppedMerchants, "19 Oct");
+  assert.equal(tx2.length, 7);
+  assert.equal(tx2[0].description, "Tesla Inc");
+  assert.equal(tx2[0].amount, 12.36);
+
+  // Dropped merchant debits become "Bank Spend" with correct date, NOT shifted into FastHosts!
+  assert.equal(tx2[1].description, "Bank Spend");
+  assert.equal(tx2[1].amount, 7.75);
+  assert.equal(tx2[2].description, "Bank Spend");
+  assert.equal(tx2[2].amount, 5.11);
+
+  // Remaining merchants correctly match their actual debits:
+  assert.equal(tx2[3].description, "FASTHOSTS");
+  assert.equal(tx2[3].amount, 0.24);
+  assert.equal(tx2[4].description, "ARGOS PAY");
+  assert.equal(tx2[4].amount, 100.00);
+  assert.equal(tx2[5].description, "SCREWFIX");
+  assert.equal(tx2[5].amount, 17.89);
+  assert.equal(tx2[6].description, "ABRATAX");
+  assert.equal(tx2[6].amount, 6.00);
 });
 
