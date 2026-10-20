@@ -186,7 +186,13 @@ function bankAccountLabel(id){return BANK_ACCOUNTS.find(([v])=>v===(id||DEFAULT_
 function normaliseCashflowAccounts(x){const oldBank=num(x.bank);x.bankAccounts=x.bankAccounts||{zempler:oldBank,lloyds:0};x.bankAccounts.zempler=num(x.bankAccounts.zempler);x.bankAccounts.lloyds=num(x.bankAccounts.lloyds);if(!x.bankAccounts.zempler&&!x.bankAccounts.lloyds&&oldBank)x.bankAccounts.zempler=oldBank;x.bank=num(x.bankAccounts.zempler)+num(x.bankAccounts.lloyds);return x;}
 function adjustCashBalance(x,account,delta){normaliseCashflowAccounts(x);const key=account||DEFAULT_BANK_ACCOUNT,change=Number(delta)||0;x.bankAccounts[key]=num(x.bankAccounts[key])+change;x.bank=num(x.bank)+change;return x;}
 function applyCashTransfer(x,item,sign=1){normaliseCashflowAccounts(x);const amount=num(item.actual||item.planned),from=item.transferFrom||DEFAULT_BANK_ACCOUNT,to=item.transferTo||"lloyds";if(!amount||from===to)return x;x.bankAccounts[from]=num(x.bankAccounts[from])-amount*sign;x.bankAccounts[to]=num(x.bankAccounts[to])+amount*sign;normaliseCashflowAccounts(x);return x;}
-function cashItemText(i){return `${i.description||i.payment||""} ${i.notes||""} ${i.category||""}`;}function isRoomRentIncome(i){return /\b(room\s*rents?|front\s*room|rent\s*front)\b/i.test(cashItemText(i));}function compactName(v){return String(v||"").toLowerCase().replace(/[^a-z0-9]/g,"");}function resolvePropertyId(value="",item={}){if(state?.properties?.some(p=>p.id===value))return value;const raw=String(value||"").trim(),hay=compactName(`${raw} ${cashItemText(item)}`);if(!hay)return "";const match=state?.properties?.find(p=>hay.includes(compactName(p.property))||compactName(p.property).includes(hay));return match?.id||"";}function normaliseCashItem(i){i.id=i.id||uid();i.createdAt=i.createdAt||i.id;i.treatment=i.treatment||"cashflow";i.notes=i.notes||"";i.account=i.account||DEFAULT_BANK_ACCOUNT;if(isRoomRentIncome(i)){i.treatment="room_rent";i.propertyId="";}else if(i.treatment==="property_income"||i.treatment==="property_expense"||i.treatment==="property_interest"||i.treatment==="property_capital"){i.propertyId=resolvePropertyId(i.propertyId,i);}else i.propertyId="";return i;}
+function cashItemText(i){return `${i.description||i.payment||""} ${i.notes||""} ${i.category||""}`;}
+function isRoomRentIncome(i){if(!i)return false;if(i.treatment==="room_rent")return true;return /\b(rooms?|room\s*rents?|room\s*income|front\s*room|rent\s*front)\b/i.test(cashItemText(i));}
+function isPensionIncome(i){if(!i)return false;if(i.treatment==="pension_income")return true;if(String(i.category||"").toLowerCase()==="pension")return true;return /\b(pension|bt\s*pension|state\s*pension)\b/i.test(cashItemText(i));}
+function isPropertyRentIncome(i){if(!i)return false;if(i.isTransfer||i.treatment==="transfer")return false;if(i.treatment==="property_expense"||i.treatment==="property_interest"||i.treatment==="property_capital"||i.treatment==="uber_expense")return false;if(/\b(mortgage|insurance|repair|maintenance|ground\s*rent|service\s*charge|agent\s*fee|management\s*fee|council\s*tax|electric|gas|water|broadband)\b/i.test(cashItemText(i)))return false;if(isRoomRentIncome(i))return false;if(i.treatment==="property_income")return true;if(Boolean(i.propertyId)&&!i.payment)return true;const text=cashItemText(i);if(/\b(rents?|rental)\b/i.test(text))return true;const hay=compactName(text);return(state?.properties||[]).some(p=>p.property&&(hay.includes(compactName(p.property))||compactName(p.property).includes(hay)));}
+function compactName(v){return String(v||"").toLowerCase().replace(/[^a-z0-9]/g,"");}
+function resolvePropertyId(value="",item={}){if(state?.properties?.some(p=>p.id===value))return value;const raw=String(value||"").trim(),hay=compactName(`${raw} ${cashItemText(item)}`);if(!hay)return "";const match=state?.properties?.find(p=>hay.includes(compactName(p.property))||compactName(p.property).includes(hay));return match?.id||"";}
+function normaliseCashItem(i){i.id=i.id||uid();i.createdAt=i.createdAt||i.id;i.treatment=i.treatment||"cashflow";i.notes=i.notes||"";i.account=i.account||DEFAULT_BANK_ACCOUNT;if(isRoomRentIncome(i)){i.treatment="room_rent";i.propertyId="";}else if(isPropertyRentIncome(i)){i.propertyId=resolvePropertyId(i.propertyId,i);i.treatment="property_income";}else if(isPensionIncome(i)){i.treatment="pension_income";i.propertyId="";}else if(i.treatment==="property_income"||i.treatment==="property_expense"||i.treatment==="property_interest"||i.treatment==="property_capital"){i.propertyId=resolvePropertyId(i.propertyId,i);}else i.propertyId="";return i;}
 const normaliseCashItemBase=normaliseCashItem;normaliseCashItem=function(i){i=normaliseCashItemBase(i);if(i.status==="Expected"&&i.expected==null&&i.actual!=null){i.expected=num(i.actual);i.actual=null;}return i;};
 function cashItemImpact(kind,item){if(!item||item.isTransfer)return 0;if(kind==="income")return item.status==="Received"?num(item.actual??item.expected):0;if(kind==="fixed")return item.status==="Paid"?-num(item.actual??item.expected):0;return item.status==="Paid"||item.status==="Part-paid"?-num(item.actual):0;}
 function reconcileCashItemBalance(x,kind,item,before){normaliseCashflowAccounts(x);const oldImpact=cashItemImpact(kind,before),newImpact=cashItemImpact(kind,item),oldAccount=before?.account||DEFAULT_BANK_ACCOUNT,newAccount=item?.account||DEFAULT_BANK_ACCOUNT;if(oldImpact)adjustCashBalance(x,oldAccount,-oldImpact);if(newImpact)adjustCashBalance(x,newAccount,newImpact);return x;}
@@ -200,7 +206,195 @@ function isPropertyManagementFee(item){return item?.treatment==="property_expens
 function ensurePropertyManagementFees(x){x.income=x.income||[];x.spending=x.spending||[];state.propertyExpenses=state.propertyExpenses||[];let cashChanged=false,propertyChanged=false;const managementRows=x.spending.filter(isPropertyManagementFee);for(const row of managementRows){const source=x.income.find(income=>income.id===row.managementFeeFor);if(row.status==="Paid")adjustCashBalance(x,row.account||source?.account,num(row.actual??row.planned));cashChanged=true;}if(managementRows.length)x.spending=x.spending.filter(row=>!managementRows.includes(row));const before=state.propertyExpenses.length;state.propertyExpenses=state.propertyExpenses.filter(expense=>!(expense.autoManagementFee&&expense.cashflowRentIncomeId));propertyChanged=state.propertyExpenses.length!==before;return{cashChanged,propertyChanged};}
 function saveCashflowState(x){x.month=x.month||workspaceMonth();const changes=ensurePropertyManagementFees(x);normaliseCashflowAccounts(x);localStorage.setItem(cashflowKey(x.month),JSON.stringify(x));if(changes.propertyChanged)save();}
 function previousCashflowMonth(month=workspaceMonth()){const d=new Date(`${month}-01T00:00:00Z`);d.setUTCMonth(d.getUTCMonth()-1);return`${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,"0")}`;}
-function copyPreviousFixedCosts(){const month=workspaceMonth(),previous=previousCashflowMonth(month),raw=localStorage.getItem(cashflowKey(previous))||(previous===TAX_WORKSPACE_MONTH?localStorage.getItem(CASHFLOW_KEY):null),saved=JSON.parse(raw||"null");if(!saved){logToUI(`No saved cashflow was found for ${workspaceMonthLabel(previous)}.`);return;}const x=cashflowState(),existingCosts=new Set(x.fixed.map(i=>compactName(i.payment))),existingRents=new Set((x.income||[]).map(i=>compactName(i.description))),fixed=(saved.fixed||[]).filter(i=>!existingCosts.has(compactName(i.payment))).map(i=>normaliseCashItem({...i,id:uid(),due:cashDueFromDayForMonth(i.due,month),actual:null,status:"Expected",copiedFromMonth:previous})),rents=(saved.income||[]).filter(i=>i.section==="fixed"&&!/\bmetro\s*prepaid\b/i.test(cashItemText(i))&&(i.treatment==="property_income"||i.treatment==="room_rent"||/\brent\b/i.test(cashItemText(i)))&&!existingRents.has(compactName(i.description))).map(i=>normaliseCashItem({...i,id:uid(),date:cashDueFromDayForMonth(i.date,month),actual:null,status:"Expected",section:"fixed",copiedFromMonth:previous}));if(!fixed.length&&!rents.length){logToUI("All previous-month fixed costs and rents are already present.");return;}x.fixed.push(...fixed);x.income.push(...rents);saveCashflowState(x);taxWorkspaceTab="cashflow";renderDashboardSurface();}
+function copyPreviousFixedCosts(){
+  const month=workspaceMonth(),previous=previousCashflowMonth(month);
+  const raw=localStorage.getItem(cashflowKey(previous))||(previous===TAX_WORKSPACE_MONTH?localStorage.getItem(CASHFLOW_KEY):null);
+  let saved=JSON.parse(raw||"null");
+  const priorStates=allCashflowStates().filter(s=>s.month<month).sort((a,b)=>b.month.localeCompare(a.month));
+  let sourceMonth=previous;
+  if((!saved||((!saved.fixed||!saved.fixed.length)&&(!saved.income||!saved.income.length)))&&priorStates.length){
+    saved=priorStates[0];
+    sourceMonth=saved.month;
+  }
+  if(!saved){
+    const fallbackSeed=cashflowSeedForMonth(previous);
+    if(fallbackSeed&&fallbackSeed.fixed&&fallbackSeed.fixed.length){
+      saved=fallbackSeed;
+      sourceMonth=previous;
+    }
+  }
+  saved=saved||{fixed:[],income:[],spending:[],month:previous};
+  const x=cashflowState();
+  x.fixed=x.fixed||[];
+  x.income=x.income||[];
+  const existingCosts=new Set(x.fixed.map(i=>compactName(i.payment)));
+  const existingRents=new Set((x.income||[]).map(i=>compactName(i.description)));
+  const existingPropertyIds=new Set((x.income||[]).map(i=>i.propertyId).filter(Boolean));
+
+  const fixed=[];
+  const misplacedIncomes=[];
+  for(const item of(saved.fixed||[])){
+    if(isRoomRentIncome(item)||isPensionIncome(item)||isPropertyRentIncome(item)){
+      misplacedIncomes.push(item);
+    }else{
+      const cName=compactName(item.payment);
+      if(!existingCosts.has(cName)){
+        existingCosts.add(cName);
+        fixed.push(normaliseCashItem({
+          ...item,
+          id:uid(),
+          due:cashDueFromDayForMonth(item.due,month),
+          actual:null,
+          status:"Expected",
+          account:item.account||DEFAULT_BANK_ACCOUNT,
+          treatment:item.treatment||"cashflow",
+          copiedFromMonth:sourceMonth
+        }));
+      }
+    }
+  }
+
+  const candidateIncomes=[...(saved.income||[]),...misplacedIncomes];
+  for(const priorState of priorStates){
+    if(priorState.month===sourceMonth)continue;
+    for(const item of[...(priorState.income||[]),...(priorState.fixed||[])]){
+      if(isRoomRentIncome(item)||isPensionIncome(item)||isPropertyRentIncome(item)||item.section==="fixed"){
+        const alreadyInCandidates=candidateIncomes.some(c=>{
+          if(c.propertyId&&item.propertyId&&c.propertyId===item.propertyId)return true;
+          if(isPensionIncome(c)&&isPensionIncome(item))return true;
+          if(isRoomRentIncome(c)&&isRoomRentIncome(item))return true;
+          return compactName(c.description||c.payment)===compactName(item.description||item.payment);
+        });
+        if(!alreadyInCandidates){
+          candidateIncomes.push({...item,_fromMonth:priorState.month});
+        }
+      }
+    }
+  }
+
+  const rents=[];
+  const isIncomePresent=(item)=>{
+    if(item.propertyId&&existingPropertyIds.has(item.propertyId))return true;
+    const cName=compactName(item.description||item.payment);
+    if(cName&&existingRents.has(cName))return true;
+    if(isPensionIncome(item)&&[...x.income,...rents].some(isPensionIncome))return true;
+    if(isRoomRentIncome(item)&&[...x.income,...rents].some(isRoomRentIncome))return true;
+    if(item.propertyId){
+      const prop=(state?.properties||[]).find(p=>p.id===item.propertyId);
+      if(prop){
+        const pComp=compactName(prop.property);
+        if([...x.income,...rents].some(i=>{
+          const desc=compactName(i.description||i.payment);
+          return desc&&(desc.includes(pComp)||pComp.includes(desc));
+        }))return true;
+      }
+    }
+    return false;
+  };
+
+  for(const item of candidateIncomes){
+    if(!item||item.isTransfer||item.treatment==="transfer")continue;
+    if(/\bmetro\s*prepaid\b/i.test(cashItemText(item)))continue;
+    if(item.treatment==="uber_income"||(item.category==="Uber"&&!isPropertyRentIncome(item)&&!isRoomRentIncome(item)&&!isPensionIncome(item)))continue;
+    const isRent=isPropertyRentIncome(item),isRoom=isRoomRentIncome(item),isPension=isPensionIncome(item),isFixed=item.section==="fixed";
+    if(isRent||isRoom||isPension||isFixed){
+      if(!isIncomePresent(item)){
+        const desc=item.description||item.payment||"Expected income";
+        const propId=item.propertyId||(isRent?resolvePropertyId(item.propertyId,item):"");
+        existingRents.add(compactName(desc));
+        if(propId)existingPropertyIds.add(propId);
+        rents.push(normaliseCashItem({
+          ...item,
+          id:uid(),
+          date:cashDueFromDayForMonth(item.date||item.due||"1",month),
+          description:desc,
+          category:item.category||(isPension?"Pension":isRent?"Rent income":"Income"),
+          expected:num(item.expected??item.actual??item.planned),
+          actual:null,
+          status:"Expected",
+          section:"fixed",
+          account:item.account||DEFAULT_BANK_ACCOUNT,
+          treatment:isRoom?"room_rent":isRent?"property_income":(isPension?"pension_income":(item.treatment||"cashflow")),
+          propertyId:propId,
+          copiedFromMonth:item._fromMonth||sourceMonth
+        }));
+      }
+    }
+  }
+
+  for(const p of(state?.properties||[])){
+    if(!p||!p.property)continue;
+    const pComp=compactName(p.property);
+    const isPresent=existingPropertyIds.has(p.id)||[...x.income,...rents].some(i=>{
+      if(i.propertyId&&i.propertyId===p.id)return true;
+      const desc=compactName(i.description||i.payment);
+      return desc&&(desc.includes(pComp)||pComp.includes(desc));
+    });
+    if(!isPresent){
+      existingPropertyIds.add(p.id);
+      existingRents.add(pComp);
+      const day=cashDay(p.start)||(pComp.includes("penn")?26:1);
+      const amount=num(p.rent)||(pComp.includes("leslie")?900:pComp.includes("5aranelagh")?550:pComp.includes("5ranelagh")?600:850);
+      rents.push(normaliseCashItem({
+        id:uid(),
+        date:`${day} ${monthShort(month)}`,
+        description:`${p.property} rent`,
+        category:"Rent income",
+        expected:amount,
+        actual:null,
+        status:"Expected",
+        section:"fixed",
+        treatment:"property_income",
+        propertyId:p.id,
+        account:DEFAULT_BANK_ACCOUNT,
+        copiedFromMonth:"state.properties"
+      }));
+    }
+  }
+
+  const hasPension=[...x.income,...rents].some(isPensionIncome);
+  if(!hasPension){
+    const pensionRecords=state?.pension||[];
+    const lastPension=pensionRecords.length?pensionRecords[pensionRecords.length-1]:null;
+    const s=(typeof current==="function")?current():null;
+    const annualPension=num(s?.moduleData?.pension?.annual)||(lastPension?num(lastPension.amount):8295);
+    let monthlyPension=0;
+    if(lastPension&&num(lastPension.amount)>0){
+      monthlyPension=num(lastPension.amount)>2000?Math.round(num(lastPension.amount)/12*100)/100:num(lastPension.amount);
+    }else if(annualPension>0){
+      monthlyPension=Math.round(annualPension/12*100)/100;
+    }else{
+      monthlyPension=691.25;
+    }
+    const provider=lastPension?.provider||"BT Pension";
+    existingRents.add(compactName(provider));
+    rents.push(normaliseCashItem({
+      id:uid(),
+      date:`1 ${monthShort(month)}`,
+      description:provider,
+      category:"Pension",
+      expected:monthlyPension,
+      actual:null,
+      status:"Expected",
+      section:"fixed",
+      treatment:"pension_income",
+      account:DEFAULT_BANK_ACCOUNT,
+      copiedFromMonth:"state.pension"
+    }));
+  }
+
+  if(!fixed.length&&!rents.length){
+    logToUI("All previous-month fixed costs and rents are already present.");
+    return;
+  }
+  x.fixed.push(...fixed);
+  x.income.push(...rents);
+  saveCashflowState(x);
+  taxWorkspaceTab="cashflow";
+  renderDashboardSurface();
+  logToUI(`Copied ${fixed.length} fixed cost(s) and ${rents.length} regular income(s) into ${workspaceMonthLabel(month)}.`);
+}
+window.copyPreviousFixedCosts=copyPreviousFixedCosts;
 function normaliseCashflowLock(x){x.lock=x.lock||{status:"open",lockDay:null,lockedAt:""};if(!["open","partial","closed"].includes(x.lock.status))x.lock.status="open";x.lock.lockDay=x.lock.status==="partial"?Math.max(1,Math.min(31,num(x.lock.lockDay)||cashDay(new Date().toISOString().slice(0,10)))):null;return x;}
 function cashflowLockLabel(x){normaliseCashflowLock(x);return x.lock.status==="closed"?"Closed month":x.lock.status==="partial"?`Locked to ${x.lock.lockDay} ${monthShort(x.month)}`:"Open month";}
 function cashflowLockDayDefault(){const m=workspaceMonth(),now=new Date(),current=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;return m===current?now.getDate():15;}
@@ -356,7 +550,7 @@ function addFixedIncome(){openCashflowEditor("income","add","","fixed");}
 function editIncome(id){const x=cashflowState(),i=(x.income||[]).find(v=>v.id===id);if(!i||guardCashflowLocked(x,"income",i))return;openCashflowEditor("income","edit",id);}
 function removeIncome(id){const x=cashflowState(),i=(x.income||[]).find(v=>v.id===id);if(!i||guardCashflowLocked(x,"income",i)||!confirm(`Remove ${i.description}?`))return;x.income=x.income.filter(v=>v.id!==id);saveCashflowState(x);taxWorkspaceTab="cashflow";renderDashboardSurface();}
 function cashDateIso(value,month=workspaceMonth()){const s=String(value||"").trim();if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;const day=cashDay(s);return day?`${month}-${String(day).padStart(2,"0")}`:"";}function cashDateMonth(value,month=workspaceMonth()){const iso=cashDateIso(value,month);return iso?iso.slice(0,7):"";}
-function workspaceMonth(){return dashboardMonth||dashboardDates().cutoff.slice(0,7);}
+function workspaceMonth(){return window.dashboardMonth||dashboardMonth||dashboardDates().cutoff.slice(0,7);}
 function workspaceMonthLabel(month){return new Intl.DateTimeFormat("en-GB",{month:"long",year:"numeric",timeZone:"UTC"}).format(new Date(`${month}-01T00:00:00Z`));}
 function normaliseLegacyCashflowStorage(){const legacy=localStorage.getItem(CASHFLOW_KEY),monthKey=cashflowKey(TAX_WORKSPACE_MONTH);if(legacy&&!localStorage.getItem(monthKey)){try{const x=JSON.parse(legacy);x.month=x.month||TAX_WORKSPACE_MONTH;localStorage.setItem(monthKey,JSON.stringify(x));}catch{localStorage.setItem(monthKey,legacy);}}}
 function cashflowStorageKeys(){normaliseLegacyCashflowStorage();return Object.keys(localStorage).filter(k=>k.startsWith(CASHFLOW_KEY_PREFIX)).sort();}
