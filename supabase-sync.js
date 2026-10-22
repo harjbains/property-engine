@@ -5,7 +5,17 @@ const SESSION_KEY="tax-engine-supabase-session",SYNC_PREFIX="tax-engine-";
 const by=s=>document.querySelector(s),all=s=>[...document.querySelectorAll(s)];
 let applyingRemote=false,pushTimer=null,lastPushAt=0,lastPullAt=0,lastLocalWriteAt=0;
 const cloudAudit={checkedAt:"",localOnly:[],cloudOnly:[],different:[],matched:0,prePull:{localOnly:0,cloudOnly:0,different:0}};
-window.TaxEngineCloudAudit=cloudAudit;
+if(typeof window !== "undefined") window.TaxEngineCloudAudit=cloudAudit;
+
+function logToUI(msg) {
+  if (typeof document === 'undefined') return;
+  const div = document.createElement('div');
+  div.style = 'position:fixed; top:10px; right:10px; background:rgba(0,0,0,0.8); color:white; padding:10px; z-index:9999; border-radius:5px; font-family:monospace; max-width:400px; word-wrap:break-word; margin-bottom:5px;';
+  div.textContent = msg; console.log(msg); console.log(msg); console.log(msg);
+  document.body.appendChild(div);
+  setTimeout(() => div.remove(), 10000);
+}
+
 
 function logToUI(msg) {
   const div = document.createElement("div");
@@ -15,7 +25,16 @@ function logToUI(msg) {
   setTimeout(() => div.remove(), 10000);
 }
 
-const nativeSetItem=Storage.prototype.setItem;
+
+function logToUI(msg) {
+  const div = document.createElement("div");
+  div.style = "position:fixed; top:10px; right:10px; background:rgba(0,0,0,0.8); color:white; padding:10px; z-index:9999; border-radius:5px; font-family:monospace; max-width:400px; word-wrap:break-word; margin-bottom:5px;";
+  div.textContent = msg;
+  document.body.appendChild(div);
+  setTimeout(() => div.remove(), 10000);
+}
+
+const nativeSetItem=typeof Storage !== "undefined" ? Storage.prototype.setItem : null;
 const status=text=>{all("[data-sync-status]").forEach(x=>x.textContent=text);};
 function session(){try{return JSON.parse(localStorage.getItem(SESSION_KEY)||"null");}catch{return null;}}
 function saveSession(s){nativeSetItem.call(localStorage,SESSION_KEY,JSON.stringify(s));}
@@ -70,6 +89,99 @@ function schedulePush(){ if(READ_ONLY_MODE) return;
       logToUI(`Cloud Sync Failed! Error: ${e.message}`);
     }),900);
 }
+function mergeCashflowPayload(localStr, remoteStr){
+  if(!localStr) return remoteStr;
+  if(!remoteStr) return localStr;
+  try{
+    const local = JSON.parse(localStr);
+    const remote = JSON.parse(remoteStr);
+    if(!local || typeof local !== 'object') return remoteStr;
+    if(!remote || typeof remote !== 'object') return localStr;
+
+    const mergeList = (localList, remoteList) => {
+      const map = new Map();
+      (Array.isArray(remoteList) ? remoteList : []).forEach(item => {
+        if(item && (item.id || item.description || item.payment)) {
+          const k = item.id || `${item.due||item.date}:${item.description||item.payment}:${item.actual||item.expected||item.planned}`;
+          map.set(k, item);
+        }
+      });
+      (Array.isArray(localList) ? localList : []).forEach(item => {
+        if(item && (item.id || item.description || item.payment)) {
+          const k = item.id || `${item.due||item.date}:${item.description||item.payment}:${item.actual||item.expected||item.planned}`;
+          map.set(k, item);
+        }
+      });
+      return [...map.values()];
+    };
+
+    const lloydsLocal = Number(local.bankAccounts?.lloyds || 0);
+    const lloydsRemote = Number(remote.bankAccounts?.lloyds || 0);
+    const zemplerLocal = Number(local.bankAccounts?.zempler || 0);
+    const zemplerRemote = Number(remote.bankAccounts?.zempler || 0);
+    const zemplerFinal = Math.max(zemplerLocal, zemplerRemote);
+    const lloydsFinal = lloydsLocal > 0 ? lloydsLocal : (lloydsRemote > 0 ? lloydsRemote : 0);
+
+    const merged = {
+      ...remote,
+      ...local,
+      fixed: mergeList(local.fixed, remote.fixed),
+      spending: mergeList(local.spending, remote.spending),
+      income: mergeList(local.income, remote.income),
+      bankAccounts: {
+        zempler: zemplerFinal,
+        lloyds: lloydsFinal
+      },
+      bank: zemplerFinal + lloydsFinal
+    };
+    return JSON.stringify(merged);
+  }catch(e){
+    return remoteStr;
+  }
+}
+
+function mergeAppStatePayload(localStr, remoteStr){
+  if(!localStr) return remoteStr;
+  if(!remoteStr) return localStr;
+  try{
+    const local = JSON.parse(localStr);
+    const remote = JSON.parse(remoteStr);
+    if(!local || typeof local !== 'object') return remoteStr;
+    if(!remote || typeof remote !== 'object') return localStr;
+
+    const mergeListById = (localList, remoteList) => {
+      const map = new Map();
+      (Array.isArray(remoteList) ? remoteList : []).forEach(item => {
+        if(item && (item.id || item.sourceExpenseId)) {
+          const k = item.id || item.sourceExpenseId;
+          map.set(k, item);
+        }
+      });
+      (Array.isArray(localList) ? localList : []).forEach(item => {
+        if(item && (item.id || item.sourceExpenseId)) {
+          const k = item.id || item.sourceExpenseId;
+          map.set(k, item);
+        }
+      });
+      return [...map.values()];
+    };
+
+    return JSON.stringify({
+      ...remote,
+      ...local,
+      properties: mergeListById(local.properties, remote.properties),
+      propertyIncome: mergeListById(local.propertyIncome, remote.propertyIncome),
+      propertyExpenses: mergeListById(local.propertyExpenses, remote.propertyExpenses),
+      campaigns: mergeListById(local.campaigns, remote.campaigns),
+      campaignTransactions: mergeListById(local.campaignTransactions, remote.campaignTransactions),
+      payments: mergeListById(local.payments, remote.payments),
+      pension: mergeListById(local.pension, remote.pension)
+    });
+  }catch(e){
+    return remoteStr;
+  }
+}
+
 async function pullAll({reload=true}={}){
   const s=await ensureSession();if(!s?.access_token)return 0;
   if(pushTimer||Date.now()-lastLocalWriteAt<10000){status("Local changes pending sync...");return 0;}
@@ -82,11 +194,18 @@ async function pullAll({reload=true}={}){
   const beforeLocalOnly=[...localBefore.keys()].filter(k=>!cloudBefore.has(k)),beforeCloudOnly=[...cloudBefore.keys()].filter(k=>!localBefore.has(k)),beforeDifferent=[...cloudBefore.keys()].filter(k=>localBefore.has(k)&&localBefore.get(k)!==cloudBefore.get(k));cloudAudit.checkedAt=new Date().toISOString();cloudAudit.prePull={localOnly:beforeLocalOnly.length,cloudOnly:beforeCloudOnly.length,different:beforeDifferent.length};
   let changed=0;applyingRemote=true;
   try{
-    rows.forEach(r=>{const value=String(r.payload?.value??"");if(localStorage.getItem(r.record_key)!==value){
-      nativeSetItem.call(localStorage,r.record_key,value); 
-      changed++;
-    }
-    // Always store the updated_at so we have a reliable baseline for optimistic concurrency
+    rows.forEach(r=>{
+      const remoteVal=String(r.payload?.value??"");
+      let nextVal=remoteVal;
+      if((r.record_key.startsWith(SYNC_PREFIX+"cashflow-") || r.record_key==="tax-engine-april-2026-cashflow") && localStorage.getItem(r.record_key)){
+        nextVal=mergeCashflowPayload(localStorage.getItem(r.record_key), remoteVal);
+      } else if(r.record_key==="tax-engine-v3" && localStorage.getItem(r.record_key)){
+        nextVal=mergeAppStatePayload(localStorage.getItem(r.record_key), remoteVal);
+      }
+      if(localStorage.getItem(r.record_key)!==nextVal){
+        nativeSetItem.call(localStorage,r.record_key,nextVal); 
+        changed++;
+      }
     });
     const localAfter=new Map(localRecords().map(r=>[r.record_key,String(r.payload?.value??"")]));cloudAudit.localOnly=[...localAfter.keys()].filter(k=>!cloudBefore.has(k));cloudAudit.cloudOnly=[...cloudBefore.keys()].filter(k=>!localAfter.has(k));cloudAudit.different=[...cloudBefore.keys()].filter(k=>localAfter.has(k)&&localAfter.get(k)!==cloudBefore.get(k));cloudAudit.matched=[...cloudBefore.keys()].filter(k=>localAfter.get(k)===cloudBefore.get(k)).length;
     if(changed&&reload)window.TaxEngineReloadFromStorage?.();
@@ -146,6 +265,9 @@ function bind(){
   window.addEventListener("focus",()=>{if(session()?.access_token&&Date.now()-lastPullAt>5000)pullAll({reload:true}).catch(e=>status(`Sync failed: ${e.message}`));});
   setInterval(()=>{if(!document.hidden&&session()?.access_token&&Date.now()-lastPullAt>30000)pullAll({reload:true}).catch(e=>status(`Sync failed: ${e.message}`));},30000);
 }
-window.TaxEngineSync={pushAll,pullAll,schedulePush};
-if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",bind);else bind();
+if(typeof window !== "undefined") window.TaxEngineSync = { pushAll, pullAll, schedulePush, mergeCashflowPayload, mergeAppStatePayload };
+if(typeof module !== "undefined" && module.exports) module.exports = { mergeCashflowPayload, mergeAppStatePayload };
+if(typeof document !== "undefined"){
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",bind);else bind();
+}
 })();

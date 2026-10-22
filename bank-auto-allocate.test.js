@@ -295,3 +295,84 @@ test("bank-auto-allocate: matchDebitsWithMerchants correctly matches by vertical
   assert.equal(tx2[6].amount, 6.00);
 });
 
+test("supabase-sync: mergeCashflowPayload preserves both local and remote transactions without deletion", () => {
+  const { mergeCashflowPayload, mergeAppStatePayload } = require("./supabase-sync.js");
+
+  const localCashflow = JSON.stringify({
+    month: "2026-10",
+    bank: 3071.28,
+    bankAccounts: { zempler: 0, lloyds: 3071.28 },
+    fixed: [
+      { id: "fix-1", due: "1 Oct", payment: "Rent", actual: 500, status: "Paid" }
+    ],
+    spending: [
+      { id: "tx-1", date: "19 Oct", description: "Tesla Inc.", actual: 12.36, status: "Paid" },
+      { id: "tx-2", date: "19 Oct", description: "Tesla Inc.", actual: 7.75, status: "Paid" }
+    ],
+    income: []
+  });
+
+  const remoteCashflow = JSON.stringify({
+    month: "2026-10",
+    bank: 0,
+    bankAccounts: { zempler: 0, lloyds: 0 },
+    fixed: [
+      { id: "fix-1", due: "1 Oct", payment: "Rent", actual: 500, status: "Paid" }
+    ],
+    spending: [
+      { id: "tx-3", date: "21 Oct", description: "Tesla Inc. Supercharge", actual: 18.50, status: "Paid" }
+    ],
+    income: [
+      { id: "inc-1", date: "1 Oct", description: "Salary", actual: 2000, status: "Received" }
+    ]
+  });
+
+  const mergedStr = mergeCashflowPayload(localCashflow, remoteCashflow);
+  const merged = JSON.parse(mergedStr);
+
+  assert.equal(merged.month, "2026-10");
+  // Both local Tesla items (tx-1, tx-2) and remote Tesla item (tx-3) must exist
+  assert.equal(merged.spending.length, 3);
+  const ids = merged.spending.map(s => s.id);
+  assert.ok(ids.includes("tx-1"));
+  assert.ok(ids.includes("tx-2"));
+  assert.ok(ids.includes("tx-3"));
+
+  // Remote income is preserved
+  assert.equal(merged.income.length, 1);
+  assert.equal(merged.income[0].id, "inc-1");
+
+  // Non-zero bank balance is preserved
+  assert.equal(merged.bankAccounts.lloyds, 3071.28);
+  assert.equal(merged.bank, 3071.28);
+});
+
+test("supabase-sync: mergeAppStatePayload preserves campaignTransactions and properties without deletion", () => {
+  const { mergeAppStatePayload } = require("./supabase-sync.js");
+
+  const localState = JSON.stringify({
+    version: 3,
+    campaignTransactions: [
+      { id: "camp-tx-1", campaignId: "c1", amount: 100 }
+    ],
+    properties: [
+      { id: "p1", property: "5a Ranelagh Road" }
+    ]
+  });
+
+  const remoteState = JSON.stringify({
+    version: 3,
+    campaignTransactions: [
+      { id: "camp-tx-2", campaignId: "c2", amount: 200 }
+    ],
+    properties: [
+      { id: "p1", property: "5a Ranelagh Road" },
+      { id: "p2", property: "35 Leslie Road" }
+    ]
+  });
+
+  const merged = JSON.parse(mergeAppStatePayload(localState, remoteState));
+  assert.equal(merged.campaignTransactions.length, 2);
+  assert.equal(merged.properties.length, 2);
+});
+
