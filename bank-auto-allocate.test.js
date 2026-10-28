@@ -513,4 +513,10 @@ test("app.js cashflowSummary calculates forecast and safe balance matching mobil
   // Safe balance: forecast (1650) - safetyBuffer (2000) = -350
   assert.equal(s.safe, -350);
 });
-
+test("desktop app: campCard displays monthly campaign surplus (safe balance), reserve, and forecast matching mobile", () => {
+  const code = fs.readFileSync("app.js", "utf8");
+  assert.ok(code.includes("Campaign Fund &mdash;"), "Campaign card must be titled Campaign Fund");
+  assert.ok(code.includes("Reserve: ' + money.format(s.safetyBuffer||2000)"), "Campaign card must show safety buffer");
+  assert.ok(code.includes("Forecast: ' + money.format(s.forecast)"), "Campaign card must show forecast balance");
+  assert.ok(code.includes("replace(/<div class=\"safe\">[\\s\\S]*?<\\/div>/, \"\")"), "Safe balance card must be replaced by campaign card to prevent duplicate cards");
+});
