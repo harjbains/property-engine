@@ -520,3 +520,116 @@ test("desktop app: campCard displays monthly campaign surplus (safe balance), re
   assert.ok(code.includes("Forecast: ' + money.format(s.forecast)"), "Campaign card must show forecast balance");
   assert.ok(code.includes("replace(/<div class=\"safe\">[\\s\\S]*?<\\/div>/, \"\")"), "Safe balance card must be replaced by campaign card to prevent duplicate cards");
 });
+
+test("supabase-sync: mergeCashflowPayload updates edited rent from £850 to £0 when remote is newer without duplicating", () => {
+  const syncCode = fs.readFileSync("supabase-sync.js", "utf8");
+  const context = {
+    Date,
+    String,
+    Number,
+    JSON,
+    Map,
+    Array,
+    console
+  };
+  vm.createContext(context);
+  const mergeCashflowMatch = syncCode.match(/function mergeCashflowPayload[\s\S]*?\n\}/);
+  assert.ok(mergeCashflowMatch, "mergeCashflowPayload must exist");
+  vm.runInContext(mergeCashflowMatch[0], context);
+
+  const local = {
+    month: "2026-10",
+    bank: 1000,
+    updatedAt: "2026-10-28T16:00:00Z",
+    fixed: [],
+    spending: [],
+    income: [
+      { id: "penn-id", propertyId: "prop-penn", description: "524 Penn Road", expected: 850, actual: null, updatedAt: "2026-10-28T16:00:00Z" }
+    ]
+  };
+
+  const remote = {
+    month: "2026-10",
+    bank: 1000,
+    updatedAt: "2026-10-28T17:00:00Z",
+    fixed: [],
+    spending: [],
+    income: [
+      { id: "penn-id", propertyId: "prop-penn", description: "524 Penn Road", expected: 0, actual: null, updatedAt: "2026-10-28T17:00:00Z" }
+    ]
+  };
+
+  const mergedStr = context.mergeCashflowPayload(JSON.stringify(local), JSON.stringify(remote));
+  const merged = JSON.parse(mergedStr);
+
+  assert.equal(merged.income.length, 1, "Must not duplicate income item");
+  assert.equal(merged.income[0].expected, 0, "Must take newer remote expected amount 0");
+});
+
+test("supabase-sync: mergeAppStatePayload updates edited propertyIncome when remote is newer", () => {
+  const syncCode = fs.readFileSync("supabase-sync.js", "utf8");
+  const context = {
+    Date,
+    String,
+    Number,
+    JSON,
+    Map,
+    Array,
+    console
+  };
+  vm.createContext(context);
+  const mergeAppMatch = syncCode.match(/function mergeAppStatePayload[\s\S]*?\n\}/);
+  assert.ok(mergeAppMatch, "mergeAppStatePayload must exist");
+  vm.runInContext(mergeAppMatch[0], context);
+
+  const local = {
+    savedAt: "2026-10-28T16:00:00Z",
+    properties: [{ id: "prop-penn", property: "524 Penn Road" }],
+    propertyIncome: [
+      { id: "pi-penn", propertyId: "prop-penn", amount: 850, period: "2026-10", modifiedAt: "2026-10-28T16:00:00Z" }
+    ]
+  };
+
+  const remote = {
+    savedAt: "2026-10-28T17:00:00Z",
+    properties: [{ id: "prop-penn", property: "524 Penn Road" }],
+    propertyIncome: [
+      { id: "pi-penn", propertyId: "prop-penn", amount: 0, period: "2026-10", modifiedAt: "2026-10-28T17:00:00Z" }
+    ]
+  };
+
+  const mergedStr = context.mergeAppStatePayload(JSON.stringify(local), JSON.stringify(remote));
+  const merged = JSON.parse(mergedStr);
+
+  assert.equal(merged.propertyIncome.length, 1, "Must have exactly 1 propertyIncome record");
+  assert.equal(merged.propertyIncome[0].amount, 0, "Must update amount to 0 from newer remote payload");
+});
+
+test("app.js dedupeCashflowPropertyRents merges fixed and ledger property rent entries and retains £0", () => {
+  const code = fs.readFileSync("app.js", "utf8");
+  const context = {
+    state: {
+      properties: [{ id: "prop-penn", property: "524 Penn Road" }]
+    },
+    num: v => Number(v) || 0,
+    Map,
+    Array,
+    Date,
+    String,
+    Object
+  };
+  vm.createContext(context);
+  const dedupeMatch = code.match(/function dedupeCashflowPropertyRents[\s\S]*?\n\}/);
+  assert.ok(dedupeMatch, "dedupeCashflowPropertyRents must exist in app.js");
+  vm.runInContext(dedupeMatch[0], context);
+
+  const incomeList = [
+    { id: "cf-fixed", section: "fixed", description: "524 Penn Road", expected: 0, actual: null, updatedAt: "2026-10-28T17:05:00Z" },
+    { id: "cf-ledger", section: "ledger", description: "524 Penn Road", expected: 850, actual: 850, status: "Received" }
+  ];
+
+  const deduped = context.dedupeCashflowPropertyRents(incomeList);
+  assert.equal(deduped.length, 1, "Must deduplicate duplicate 524 Penn Road items");
+  assert.equal(deduped[0].expected, 0, "Must retain 0 expected amount");
+  assert.equal(deduped[0].section, "fixed", "Must retain fixed section for checklist display");
+});

@@ -220,10 +220,148 @@ function emptyCashflow(month=workspaceMonth()){return{bank:0,bankAccounts:{zempl
 function monthShort(month=workspaceMonth()){return workspaceMonthLabel(month).split(" ")[0].slice(0,3);}
 function cashDueFromDayForMonth(value,month=workspaceMonth()){const day=cashDay(value)||15;return`${day} ${monthShort(month)}`;}
 function cashflowSeedForMonth(month=workspaceMonth()){return month===TAX_WORKSPACE_MONTH?JSON.parse(JSON.stringify(cashflowSeed)):emptyCashflow(month);}
-function cashflowStateForMonth(month){const saved=JSON.parse(localStorage.getItem(cashflowKey(month))||"null"),base=saved?{...cashflowSeedForMonth(month),...saved,month}:{...cashflowSeedForMonth(month),month};base.fixed=base.fixed||[];base.spending=base.spending||[];base.income=base.income||[];base.fixed.forEach(normaliseCashItem);base.spending.forEach(normaliseCashItem);base.income.forEach(normaliseCashItem);normaliseCashflowLock(base);normaliseCashflowAccounts(base);return base;}function cashflowState(){try{const month=workspaceMonth(),saved=JSON.parse(localStorage.getItem(cashflowKey(month))||localStorage.getItem(month===TAX_WORKSPACE_MONTH?CASHFLOW_KEY:"null")),base=cashflowSeedForMonth(month),x=saved&&Array.isArray(saved.fixed)?{...base,...saved,month}:base;x.income=x.income||[];x.fixed.forEach(normaliseCashItem);x.spending.forEach(normaliseCashItem);x.income.forEach(normaliseCashItem);normaliseCashflowLock(x);normaliseCashflowAccounts(x);return x;}catch{const x=cashflowSeedForMonth();x.income=x.income||[];x.fixed.forEach(normaliseCashItem);x.spending.forEach(normaliseCashItem);x.income.forEach(normaliseCashItem);normaliseCashflowLock(x);normaliseCashflowAccounts(x);return x;}}
+function dedupeCashflowPropertyRents(incomeList){
+  if(!Array.isArray(incomeList)) return [];
+  const props = state?.properties || [];
+  const propMap = new Map();
+  const result = [];
+  for(const item of incomeList){
+    if(!item) continue;
+    let prop = null;
+    if(item.propertyId){
+      prop = props.find(p => p.id === item.propertyId);
+    }
+    if(!prop){
+      const desc = String(item.description || item.payment || "").toLowerCase();
+      prop = props.find(p => {
+        const pName = String(p.property || "").toLowerCase();
+        return (desc.includes("penn") && pName.includes("penn")) ||
+               (desc.includes("leslie") && pName.includes("leslie")) ||
+               (desc.includes("ranelagh") && pName.includes("ranelagh"));
+      });
+    }
+    if(prop){
+      item.propertyId = prop.id;
+      item.treatment = "property_income";
+      if(!propMap.has(prop.id)){
+        propMap.set(prop.id, item);
+        result.push(item);
+      }else{
+        const existing = propMap.get(prop.id);
+        const itemTime = item.updatedAt ? new Date(item.updatedAt).getTime() : 0;
+        const existTime = existing.updatedAt ? new Date(existing.updatedAt).getTime() : 0;
+        if(existing.section === "fixed" || item.section === "fixed"){
+          existing.section = "fixed";
+        }
+        if(itemTime > existTime || (num(item.expected) === 0 && num(existing.expected) !== 0)){
+          Object.assign(existing, item);
+        }else if(num(existing.expected) === 0 && num(item.expected) !== 0){
+          // keep existing with 0
+        }else if(item.status === "Received" && existing.status !== "Received"){
+          Object.assign(existing, item);
+        }
+      }
+    }else{
+      result.push(item);
+    }
+  }
+  return result;
+}
+
+function syncCashflowRentToPropertyRecords(item, month, expectedAmount, actualAmount, status){
+  try{
+    if(!state || !Array.isArray(state.properties)) return;
+
+    let prop = null;
+    if(item.propertyId){
+      prop = state.properties.find(p => p.id === item.propertyId);
+    }
+    if(!prop){
+      const desc = String(item.description || item.payment || "").toLowerCase();
+      prop = state.properties.find(p => {
+        const pName = String(p.property || "").toLowerCase();
+        return (desc.includes("penn") && pName.includes("penn")) ||
+               (desc.includes("leslie") && pName.includes("leslie")) ||
+               (desc.includes("ranelagh") && pName.includes("ranelagh"));
+      });
+    }
+    if(!prop) return;
+
+    state.propertyIncome = state.propertyIncome || [];
+    const finalAmount = status === "Received" ? (actualAmount != null ? num(actualAmount) : num(expectedAmount)) : num(expectedAmount);
+
+    let recs = state.propertyIncome.filter(r => r.propertyId === prop.id && (r.period === month || (r.date && r.date.slice(0, 7) === month)));
+    if(recs.length > 0){
+      recs[0].amount = Math.max(0, finalAmount);
+      recs[0].modifiedAt = new Date().toISOString();
+      recs[0].notes = finalAmount === 0 ? "Rent adjusted to £0.00" : (status === "Received" ? "Rent received" : "Monthly rent expected");
+      if(recs.length > 1){
+        const keepId = recs[0].id;
+        state.propertyIncome = state.propertyIncome.filter(r => !(r.propertyId === prop.id && (r.period === month || (r.date && r.date.slice(0, 7) === month)) && r.id !== keepId));
+      }
+    }else{
+      const day = String(prop.property || "").toLowerCase().includes("penn") ? 26 : 1;
+      state.propertyIncome.push({
+        id: uid(),
+        propertyId: prop.id,
+        date: month + '-' + String(day).padStart(2, '0'),
+        amount: Math.max(0, finalAmount),
+        period: month,
+        notes: finalAmount === 0 ? "Rent adjusted to £0.00" : "Rent from cashflow",
+        modifiedAt: new Date().toISOString()
+      });
+    }
+
+    state.savedAt = new Date().toISOString();
+    save();
+  }catch(e){
+    console.error("Failed to sync property rent to app state:", e);
+  }
+}
+
+function cashflowStateForMonth(month){
+  const saved=JSON.parse(localStorage.getItem(cashflowKey(month))||"null"),
+  base=saved?{...cashflowSeedForMonth(month),...saved,month}:{...cashflowSeedForMonth(month),month};
+  base.fixed=base.fixed||[];
+  base.spending=base.spending||[];
+  base.income=base.income||[];
+  base.fixed.forEach(normaliseCashItem);
+  base.spending.forEach(normaliseCashItem);
+  base.income.forEach(normaliseCashItem);
+  base.income=dedupeCashflowPropertyRents(base.income);
+  normaliseCashflowLock(base);
+  normaliseCashflowAccounts(base);
+  return base;
+}
+function cashflowState(){
+  try{
+    const month=workspaceMonth(),
+    saved=JSON.parse(localStorage.getItem(cashflowKey(month))||localStorage.getItem(month===TAX_WORKSPACE_MONTH?CASHFLOW_KEY:"null")),
+    base=cashflowSeedForMonth(month),
+    x=saved&&Array.isArray(saved.fixed)?{...base,...saved,month}:base;
+    x.income=x.income||[];
+    x.fixed.forEach(normaliseCashItem);
+    x.spending.forEach(normaliseCashItem);
+    x.income.forEach(normaliseCashItem);
+    x.income=dedupeCashflowPropertyRents(x.income);
+    normaliseCashflowLock(x);
+    normaliseCashflowAccounts(x);
+    return x;
+  }catch{
+    const x=cashflowSeedForMonth();
+    x.income=x.income||[];
+    x.fixed.forEach(normaliseCashItem);
+    x.spending.forEach(normaliseCashItem);
+    x.income.forEach(normaliseCashItem);
+    x.income=dedupeCashflowPropertyRents(x.income);
+    normaliseCashflowLock(x);
+    normaliseCashflowAccounts(x);
+    return x;
+  }
+}
 function isPropertyManagementFee(item){return item?.treatment==="property_expense"&&/^(property management|agent fees?)$/i.test(String(item.category||"").trim());}
 function ensurePropertyManagementFees(x){x.income=x.income||[];x.spending=x.spending||[];state.propertyExpenses=state.propertyExpenses||[];let cashChanged=false,propertyChanged=false;const managementRows=x.spending.filter(isPropertyManagementFee);for(const row of managementRows){const source=x.income.find(income=>income.id===row.managementFeeFor);if(row.status==="Paid")adjustCashBalance(x,row.account||source?.account,num(row.actual??row.planned));cashChanged=true;}if(managementRows.length)x.spending=x.spending.filter(row=>!managementRows.includes(row));const before=state.propertyExpenses.length;state.propertyExpenses=state.propertyExpenses.filter(expense=>!(expense.autoManagementFee&&expense.cashflowRentIncomeId));propertyChanged=state.propertyExpenses.length!==before;return{cashChanged,propertyChanged};}
-function saveCashflowState(x){x.month=x.month||workspaceMonth();const changes=ensurePropertyManagementFees(x);normaliseCashflowAccounts(x);localStorage.setItem(cashflowKey(x.month),JSON.stringify(x));if(changes.propertyChanged)save();}
+function saveCashflowState(x){x.month=x.month||workspaceMonth();x.income=dedupeCashflowPropertyRents(x.income||[]);x.updatedAt=x.updatedAt||new Date().toISOString();const changes=ensurePropertyManagementFees(x);normaliseCashflowAccounts(x);localStorage.setItem(cashflowKey(x.month),JSON.stringify(x));if(changes.propertyChanged)save();}
 function previousCashflowMonth(month=workspaceMonth()){const d=new Date(`${month}-01T00:00:00Z`);d.setUTCMonth(d.getUTCMonth()-1);return`${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,"0")}`;}
 function copyPreviousFixedCosts(){
   const month=workspaceMonth(),previous=previousCashflowMonth(month);
@@ -549,8 +687,12 @@ function saveCashflowEditor(){
     let item=x.income.find(i=>i.id===cashflowEditor.id),before=item?{...item}:null;
     if(!item){item={id:uid(),createdAt:new Date().toISOString(),status:"Expected"};x.income.push(item);}
     let expected=editorNumber("expected"),actual=editorNumber("actual");const status=editorValue("status")||"Expected";if(status==="Expected"&&expected==null&&actual!=null){expected=actual;actual=null;}
-    Object.assign(item,{date:cashDueFromDay(editorValue("date")),description:editorValue("description")||"New income",category:editorValue("category")||"Income",expected,actual,status,treatment,propertyId,notes:editorValue("notes"),account,section:cashflowEditor.kind==="fixed"||item.section==="fixed"?"fixed":"ledger"});
+    Object.assign(item,{date:cashDueFromDay(editorValue("date")),description:editorValue("description")||"New income",category:editorValue("category")||"Income",expected,actual,status,treatment,propertyId,notes:editorValue("notes"),account,section:cashflowEditor.kind==="fixed"||item.section==="fixed"?"fixed":"ledger",updatedAt:new Date().toISOString()});
     reconcileCashItemBalance(x,"income",item,before);
+    if(treatment==="property_income"||propertyId){
+      syncCashflowRentToPropertyRecords(item, x.month, expected, actual, status);
+      x.income=dedupeCashflowPropertyRents(x.income);
+    }
   }else{
     let item=x.spending.find(i=>i.id===cashflowEditor.id),before=item?{...item}:null;
     if(!item){item={id:uid(),createdAt:new Date().toISOString(),status:"Planned"};x.spending.push(item);}
@@ -587,7 +729,31 @@ function addManagementFeeFromCashflow(button){const incomeId=button.dataset.inco
 function cashflowUberExpenseRecords(month=""){return allCashflowStates().flatMap(x=>[...x.fixed.map(i=>({...i,date:i.due,description:i.payment,source:"fixed"})),...x.spending.map(i=>({...i,source:"spending"}))].filter(i=>i.treatment==="uber_expense"&&cashDateMonth(i.date,x.month)===x.month&&num(i.actual)>0&&(i.status==="Paid"||i.status==="Part-paid")).map(i=>({id:`cashflow-uber-${i.id}`,date:cashDateIso(i.date,x.month),category:i.category||i.description||"Private-hire business expense",description:i.description||i.payment||i.category||"Private-hire business expense",amount:num(i.actual),notes:i.notes||"",treatment:i.treatment,cashflowSource:true,sourceSection:i.source}))).filter(i=>!month||i.date?.slice(0,7)===month);}
 const actualDashboardInputsBase=actualDashboardInputs;actualDashboardInputs=function(){const result=actualDashboardInputsBase(),cutoff=dashboardDates().cutoff;result.uberOtherExpenses=cashflowUberExpenseRecords().filter(x=>dateInTaxYear(x.date,state.year)&&x.date<=cutoff).reduce((sum,x)=>sum+num(x.amount),0);return result;};
 function cashflowPropertyExpenseRecords(month=""){return allCashflowStates().flatMap(x=>{const paid=paidCashflowPropertyItems(x,x.month,false).filter(i=>!isPropertyManagementFee(i)).map(i=>({id:`cashflow-${i.id}`,propertyId:i.propertyId,date:cashDateIso(i.date,x.month),category:i.treatment==="property_interest"?"Mortgage interest":i.treatment==="property_capital"?"Capital cost":i.category||i.description||"Property expense",amount:num(i.actual),notes:i.notes||i.description||"Cashflow property payment",treatment:i.treatment,cashflowSource:true,sourceSection:i.source})),fees=cashflowPropertyIncomeItems(x,x.month).map(i=>({id:`cashflow-management-${i.id}`,propertyId:i.propertyId,date:cashDateIso(i.date,x.month),category:"Property Management",amount:Math.round(num(i.actual)*10)/100,notes:`Automatic 10% management fee on ${i.description}`,treatment:"property_expense",cashflowSource:true,sourceSection:"derived"}));return[...paid,...fees];}).filter(i=>!month||i.date?.slice(0,7)===month);}
-function manualPropertyIncomeRecords(month=""){return state.propertyIncome.filter(i=>!month||i.date?.slice(0,7)===month);}function propertyIncomeRecords(month=""){if(month){const cash=dedupeMoneyRecords(cashflowPropertyIncomeRecords(month));return cash.length?cash:dedupeMoneyRecords(manualPropertyIncomeRecords(month));}const months=new Set([...state.propertyIncome.map(i=>i.date?.slice(0,7)),...cashflowPropertyIncomeRecords().map(i=>i.date?.slice(0,7))].filter(Boolean));return dedupeMoneyRecords([...months].flatMap(m=>propertyIncomeRecords(m)));}
+function manualPropertyIncomeRecords(month=""){return state.propertyIncome.filter(i=>!month||i.date?.slice(0,7)===month);}function propertyIncomeRecords(month=""){
+  if(month){
+    const cash=dedupeMoneyRecords(cashflowPropertyIncomeRecords(month));
+    if(cash.length) return cash;
+    const manual=dedupeMoneyRecords(manualPropertyIncomeRecords(month));
+    try{
+      const raw=localStorage.getItem(cashflowKey(month));
+      if(raw){
+        const xSaved=JSON.parse(raw);
+        if(xSaved&&Array.isArray(xSaved.income)){
+          return manual.map(mRec=>{
+            const cfItem=xSaved.income.find(ci=>ci.propertyId===mRec.propertyId||(ci.treatment==="property_income"&&String(ci.description||"").toLowerCase().includes("penn")&&String(propertyName(mRec.propertyId)||"").toLowerCase().includes("penn")));
+            if(cfItem&&num(cfItem.expected)===0&&(cfItem.actual==null||num(cfItem.actual)===0)){
+              return {...mRec,amount:0,notes:"Rent adjusted to £0.00"};
+            }
+            return mRec;
+          });
+        }
+      }
+    }catch{}
+    return manual;
+  }
+  const months=new Set([...state.propertyIncome.map(i=>i.date?.slice(0,7)),...cashflowPropertyIncomeRecords().map(i=>i.date?.slice(0,7))].filter(Boolean));
+  return dedupeMoneyRecords([...months].flatMap(m=>propertyIncomeRecords(m)));
+}
 function manualPropertyExpenseRecords(month=""){return state.propertyExpenses.filter(i=>!month||i.date?.slice(0,7)===month);}function dedupePropertyExpenseRecords(rows){const seen=new Set();return rows.filter(i=>{const raw=String(i.category||"").trim().toLowerCase(),category=raw==="agent fees"||raw==="property management"?"agent fees":raw,key=`${i.propertyId||""}:${i.date||""}:${num(i.amount).toFixed(2)}:${category}`;if(seen.has(key))return false;seen.add(key);return true;});}function propertyExpenseRecords(month=""){const manual=manualPropertyExpenseRecords(month),cash=cashflowPropertyExpenseRecords(month);return dedupePropertyExpenseRecords([...cash,...manual]);}function paidCashflowPropertyItems(x,month,includeLedger=true){const all=[...x.fixed.map(i=>normaliseCashItem({...i,date:i.due,description:i.payment,source:"fixed"})),...x.spending.map(i=>normaliseCashItem({...i,source:"spending"}))],cash=all.filter(i=>i.treatment&&i.treatment!=="cashflow"&&i.treatment!=="room_rent"&&i.treatment!=="transfer"&&i.propertyId&&cashDateMonth(i.date,month)===month&&num(i.actual)>0&&(i.status==="Paid"||i.status==="Part-paid"));return includeLedger?FinancialControls.propertyPayslipItems(propertyExpenseRecords(month)):cash;}
 function cashflowPropertyIncomeItems(x,month){return(x.income||[]).map(i=>normaliseCashItem(i)).filter(i=>i.treatment==="property_income"&&!isRoomRentIncome(i)&&i.propertyId&&cashDateMonth(i.date,month)===month&&num(i.actual)>0);}function dedupeMoneyRecords(rows){const seen=new Set();return rows.filter(i=>{const key=`${i.propertyId||""}:${i.date||""}:${num(i.amount).toFixed(2)}:${i.period||i.date?.slice(0,7)||""}`;if(seen.has(key))return false;seen.add(key);return true;});}
 function isoUtcDate(value){return /^\d{4}-\d{2}-\d{2}$/.test(value||"")?new Date(`${value}T00:00:00Z`):null;}
@@ -661,7 +827,7 @@ by("#previousDashboardMonth").addEventListener("click",()=>shiftDashboardMonth(-
 document.addEventListener("click",e=>{const row=e.target.closest("[data-sandbox-row-action]");if(row){e.preventDefault();e.stopPropagation();const action=row.dataset.sandboxRowAction,type=row.dataset.sandboxType,id=row.dataset.sandboxId;if(action==="toggle")toggleSandboxStatus(type,id);if(action==="remove")removeSandboxItem(type,id);return;}const action=e.target.closest("[data-sandbox-action]");if(!action)return;e.preventDefault();e.stopPropagation();const a=action.dataset.sandboxAction,id=action.dataset.sandboxId;if(a==="reset")resetSandbox();if(a==="edit-balance")sandboxOpenEditor("balance","edit");if(a==="save-view")saveSandboxView(false);if(a==="save-new-view")saveSandboxView(true);if(a==="delete-view")deleteSandboxView(sandboxState().loadedViewId);if(a==="add-fixed")sandboxOpenEditor("fixed","add");if(a==="add-income")sandboxOpenEditor("income","add","","ledger");if(a==="add-spending")sandboxOpenEditor("spending","add");if(a==="edit-fixed")sandboxOpenEditor("fixed","edit",id);if(a==="edit-income")sandboxOpenEditor("income","edit",id);if(a==="edit-spending")sandboxOpenEditor("spending","edit",id);if(a==="clear-ledger")clearSandboxLedger();if(a==="save-editor")saveSandboxEditor();if(a==="cancel-editor"){sandboxEditor=null;renderDashboardSurface();}},true);
 document.addEventListener("change",e=>{const select=e.target.closest("[data-sandbox-view-select]");if(select&&select.value)loadSandboxView(select.value);});
 document.addEventListener("input",e=>{if(e.target.matches("[data-sandbox-notes],[data-sandbox-name]"))updateSandboxMeta();});
-document.addEventListener("click",e=>{const ledgerMonthButton=e.target.closest("[data-property-ledger-month]");if(ledgerMonthButton){shiftPropertyLedgerMonth(Number(ledgerMonthButton.dataset.propertyLedgerMonth)||0);return;}const propAction=e.target.closest("[data-property-action]");if(propAction){const a=propAction.dataset.propertyAction;if(a==="add-management-fee")addManagementFeeFromCashflow(propAction);return;}const tab=e.target.closest("[data-tax-tab]");if(tab){const root=tab.closest(".tax-workspace"),target=tab.dataset.taxTab;taxWorkspaceTab=target;root.querySelectorAll("[data-tax-tab]").forEach(x=>x.classList.toggle("active",x===tab));root.querySelectorAll("[data-tax-panel]").forEach(x=>x.hidden=x.dataset.taxPanel!==target);return;}const sandboxAction=e.target.closest("[data-sandbox-action]");if(sandboxAction){const a=sandboxAction.dataset.sandboxAction,id=sandboxAction.dataset.sandboxId;if(a==="reset")resetSandbox();if(a==="add-fixed")sandboxOpenEditor("fixed","add");if(a==="add-income")sandboxOpenEditor("income","add","","ledger");if(a==="add-spending")sandboxOpenEditor("spending","add");if(a==="edit-fixed")sandboxOpenEditor("fixed","edit",id);if(a==="edit-income")sandboxOpenEditor("income","edit",id);if(a==="edit-spending")sandboxOpenEditor("spending","edit",id);if(a==="remove-fixed")removeSandboxItem("fixed",id);if(a==="remove-income")removeSandboxItem("income",id);if(a==="remove-spending")removeSandboxItem("spending",id);if(a==="clear-ledger")clearSandboxLedger();if(a==="save-editor")saveSandboxEditor();if(a==="cancel-editor"){sandboxEditor=null;renderDashboardSurface();}return;}const action=e.target.closest("[data-cash-action]");if(action){const a=action.dataset.cashAction,id=action.dataset.cashId;if(a==="export-workspace")exportMonthlyWorkspace();if(a==="lock-to-day")lockCashflowToDay();if(a==="close-month")closeCashflowMonth();if(a==="reopen-month")reopenCashflowMonth();if(a==="copy-previous-fixed")copyPreviousFixedCosts();if(a==="add-fixed")addFixedCost();if(a==="edit-balance")openCashflowEditor("balance","edit");if(a==="add-fixed-income")addFixedIncome();if(a==="edit-fixed")editFixedCost(id);if(a==="remove-fixed")removeFixedCost(id);if(a==="add-income")addIncome();if(a==="edit-income")editIncome(id);if(a==="remove-income")removeIncome(id);if(a==="add-planned")addSpending("planned");if(a==="add-spending")addSpending("actual");if(a==="add-transfer")addTransfer();if(a==="edit-spending")editSpending(id);if(a==="remove-spending")removeSpending(id);if(a==="save-editor")saveCashflowEditor();if(a==="cancel-editor"){cashflowEditor=null;renderDashboardSurface();}return;}const fixedIncome=e.target.closest("[data-fixed-income-id]");if(fixedIncome){const x=cashflowState(),item=(x.income||[]).find(i=>i.id===fixedIncome.dataset.fixedIncomeId);if(!item)return;if(guardCashflowLocked(x,"income",item))return;if(item.status!=="Received"){item.status="Received";item.actual=item.expected;adjustCashBalance(x,item.account,num(item.actual));}else{adjustCashBalance(x,item.account,-num(item.actual||item.expected));item.actual=null;item.status="Expected";}saveCashflowState(x);patchStatusButtonInPlace(fixedIncome,item.status);refreshCashflowCardsInPlace();return;}const ledgerIncome=e.target.closest("[data-ledger-income-id]");if(ledgerIncome){const x=cashflowState(),item=(x.income||[]).find(i=>i.id===ledgerIncome.dataset.ledgerIncomeId);if(!item)return;if(guardCashflowLocked(x,"income",item))return;if(item.status!=="Received"){item.status="Received";item.actual=item.actual??item.expected??0;adjustCashBalance(x,item.account,num(item.actual));}else{adjustCashBalance(x,item.account,-num(item.actual||item.expected));item.actual=null;item.status="Expected";}saveCashflowState(x);patchLedgerStatusButtonInPlace(ledgerIncome,item.status,item,true);refreshCashflowCardsInPlace();return;}const ledgerSpending=e.target.closest("[data-ledger-spending-id]");if(ledgerSpending){const x=cashflowState(),item=x.spending.find(i=>i.id===ledgerSpending.dataset.ledgerSpendingId);if(!item)return;if(guardCashflowLocked(x,"spending",item))return;if(item.status!=="Paid"){item.status="Paid";item.actual=item.actual??item.planned??0;adjustCashBalance(x,item.account,-num(item.actual));}else{adjustCashBalance(x,item.account,num(item.actual||item.planned));item.actual=null;item.status=item.planned!=null?"Planned":"Unplanned";}saveCashflowState(x);syncCampaignExpenseTransaction(item,item.status!=="Paid");patchLedgerStatusButtonInPlace(ledgerSpending,item.status,item,false);refreshCashflowCardsInPlace();return;}const fixed=e.target.closest("[data-fixed-cost-id]");if(!fixed)return;const x=cashflowState(),item=x.fixed.find(i=>i.id===fixed.dataset.fixedCostId);if(!item)return;if(guardCashflowLocked(x,"fixed",item))return;if(item.status!=="Paid"){item.status="Paid";item.actual=item.expected;adjustCashBalance(x,item.account,-num(item.actual));}else{adjustCashBalance(x,item.account,num(item.actual||item.expected));item.actual=null;item.status="Expected";}saveCashflowState(x);syncCampaignExpenseTransaction(item,item.status!=="Paid");patchStatusButtonInPlace(fixed,item.status);refreshCashflowCardsInPlace();});
+document.addEventListener("click",e=>{const ledgerMonthButton=e.target.closest("[data-property-ledger-month]");if(ledgerMonthButton){shiftPropertyLedgerMonth(Number(ledgerMonthButton.dataset.propertyLedgerMonth)||0);return;}const propAction=e.target.closest("[data-property-action]");if(propAction){const a=propAction.dataset.propertyAction;if(a==="add-management-fee")addManagementFeeFromCashflow(propAction);return;}const tab=e.target.closest("[data-tax-tab]");if(tab){const root=tab.closest(".tax-workspace"),target=tab.dataset.taxTab;taxWorkspaceTab=target;root.querySelectorAll("[data-tax-tab]").forEach(x=>x.classList.toggle("active",x===tab));root.querySelectorAll("[data-tax-panel]").forEach(x=>x.hidden=x.dataset.taxPanel!==target);return;}const sandboxAction=e.target.closest("[data-sandbox-action]");if(sandboxAction){const a=sandboxAction.dataset.sandboxAction,id=sandboxAction.dataset.sandboxId;if(a==="reset")resetSandbox();if(a==="add-fixed")sandboxOpenEditor("fixed","add");if(a==="add-income")sandboxOpenEditor("income","add","","ledger");if(a==="add-spending")sandboxOpenEditor("spending","add");if(a==="edit-fixed")sandboxOpenEditor("fixed","edit",id);if(a==="edit-income")sandboxOpenEditor("income","edit",id);if(a==="edit-spending")sandboxOpenEditor("spending","edit",id);if(a==="remove-fixed")removeSandboxItem("fixed",id);if(a==="remove-income")removeSandboxItem("income",id);if(a==="remove-spending")removeSandboxItem("spending",id);if(a==="clear-ledger")clearSandboxLedger();if(a==="save-editor")saveSandboxEditor();if(a==="cancel-editor"){sandboxEditor=null;renderDashboardSurface();}return;}const action=e.target.closest("[data-cash-action]");if(action){const a=action.dataset.cashAction,id=action.dataset.cashId;if(a==="export-workspace")exportMonthlyWorkspace();if(a==="lock-to-day")lockCashflowToDay();if(a==="close-month")closeCashflowMonth();if(a==="reopen-month")reopenCashflowMonth();if(a==="copy-previous-fixed")copyPreviousFixedCosts();if(a==="add-fixed")addFixedCost();if(a==="edit-balance")openCashflowEditor("balance","edit");if(a==="add-fixed-income")addFixedIncome();if(a==="edit-fixed")editFixedCost(id);if(a==="remove-fixed")removeFixedCost(id);if(a==="add-income")addIncome();if(a==="edit-income")editIncome(id);if(a==="remove-income")removeIncome(id);if(a==="add-planned")addSpending("planned");if(a==="add-spending")addSpending("actual");if(a==="add-transfer")addTransfer();if(a==="edit-spending")editSpending(id);if(a==="remove-spending")removeSpending(id);if(a==="save-editor")saveCashflowEditor();if(a==="cancel-editor"){cashflowEditor=null;renderDashboardSurface();}return;}const fixedIncome=e.target.closest("[data-fixed-income-id]");if(fixedIncome){const x=cashflowState(),item=(x.income||[]).find(i=>i.id===fixedIncome.dataset.fixedIncomeId);if(!item)return;if(guardCashflowLocked(x,"income",item))return;if(item.status!=="Received"){item.status="Received";item.actual=item.expected;adjustCashBalance(x,item.account,num(item.actual));}else{adjustCashBalance(x,item.account,-num(item.actual||item.expected));item.actual=null;item.status="Expected";}item.updatedAt=new Date().toISOString();if(item.treatment==="property_income"||item.propertyId)syncCashflowRentToPropertyRecords(item,x.month,item.expected,item.actual,item.status);saveCashflowState(x);patchStatusButtonInPlace(fixedIncome,item.status);refreshCashflowCardsInPlace();return;}const ledgerIncome=e.target.closest("[data-ledger-income-id]");if(ledgerIncome){const x=cashflowState(),item=(x.income||[]).find(i=>i.id===ledgerIncome.dataset.ledgerIncomeId);if(!item)return;if(guardCashflowLocked(x,"income",item))return;if(item.status!=="Received"){item.status="Received";item.actual=item.actual??item.expected??0;adjustCashBalance(x,item.account,num(item.actual));}else{adjustCashBalance(x,item.account,-num(item.actual||item.expected));item.actual=null;item.status="Expected";}item.updatedAt=new Date().toISOString();if(item.treatment==="property_income"||item.propertyId)syncCashflowRentToPropertyRecords(item,x.month,item.expected,item.actual,item.status);saveCashflowState(x);patchLedgerStatusButtonInPlace(ledgerIncome,item.status,item,true);refreshCashflowCardsInPlace();return;}const ledgerSpending=e.target.closest("[data-ledger-spending-id]");if(ledgerSpending){const x=cashflowState(),item=x.spending.find(i=>i.id===ledgerSpending.dataset.ledgerSpendingId);if(!item)return;if(guardCashflowLocked(x,"spending",item))return;if(item.status!=="Paid"){item.status="Paid";item.actual=item.actual??item.planned??0;adjustCashBalance(x,item.account,-num(item.actual));}else{adjustCashBalance(x,item.account,num(item.actual||item.planned));item.actual=null;item.status=item.planned!=null?"Planned":"Unplanned";}saveCashflowState(x);syncCampaignExpenseTransaction(item,item.status!=="Paid");patchLedgerStatusButtonInPlace(ledgerSpending,item.status,item,false);refreshCashflowCardsInPlace();return;}const fixed=e.target.closest("[data-fixed-cost-id]");if(!fixed)return;const x=cashflowState(),item=x.fixed.find(i=>i.id===fixed.dataset.fixedCostId);if(!item)return;if(guardCashflowLocked(x,"fixed",item))return;if(item.status!=="Paid"){item.status="Paid";item.actual=item.expected;adjustCashBalance(x,item.account,-num(item.actual));}else{adjustCashBalance(x,item.account,num(item.actual||item.expected));item.actual=null;item.status="Expected";}saveCashflowState(x);syncCampaignExpenseTransaction(item,item.status!=="Paid");patchStatusButtonInPlace(fixed,item.status);refreshCashflowCardsInPlace();});
 document.addEventListener("change",e=>{if(!e.target.matches('[data-cash-editor="treatment"]'))return;const property=by("[data-property-field]");if(!property)return;property.hidden=!isPropertyTreatment(e.target.value);if(property.hidden)property.value="";});
 document.addEventListener("click",e=>{if(e.target.closest('[data-cash-action="edit-tax-due"]'))openCashflowEditor("tax","edit");});
 function sortCashflowTable(button){const table=button.closest(".tax-workspace-table"),column=Number(button.dataset.cashSort),numeric=button.hasAttribute("data-sort-number"),direction=button.dataset.sortDirection==="asc"?"desc":"asc",rows=[...table.querySelectorAll(":scope > .tax-workspace-row:not(.header)")],value=row=>{const text=row.children[column]?.textContent?.trim()||"";if(numeric)return Number(text.replace(/[^0-9.-]/g,""))||0;const day=text.match(/^\d+/);return column===0&&day?Number(day[0]):text.toLowerCase();};rows.sort((a,b)=>{const av=value(a),bv=value(b),result=typeof av==="number"?av-bv:String(av).localeCompare(String(bv),"en-GB",{numeric:true});return direction==="asc"?result:-result;}).forEach(row=>table.appendChild(row));table.querySelectorAll(".cash-sort").forEach(x=>{if(x!==button){delete x.dataset.sortDirection;x.removeAttribute("aria-sort");}});button.dataset.sortDirection=direction;button.setAttribute("aria-sort",direction==="asc"?"ascending":"descending");}

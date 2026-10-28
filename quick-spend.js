@@ -36,6 +36,7 @@ function loadCashflow(month){
   base.fixed.forEach(normDate);
   base.spending.forEach(normDate);
   base.income.forEach(normDate);
+  if(typeof dedupeCashflowPropertyRents === 'function') base.income = dedupeCashflowPropertyRents(base.income);
   return base;
 }
 
@@ -56,6 +57,7 @@ function saveCashflow(x){
   x.bankAccounts.zempler=0;
   x.bank=x.bankAccounts.lloyds;
   x.bankUpdatedAt=x.bankUpdatedAt||new Date().toISOString();
+  x.updatedAt=x.updatedAt||new Date().toISOString();
   localStorage.setItem(cashflowKey(x.month),JSON.stringify(x));
 }
 
@@ -418,6 +420,100 @@ function getSafetyBuffer(){
     }
   }catch{}
   return 2000;
+}
+
+function dedupeCashflowPropertyRents(incomeList){
+  if(!Array.isArray(incomeList)) return [];
+  let props = [];
+  try{ props = loadAppState().properties || []; }catch{}
+  const propMap = new Map();
+  const result = [];
+  for(const item of incomeList){
+    if(!item) continue;
+    let prop = null;
+    if(item.propertyId){
+      prop = props.find(p => p.id === item.propertyId);
+    }
+    if(!prop){
+      const desc = String(item.description || item.payment || "").toLowerCase();
+      prop = props.find(p => {
+        const pName = String(p.property || "").toLowerCase();
+        return (desc.includes("penn") && pName.includes("penn")) ||
+               (desc.includes("leslie") && pName.includes("leslie")) ||
+               (desc.includes("ranelagh") && pName.includes("ranelagh"));
+      });
+    }
+    if(prop){
+      item.propertyId = prop.id;
+      item.treatment = "property_income";
+      if(!propMap.has(prop.id)){
+        propMap.set(prop.id, item);
+        result.push(item);
+      }else{
+        const existing = propMap.get(prop.id);
+        const itemTime = item.updatedAt ? new Date(item.updatedAt).getTime() : 0;
+        const existTime = existing.updatedAt ? new Date(existing.updatedAt).getTime() : 0;
+        if(itemTime > existTime || (num(item.expected) === 0 && num(existing.expected) !== 0)){
+          Object.assign(existing, item);
+        }else if(num(existing.expected) === 0 && num(item.expected) !== 0){
+          // keep existing with 0
+        }else if(item.status === "Received" && existing.status !== "Received"){
+          Object.assign(existing, item);
+        }
+      }
+    }else{
+      result.push(item);
+    }
+  }
+  return result;
+}
+
+function syncMobilePropertyIncome(item, month, expectedAmount, actualAmount, status){
+  try{
+    const s = loadAppState();
+    if(!s || !Array.isArray(s.properties)) return;
+
+    let prop = null;
+    if(item.propertyId){
+      prop = s.properties.find(p => p.id === item.propertyId);
+    }
+    if(!prop){
+      const desc = String(item.description || item.payment || "").toLowerCase();
+      prop = s.properties.find(p => {
+        const pName = String(p.property || "").toLowerCase();
+        return (desc.includes("penn") && pName.includes("penn")) ||
+               (desc.includes("leslie") && pName.includes("leslie")) ||
+               (desc.includes("ranelagh") && pName.includes("ranelagh"));
+      });
+    }
+    if(!prop) return;
+
+    s.propertyIncome = s.propertyIncome || [];
+    const finalAmount = status === "Received" ? (actualAmount != null ? num(actualAmount) : num(expectedAmount)) : num(expectedAmount);
+
+    let rec = s.propertyIncome.find(r => r.propertyId === prop.id && (r.period === month || (r.date && r.date.slice(0, 7) === month)));
+    if(rec){
+      rec.amount = Math.max(0, finalAmount);
+      rec.modifiedAt = new Date().toISOString();
+      rec.notes = finalAmount === 0 ? "Rent adjusted to £0.00" : (status === "Received" ? "Rent received" : "Monthly rent expected");
+    }else{
+      const day = String(prop.property || "").toLowerCase().includes("penn") ? 26 : 1;
+      s.propertyIncome.push({
+        id: crypto.randomUUID ? crypto.randomUUID() : ('pi-' + Date.now()),
+        propertyId: prop.id,
+        date: month + '-' + String(day).padStart(2, '0'),
+        amount: Math.max(0, finalAmount),
+        period: month,
+        notes: finalAmount === 0 ? "Rent adjusted to £0.00" : "Rent from cashflow",
+        modifiedAt: new Date().toISOString()
+      });
+    }
+
+    s.savedAt = new Date().toISOString();
+    localStorage.setItem("tax-engine-v3", JSON.stringify(s));
+  }catch(e){
+    console.error("Failed to sync property rent to app state:", e);
+  }
 }
 
 function propertyOptions(){
@@ -965,9 +1061,16 @@ function init(){
     item.notes=newNotes;
     item.account=DEFAULT_BANK_ACCOUNT;
 
+    item.updatedAt=new Date().toISOString();
     x.bankAccounts=x.bankAccounts||{zempler:0,lloyds:0};
     x.bankAccounts.lloyds=num(x.bankAccounts.lloyds)-oldImpact+newImpact;
     x.bankUpdatedAt=new Date().toISOString();
+    x.updatedAt=new Date().toISOString();
+
+    if(collection==='income'){
+      syncMobilePropertyIncome(item, currentMonth, newAmount, newActual, newStatus);
+      x.income=dedupeCashflowPropertyRents(x.income);
+    }
 
     saveCashflow(x);
     if(collection!=='income') syncMobileCampaignTx(item, false);
