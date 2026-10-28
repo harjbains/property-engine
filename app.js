@@ -201,9 +201,9 @@ function bankAccountOptions(selected=DEFAULT_BANK_ACCOUNT){return BANK_ACCOUNTS.
 function transferReasonOptions(selected="general"){return TRANSFER_REASONS.map(([v,l])=>`<option value="${v}" ${v===(selected||"general")?"selected":""}>${l}</option>`).join("");}
 function transferReasonLabel(value){return TRANSFER_REASONS.find(([v])=>v===(value||"general"))?.[1]||"General transfer";}
 function bankAccountLabel(id){return BANK_ACCOUNTS.find(([v])=>v===(id||DEFAULT_BANK_ACCOUNT))?.[1]||"Zempler";}
-function normaliseCashflowAccounts(x){const oldBank=num(x.bank);x.bankAccounts=x.bankAccounts||{zempler:oldBank,lloyds:0};x.bankAccounts.zempler=num(x.bankAccounts.zempler);x.bankAccounts.lloyds=num(x.bankAccounts.lloyds);if(!x.bankAccounts.zempler&&!x.bankAccounts.lloyds&&oldBank)x.bankAccounts.zempler=oldBank;x.bank=num(x.bankAccounts.zempler)+num(x.bankAccounts.lloyds);return x;}
-function adjustCashBalance(x,account,delta){normaliseCashflowAccounts(x);const key=account||DEFAULT_BANK_ACCOUNT,change=Number(delta)||0;x.bankAccounts[key]=num(x.bankAccounts[key])+change;x.bank=num(x.bank)+change;return x;}
-function applyCashTransfer(x,item,sign=1){normaliseCashflowAccounts(x);const amount=num(item.actual||item.planned),from=item.transferFrom||DEFAULT_BANK_ACCOUNT,to=item.transferTo||"lloyds";if(!amount||from===to)return x;x.bankAccounts[from]=num(x.bankAccounts[from])-amount*sign;x.bankAccounts[to]=num(x.bankAccounts[to])+amount*sign;normaliseCashflowAccounts(x);return x;}
+function normaliseCashflowAccounts(x){if(!x.bankAccounts){const oldBank=num(x.bank);x.bankAccounts={zempler:oldBank,lloyds:0};}x.bankAccounts.zempler=num(x.bankAccounts.zempler);x.bankAccounts.lloyds=num(x.bankAccounts.lloyds);x.bank=x.bankAccounts.zempler+x.bankAccounts.lloyds;return x;}
+function adjustCashBalance(x,account,delta){normaliseCashflowAccounts(x);const key=account||DEFAULT_BANK_ACCOUNT,change=Number(delta)||0;x.bankAccounts[key]=num(x.bankAccounts[key])+change;x.bank=num(x.bank)+change;x.bankUpdatedAt=new Date().toISOString();return x;}
+function applyCashTransfer(x,item,sign=1){normaliseCashflowAccounts(x);const amount=num(item.actual||item.planned),from=item.transferFrom||DEFAULT_BANK_ACCOUNT,to=item.transferTo||"lloyds";if(!amount||from===to)return x;x.bankAccounts[from]=num(x.bankAccounts[from])-amount*sign;x.bankAccounts[to]=num(x.bankAccounts[to])+amount*sign;x.bankUpdatedAt=new Date().toISOString();normaliseCashflowAccounts(x);return x;}
 function cashItemText(i){return `${i.description||i.payment||""} ${i.notes||""} ${i.category||""}`;}
 function isRoomRentIncome(i){if(!i)return false;if(i.treatment==="room_rent")return true;return /\b(rooms?|room\s*rents?|room\s*income|front\s*room|rent\s*front)\b/i.test(cashItemText(i));}
 function isPensionIncome(i){if(!i)return false;if(i.treatment==="pension_income")return true;if(String(i.category||"").toLowerCase()==="pension")return true;return /\b(pension|bt\s*pension|state\s*pension)\b/i.test(cashItemText(i));}
@@ -521,6 +521,7 @@ function saveCashflowEditor(){
     x.taxDueOverride=editorNumber("taxDue")||0;
   }else if(cashflowEditor.type==="balance"){
     x.bankAccounts={zempler:editorNumber("zempler")||0,lloyds:editorNumber("lloyds")||0};
+    x.bankUpdatedAt=new Date().toISOString();
     normaliseCashflowAccounts(x);
   }else if(cashflowEditor.type==="transfer"){
     x.spending=x.spending||[];

@@ -376,3 +376,78 @@ test("supabase-sync: mergeAppStatePayload preserves campaignTransactions and pro
   assert.equal(merged.properties.length, 2);
 });
 
+test("supabase-sync: mergeCashflowPayload permits resetting balance to £0.00 when local bankUpdatedAt is newer", () => {
+  const { mergeCashflowPayload } = require("./supabase-sync.js");
+
+  const localCashflow = JSON.stringify({
+    month: "2026-10",
+    bank: 0,
+    bankAccounts: { zempler: 0, lloyds: 0 },
+    bankUpdatedAt: "2026-10-28T16:00:00.000Z",
+    fixed: [],
+    spending: [],
+    income: []
+  });
+
+  const remoteCashflow = JSON.stringify({
+    month: "2026-10",
+    bank: 3071.28,
+    bankAccounts: { zempler: 1200, lloyds: 1871.28 },
+    bankUpdatedAt: "2026-10-28T14:00:00.000Z",
+    fixed: [],
+    spending: [],
+    income: []
+  });
+
+  const merged = JSON.parse(mergeCashflowPayload(localCashflow, remoteCashflow));
+  assert.equal(merged.bankAccounts.zempler, 0, "Local 0 balance for zempler must win when newer");
+  assert.equal(merged.bankAccounts.lloyds, 0, "Local 0 balance for lloyds must win when newer");
+  assert.equal(merged.bank, 0, "Total bank balance must be 0");
+  assert.equal(merged.bankUpdatedAt, "2026-10-28T16:00:00.000Z");
+});
+
+test("app.js: normaliseCashflowAccounts does not resurrect oldBank when resetting to 0", () => {
+  const code = fs.readFileSync("app.js", "utf8");
+  const context = {
+    Math,
+    Number,
+    num: v => Math.max(0, Number(v) || 0)
+  };
+  vm.createContext(context);
+  const normMatch = code.match(/function normaliseCashflowAccounts[\s\S]*?return x;\s*\}/);
+  assert.ok(normMatch, "normaliseCashflowAccounts function must exist in app.js");
+  vm.runInContext(normMatch[0], context);
+
+  const state = {
+    bank: 3000,
+    bankAccounts: { zempler: 0, lloyds: 0 }
+  };
+
+  const result = context.normaliseCashflowAccounts(state);
+  assert.equal(result.bankAccounts.zempler, 0, "zempler must remain 0 and not resurrect oldBank 3000");
+  assert.equal(result.bankAccounts.lloyds, 0, "lloyds must remain 0");
+  assert.equal(result.bank, 0, "total bank must be 0");
+});
+
+test("quick-spend.js: getBankBalance correctly returns 0 when accounts are 0", () => {
+  const code = fs.readFileSync("quick-spend.js", "utf8");
+  const context = {
+    Math,
+    Number,
+    num: v => Math.max(0, Number(v) || 0)
+  };
+  vm.createContext(context);
+  const getBalMatch = code.match(/function getBankBalance[\s\S]*?return num\(x\.bank\);\s*\}/);
+  assert.ok(getBalMatch, "getBankBalance function must exist in quick-spend.js");
+  vm.runInContext(getBalMatch[0], context);
+
+  const state = {
+    bank: 3000, // old bank property before reset
+    bankAccounts: { zempler: 0, lloyds: 0 }
+  };
+
+  const bal = context.getBankBalance(state);
+  assert.equal(bal, 0, "getBankBalance must return 0 when bankAccounts are 0");
+});
+
+

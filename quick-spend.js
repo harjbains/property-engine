@@ -39,11 +39,18 @@ function loadCashflow(month){
 }
 
 function getBankBalance(x){
-  return num(x.bankAccounts?.lloyds)+num(x.bankAccounts?.zempler)||num(x.bank);
+  if(x.bankAccounts){
+    return num(x.bankAccounts.lloyds)+num(x.bankAccounts.zempler);
+  }
+  return num(x.bank);
 }
 
 function saveCashflow(x){
-  x.bank=num(x.bankAccounts?.zempler)+num(x.bankAccounts?.lloyds);
+  x.bankAccounts=x.bankAccounts||{zempler:0,lloyds:0};
+  x.bankAccounts.zempler=num(x.bankAccounts.zempler);
+  x.bankAccounts.lloyds=num(x.bankAccounts.lloyds);
+  x.bank=x.bankAccounts.zempler+x.bankAccounts.lloyds;
+  x.bankUpdatedAt=x.bankUpdatedAt||new Date().toISOString();
   localStorage.setItem(cashflowKey(x.month),JSON.stringify(x));
 }
 
@@ -709,6 +716,7 @@ window.checkOff=function(id,type){
 
   x.bankAccounts=x.bankAccounts||{zempler:0,lloyds:0};
   x.bankAccounts.lloyds=num(x.bankAccounts.lloyds)-oldImpact+newImpact;
+  x.bankUpdatedAt=new Date().toISOString();
 
   saveCashflow(x);
   if(type==='cost') syncMobileCampaignTx(item, false);
@@ -858,6 +866,7 @@ function init(){
     x.spending.push(item);
     x.bankAccounts=x.bankAccounts||{zempler:0,lloyds:0};
     x.bankAccounts.lloyds=num(x.bankAccounts.lloyds)-amount;
+    x.bankUpdatedAt=new Date().toISOString();
     saveCashflow(x);
     syncMobileCampaignTx(item, false);
 
@@ -953,6 +962,7 @@ function init(){
 
     x.bankAccounts=x.bankAccounts||{zempler:0,lloyds:0};
     x.bankAccounts.lloyds=num(x.bankAccounts.lloyds)-oldImpact+newImpact;
+    x.bankUpdatedAt=new Date().toISOString();
 
     saveCashflow(x);
     if(collection!=='income') syncMobileCampaignTx(item, false);
@@ -989,6 +999,7 @@ function init(){
 
     x.bankAccounts=x.bankAccounts||{zempler:0,lloyds:0};
     x.bankAccounts.lloyds=num(x.bankAccounts.lloyds)-oldImpact;
+    x.bankUpdatedAt=new Date().toISOString();
 
     saveCashflow(x);
     by("#mobileEditDialog")?.close();
@@ -1333,6 +1344,7 @@ function init(){
       x.bankAccounts=x.bankAccounts||{zempler:0,lloyds:0};
       x.bankAccounts.lloyds=num(x.bankAccounts.lloyds)-totalAllocatedAmount;
     }
+    x.bankUpdatedAt=new Date().toISOString();
 
     saveCashflow(x);
     closeScanModal();
@@ -1363,7 +1375,33 @@ function init(){
     const parsed=parseBankStatementText(sample,currentMonth);
     renderScanResults(parsed);
   });
-  by("#btnConfirmAllocation")?.addEventListener("click",confirmBankAllocation);
+  function openBankBalanceModal(){
+    const x=loadCashflow(currentMonth);
+    const zempler=x.bankAccounts?.zempler??0;
+    const lloyds=x.bankAccounts?.lloyds??(x.bank??0);
+    if(by("#editLloydsBalance"))by("#editLloydsBalance").value=lloyds;
+    if(by("#editZemplerBalance"))by("#editZemplerBalance").value=zempler;
+    by("#mobileBankBalanceDialog")?.showModal();
+  }
+
+  by(".card-bank")?.addEventListener("click",openBankBalanceModal);
+  by("#closeBankBalanceDialog")?.addEventListener("click",()=>by("#mobileBankBalanceDialog")?.close());
+  by("#cancelBankBalanceDialog")?.addEventListener("click",()=>by("#mobileBankBalanceDialog")?.close());
+  by("#mobileBankBalanceForm")?.addEventListener("submit",e=>{
+    e.preventDefault();
+    const x=loadCashflow(currentMonth);
+    const lloydsVal=parseFloat(by("#editLloydsBalance")?.value)||0;
+    const zemplerVal=parseFloat(by("#editZemplerBalance")?.value)||0;
+    x.bankAccounts={
+      zempler: Math.max(0, zemplerVal),
+      lloyds: Math.max(0, lloydsVal)
+    };
+    x.bank=x.bankAccounts.zempler+x.bankAccounts.lloyds;
+    x.bankUpdatedAt=new Date().toISOString();
+    saveCashflow(x);
+    by("#mobileBankBalanceDialog")?.close();
+    render();
+  });
 
   window.TaxEngineReloadFromStorage=render;
   window.addEventListener("storage",render);
