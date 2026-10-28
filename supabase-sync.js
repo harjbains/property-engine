@@ -118,18 +118,14 @@ function mergeCashflowPayload(localStr, remoteStr){
     const localBankTime = local.bankUpdatedAt ? new Date(local.bankUpdatedAt).getTime() : 0;
     const remoteBankTime = remote.bankUpdatedAt ? new Date(remote.bankUpdatedAt).getTime() : 0;
 
-    let zemplerFinal, lloydsFinal, bankUpdatedAtFinal;
+    let lloydsFinal, bankUpdatedAtFinal;
     if (localBankTime || remoteBankTime) {
       const winner = localBankTime >= remoteBankTime ? local : remote;
-      zemplerFinal = Number(winner.bankAccounts?.zempler || 0);
-      lloydsFinal = Number(winner.bankAccounts?.lloyds || 0);
+      lloydsFinal = Number(winner.bankAccounts?.lloyds ?? winner.bank ?? 0) + Number(winner.bankAccounts?.zempler || 0);
       bankUpdatedAtFinal = winner.bankUpdatedAt || "";
     } else {
-      const lloydsLocal = Number(local.bankAccounts?.lloyds || 0);
-      const lloydsRemote = Number(remote.bankAccounts?.lloyds || 0);
-      const zemplerLocal = Number(local.bankAccounts?.zempler || 0);
-      const zemplerRemote = Number(remote.bankAccounts?.zempler || 0);
-      zemplerFinal = Math.max(zemplerLocal, zemplerRemote);
+      const lloydsLocal = Number(local.bankAccounts?.lloyds ?? local.bank ?? 0) + Number(local.bankAccounts?.zempler || 0);
+      const lloydsRemote = Number(remote.bankAccounts?.lloyds ?? remote.bank ?? 0) + Number(remote.bankAccounts?.zempler || 0);
       lloydsFinal = lloydsLocal > 0 ? lloydsLocal : (lloydsRemote > 0 ? lloydsRemote : 0);
       bankUpdatedAtFinal = "";
     }
@@ -141,10 +137,10 @@ function mergeCashflowPayload(localStr, remoteStr){
       spending: mergeList(local.spending, remote.spending),
       income: mergeList(local.income, remote.income),
       bankAccounts: {
-        zempler: zemplerFinal,
+        zempler: 0,
         lloyds: lloydsFinal
       },
-      bank: zemplerFinal + lloydsFinal,
+      bank: lloydsFinal,
       bankUpdatedAt: bankUpdatedAtFinal
     };
     return JSON.stringify(merged);

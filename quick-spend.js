@@ -25,7 +25,8 @@ function loadCashflow(month){
   const base=saved&&typeof saved==="object"?{...emptyCashflow(month),...saved,month}:emptyCashflow(month);
   base.fixed=Array.isArray(base.fixed)?base.fixed:[];base.spending=Array.isArray(base.spending)?base.spending:[];base.income=Array.isArray(base.income)?base.income:[];
   base.bankAccounts=base.bankAccounts||{zempler:0,lloyds:num(base.bank)};
-  base.bankAccounts.zempler=num(base.bankAccounts.zempler);base.bankAccounts.lloyds=num(base.bankAccounts.lloyds);
+  if(base.bankAccounts.zempler){base.bankAccounts.lloyds=num(base.bankAccounts.lloyds)+num(base.bankAccounts.zempler);base.bankAccounts.zempler=0;}
+  base.bankAccounts.lloyds=num(base.bankAccounts.lloyds);base.bankAccounts.zempler=0;base.bank=base.bankAccounts.lloyds;
   const normDate=item=>{
     if(!item)return item;
     if(item.date&&/^\d{4}-\d{2}-\d{1,2}/.test(String(item.date).trim()))item.date=formatCashDate(item.date,month);
@@ -40,16 +41,20 @@ function loadCashflow(month){
 
 function getBankBalance(x){
   if(x.bankAccounts){
-    return num(x.bankAccounts.lloyds)+num(x.bankAccounts.zempler);
+    return num(x.bankAccounts.lloyds);
   }
   return num(x.bank);
 }
 
 function saveCashflow(x){
   x.bankAccounts=x.bankAccounts||{zempler:0,lloyds:0};
-  x.bankAccounts.zempler=num(x.bankAccounts.zempler);
+  if(x.bankAccounts.zempler){
+    x.bankAccounts.lloyds=num(x.bankAccounts.lloyds)+num(x.bankAccounts.zempler);
+    x.bankAccounts.zempler=0;
+  }
   x.bankAccounts.lloyds=num(x.bankAccounts.lloyds);
-  x.bank=x.bankAccounts.zempler+x.bankAccounts.lloyds;
+  x.bankAccounts.zempler=0;
+  x.bank=x.bankAccounts.lloyds;
   x.bankUpdatedAt=x.bankUpdatedAt||new Date().toISOString();
   localStorage.setItem(cashflowKey(x.month),JSON.stringify(x));
 }
@@ -1377,10 +1382,8 @@ function init(){
   });
   function openBankBalanceModal(){
     const x=loadCashflow(currentMonth);
-    const zempler=x.bankAccounts?.zempler??0;
     const lloyds=x.bankAccounts?.lloyds??(x.bank??0);
     if(by("#editLloydsBalance"))by("#editLloydsBalance").value=lloyds;
-    if(by("#editZemplerBalance"))by("#editZemplerBalance").value=zempler;
     by("#mobileBankBalanceDialog")?.showModal();
   }
 
@@ -1391,12 +1394,11 @@ function init(){
     e.preventDefault();
     const x=loadCashflow(currentMonth);
     const lloydsVal=parseFloat(by("#editLloydsBalance")?.value)||0;
-    const zemplerVal=parseFloat(by("#editZemplerBalance")?.value)||0;
     x.bankAccounts={
-      zempler: Math.max(0, zemplerVal),
+      zempler: 0,
       lloyds: Math.max(0, lloydsVal)
     };
-    x.bank=x.bankAccounts.zempler+x.bankAccounts.lloyds;
+    x.bank=x.bankAccounts.lloyds;
     x.bankUpdatedAt=new Date().toISOString();
     saveCashflow(x);
     by("#mobileBankBalanceDialog")?.close();

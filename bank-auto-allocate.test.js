@@ -450,4 +450,67 @@ test("quick-spend.js: getBankBalance correctly returns 0 when accounts are 0", (
   assert.equal(bal, 0, "getBankBalance must return 0 when bankAccounts are 0");
 });
 
+test("app.js cashflowSummary calculates forecast and safe balance matching mobile logic", () => {
+  const code = fs.readFileSync("app.js", "utf8");
+  const context = {
+    Math,
+    Number,
+    String,
+    num: v => Math.max(0, Number(v) || 0),
+    cashflowTaxDue: () => 0,
+    state: { year: "2026-27", banking: { safetyBuffer: 2000 } }
+  };
+  vm.createContext(context);
+  const normMatch = code.match(/function normaliseCashflowAccounts[\s\S]*?return x;\s*\}/);
+  const isPendingMatch = code.match(/function isPendingCashStatus[\s\S]*?return s!=="paid"&&s!=="received";\s*\}/);
+  const sumMatch = code.match(/function cashflowSummary[\s\S]*?return\{[\s\S]*?forecast\};\s*\}/);
+
+  assert.ok(normMatch, "normaliseCashflowAccounts must exist");
+  assert.ok(isPendingMatch, "isPendingCashStatus must exist");
+  assert.ok(sumMatch, "cashflowSummary must exist");
+
+  vm.runInContext(`
+    ${normMatch[0]}
+    ${isPendingMatch[0]}
+    ${sumMatch[0]}
+  `, context);
+
+  const sample = {
+    bank: 1000,
+    bankAccounts: { zempler: 200, lloyds: 800 }, // Legacy Zempler balance
+    fixed: [
+      { id: "f1", payment: "Mortgage", expected: 500, actual: 500, status: "Paid" },
+      { id: "f2", payment: "Octopus", expected: 300, actual: 100, status: "Part-paid" }, // 200 left
+      { id: "f3", payment: "Insurance", expected: 150, actual: null, status: "Expected" } // 150 left
+    ],
+    spending: [
+      { id: "s1", description: "Repairs", planned: 200, actual: null, status: "Planned" }, // 200 left
+      { id: "s2", description: "Transfer", planned: 100, actual: 100, isTransfer: true, status: "Paid" } // ignored
+    ],
+    income: [
+      { id: "i1", description: "Rent", expected: 1200, actual: null, status: "Expected" }, // 1200 pending
+      { id: "i2", description: "Salary", expected: 1000, actual: 1000, status: "Received" } // already in bank
+    ]
+  };
+
+  const s = context.cashflowSummary(sample);
+
+  // Legacy Zempler 200 should fold into Lloyds 800 -> Lloyds 1000, Zempler 0
+  assert.equal(s.lloyds, 1000);
+  assert.equal(sample.bankAccounts.zempler, 0);
+
+  // Pending costs: f2 (300 - 100 = 200) + f3 (150) + s1 (200) = 550
+  assert.equal(s.fixedUnpaid, 350); // 200 + 150
+  assert.equal(s.plannedUnpaid, 200);
+  assert.equal(s.totalPendingCosts, 550);
+
+  // Pending income: i1 = 1200
+  assert.equal(s.incomeExpected, 1200);
+
+  // Forecast: current bank (1000) + pending income (1200) - pending costs (550) = 1650
+  assert.equal(s.forecast, 1650);
+
+  // Safe balance: forecast (1650) - safetyBuffer (2000) = -350
+  assert.equal(s.safe, -350);
+});
 
