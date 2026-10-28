@@ -581,12 +581,20 @@ function render(){
   ];
 
   // Filter and sort Pending items by date
-  const pendingCosts=allCosts.filter(i=>isPendingStatus(i.status)).sort(itemDateSort);
+  const pendingCosts=allCosts.filter(i=>isPendingStatus(i.status)&&!i.isTransfer).sort(itemDateSort);
   const pendingIncome=allIncome.filter(i=>isPendingStatus(i.status)).sort(itemDateSort);
 
   // Totals
-  const totalPendingCostsAmount=pendingCosts.reduce((sum,i)=>sum+num(i.expected??i.payment??i.planned??i.actual),0);
-  const totalPendingIncomeAmount=pendingIncome.reduce((sum,i)=>sum+num(i.expected??i.actual),0);
+  const totalPendingCostsAmount=pendingCosts.reduce((sum,i)=>{
+    const full=num(i.planned??i.expected??i.payment??i.actual);
+    const paidPart=/part/i.test(i.status)?num(i.actual):0;
+    return sum+Math.max(0,full-paidPart);
+  },0);
+  const totalPendingIncomeAmount=pendingIncome.reduce((sum,i)=>{
+    const exp=num(i.expected);
+    const act=num(i.actual);
+    return sum+(exp>0?Math.max(0,exp-act):num(i.expected??i.actual));
+  },0);
 
   // Update Summary Containers
   by("#totalPendingExpenses").textContent=money.format(totalPendingCostsAmount);
@@ -602,7 +610,8 @@ function render(){
   const remainingIncome=totalPendingIncomeAmount;
   const remainingExpenses=totalPendingCostsAmount;
   const safetyBuffer=getSafetyBuffer();
-  const campaignSurplus=currentBank+remainingIncome-remainingExpenses-safetyBuffer;
+  const forecastEndBalance=currentBank+remainingIncome-remainingExpenses;
+  const campaignSurplus=forecastEndBalance-safetyBuffer;
 
   const surplusEl=by("#balCampaignSurplus");
   if(surplusEl){
@@ -612,8 +621,8 @@ function render(){
 
   const subEl=by("#campaignFundSub");
   if(subEl){
-    subEl.textContent=`Reserve: ${money.format(safetyBuffer)}`;
-    subEl.title=`Safety Buffer: ${money.format(safetyBuffer)} (Current balance ${money.format(currentBank)} + remaining income ${money.format(remainingIncome)} - remaining expenses ${money.format(remainingExpenses)} - buffer = ${money.format(campaignSurplus)}). Tap to edit.`;
+    subEl.textContent=`Reserve: ${money.format(safetyBuffer)} · Forecast: ${money.format(forecastEndBalance)}`;
+    subEl.title=`Forecast Balance: ${money.format(forecastEndBalance)} (Bank ${money.format(currentBank)} + remaining income ${money.format(remainingIncome)} - remaining expenses ${money.format(remainingExpenses)}) minus Reserve ${money.format(safetyBuffer)} = Campaign surplus ${money.format(campaignSurplus)}. Tap to edit.`;
   }
 
   const primaryCamp=getPrimaryCampaign();
