@@ -100,28 +100,63 @@ function mergeCashflowPayload(localStr, remoteStr){
 
     const localTime = local.updatedAt ? new Date(local.updatedAt).getTime() : (local.bankUpdatedAt ? new Date(local.bankUpdatedAt).getTime() : 0);
     const remoteTime = remote.updatedAt ? new Date(remote.updatedAt).getTime() : (remote.bankUpdatedAt ? new Date(remote.bankUpdatedAt).getTime() : 0);
-    const remoteIsNewer = remoteTime > localTime;
+    const remoteIsMobile = remote.sourceDevice === "mobile";
+    const remoteIsNewer = remoteIsMobile || (remoteTime > localTime);
 
     const getItemKey = (item) => {
       if(!item) return '';
       if(item.id) return item.id;
       if(item.propertyId) return 'prop:' + item.propertyId;
       const desc = String(item.description || item.payment || '').trim().toLowerCase();
-      return (item.due || item.date || '') + ':' + desc + ':' + (item.section || '');
+      return (item.due || item.date || '') + ':' + desc;
     };
 
-    const mergeList = (localList, remoteList) => {
-      const map = new Map();
-      const firstList = remoteIsNewer ? localList : remoteList;
-      const secondList = remoteIsNewer ? remoteList : localList;
+    const cleanIncomeList = (list) => {
+      return (Array.isArray(list) ? list : []).map(i => {
+        if(!i) return i;
+        const item = { ...i };
+        const desc = String(item.description || item.payment || "").toLowerCase();
+        if((item.treatment === "property_income" || desc.includes("penn") || desc.includes("leslie") || desc.includes("ranelagh") || desc.includes("pension")) && !item.section) {
+          item.section = "fixed";
+        }
+        return item;
+      });
+    };
 
-      (Array.isArray(firstList) ? firstList : []).forEach(item => {
+    const mergeList = (localList, remoteList, isIncome = false) => {
+      const cleanRemote = isIncome ? cleanIncomeList(remoteList) : (Array.isArray(remoteList) ? remoteList : []);
+      const cleanLocal = isIncome ? cleanIncomeList(localList) : (Array.isArray(localList) ? localList : []);
+
+      if(remoteIsMobile) {
+        // Mobile is authoritative: take remoteList directly, preserving only local items created on desktop strictly AFTER remoteTime
+        const remoteKeys = new Set(cleanRemote.map(getItemKey).filter(Boolean));
+        const newlyAddedOnDesktop = cleanLocal.filter(item => {
+          if(!item || !item.createdAt) return false;
+          const cTime = new Date(item.createdAt).getTime();
+          return cTime > remoteTime && !remoteKeys.has(getItemKey(item));
+        });
+        return [...cleanRemote, ...newlyAddedOnDesktop];
+      }
+
+      if(remoteIsNewer && remoteTime > localTime) {
+        // Remote is newer: take remoteList, preserving only local items created strictly AFTER remoteTime
+        const remoteKeys = new Set(cleanRemote.map(getItemKey).filter(Boolean));
+        const newlyAddedLocal = cleanLocal.filter(item => {
+          if(!item || !item.createdAt) return false;
+          const cTime = new Date(item.createdAt).getTime();
+          return cTime > remoteTime && !remoteKeys.has(getItemKey(item));
+        });
+        return [...cleanRemote, ...newlyAddedLocal];
+      }
+
+      // If timestamps are absent or equal, union both by key
+      const map = new Map();
+      cleanRemote.forEach(item => {
         if(item && (item.id || item.description || item.payment || item.propertyId)) {
-          const k = getItemKey(item);
-          map.set(k, { ...item });
+          map.set(getItemKey(item), { ...item });
         }
       });
-      (Array.isArray(secondList) ? secondList : []).forEach(item => {
+      cleanLocal.forEach(item => {
         if(item && (item.id || item.description || item.payment || item.propertyId)) {
           const k = getItemKey(item);
           const existing = map.get(k);
@@ -130,7 +165,7 @@ function mergeCashflowPayload(localStr, remoteStr){
           } else {
             const itemTime = item.updatedAt ? new Date(item.updatedAt).getTime() : 0;
             const existTime = existing.updatedAt ? new Date(existing.updatedAt).getTime() : 0;
-            if(itemTime > existTime || (itemTime === existTime && (remoteIsNewer ? (secondList === remoteList) : (secondList === localList)))) {
+            if(itemTime > existTime) {
               map.set(k, { ...existing, ...item });
             }
           }
@@ -139,9 +174,15 @@ function mergeCashflowPayload(localStr, remoteStr){
       return [...map.values()];
     };
 
+    const localBankTime = local.bankUpdatedAt ? new Date(local.bankUpdatedAt).getTime() : 0;
+    const remoteBankTime = remote.bankUpdatedAt ? new Date(remote.bankUpdatedAt).getTime() : 0;
+
     let lloydsFinal, bankUpdatedAtFinal;
-    if (localTime || remoteTime) {
-      const winner = localTime >= remoteTime ? local : remote;
+    if(remoteIsMobile) {
+      lloydsFinal = Number(remote.bankAccounts?.lloyds ?? remote.bank ?? 0);
+      bankUpdatedAtFinal = remote.bankUpdatedAt || "";
+    } else if (localBankTime || remoteBankTime) {
+      const winner = localBankTime >= remoteBankTime ? local : remote;
       lloydsFinal = Number(winner.bankAccounts?.lloyds ?? winner.bank ?? 0) + Number(winner.bankAccounts?.zempler || 0);
       bankUpdatedAtFinal = winner.bankUpdatedAt || "";
     } else {
@@ -154,16 +195,17 @@ function mergeCashflowPayload(localStr, remoteStr){
     const merged = {
       ...(remoteIsNewer ? local : remote),
       ...(remoteIsNewer ? remote : local),
-      fixed: mergeList(local.fixed, remote.fixed),
-      spending: mergeList(local.spending, remote.spending),
-      income: mergeList(local.income, remote.income),
+      fixed: mergeList(local.fixed, remote.fixed, false),
+      spending: mergeList(local.spending, remote.spending, false),
+      income: mergeList(local.income, remote.income, true),
       bankAccounts: {
         zempler: 0,
         lloyds: lloydsFinal
       },
       bank: lloydsFinal,
       bankUpdatedAt: bankUpdatedAtFinal,
-      updatedAt: remoteIsNewer ? (remote.updatedAt || new Date(remoteTime).toISOString()) : (local.updatedAt || new Date(localTime).toISOString())
+      updatedAt: remoteIsNewer ? (remote.updatedAt || new Date(remoteTime).toISOString()) : (local.updatedAt || new Date(localTime).toISOString()),
+      sourceDevice: remoteIsMobile ? "mobile" : (remoteIsNewer ? (remote.sourceDevice || "remote") : (local.sourceDevice || "local"))
     };
     return JSON.stringify(merged);
   }catch(e){
@@ -182,20 +224,32 @@ function mergeAppStatePayload(localStr, remoteStr){
 
     const localTime = local.savedAt ? new Date(local.savedAt).getTime() : 0;
     const remoteTime = remote.savedAt ? new Date(remote.savedAt).getTime() : 0;
-    const remoteIsNewer = remoteTime > localTime;
+    const remoteIsMobile = remote.sourceDevice === "mobile";
+    const remoteIsNewer = remoteIsMobile || (remoteTime > localTime);
 
     const mergeListById = (localList, remoteList) => {
-      const map = new Map();
-      const firstList = remoteIsNewer ? localList : remoteList;
-      const secondList = remoteIsNewer ? remoteList : localList;
+      const cleanRemote = Array.isArray(remoteList) ? remoteList : [];
+      const cleanLocal = Array.isArray(localList) ? localList : [];
 
-      (Array.isArray(firstList) ? firstList : []).forEach(item => {
+      if(remoteIsMobile || (remoteIsNewer && remoteTime > localTime)) {
+        const remoteIds = new Set(cleanRemote.map(i => i?.id || i?.sourceExpenseId).filter(Boolean));
+        const newlyAddedLocal = cleanLocal.filter(item => {
+          if(!item) return false;
+          const k = item.id || item.sourceExpenseId;
+          const itemTime = item.createdAt ? new Date(item.createdAt).getTime() : (item.modifiedAt ? new Date(item.modifiedAt).getTime() : 0);
+          return itemTime > remoteTime && !remoteIds.has(k);
+        });
+        return [...cleanRemote, ...newlyAddedLocal];
+      }
+
+      const map = new Map();
+      cleanRemote.forEach(item => {
         if(item && (item.id || item.sourceExpenseId)) {
           const k = item.id || item.sourceExpenseId;
           map.set(k, { ...item });
         }
       });
-      (Array.isArray(secondList) ? secondList : []).forEach(item => {
+      cleanLocal.forEach(item => {
         if(item && (item.id || item.sourceExpenseId)) {
           const k = item.id || item.sourceExpenseId;
           const existing = map.get(k);
@@ -204,7 +258,7 @@ function mergeAppStatePayload(localStr, remoteStr){
           } else {
             const itemTime = item.modifiedAt ? new Date(item.modifiedAt).getTime() : (item.updatedAt ? new Date(item.updatedAt).getTime() : 0);
             const existTime = existing.modifiedAt ? new Date(existing.modifiedAt).getTime() : (existing.updatedAt ? new Date(existing.updatedAt).getTime() : 0);
-            if(itemTime > existTime || (itemTime === existTime && (remoteIsNewer ? (secondList === remoteList) : (secondList === localList)))) {
+            if(itemTime > existTime) {
               map.set(k, { ...existing, ...item });
             }
           }
@@ -216,7 +270,8 @@ function mergeAppStatePayload(localStr, remoteStr){
     return JSON.stringify({
       ...(remoteIsNewer ? local : remote),
       ...(remoteIsNewer ? remote : local),
-      savedAt: remoteIsNewer ? remote.savedAt : local.savedAt,
+      savedAt: remoteIsNewer ? (remote.savedAt || new Date(remoteTime).toISOString()) : (local.savedAt || new Date(localTime).toISOString()),
+      sourceDevice: remoteIsMobile ? "mobile" : (remoteIsNewer ? (remote.sourceDevice || "remote") : (local.sourceDevice || "local")),
       properties: mergeListById(local.properties, remote.properties),
       propertyIncome: mergeListById(local.propertyIncome, remote.propertyIncome),
       propertyExpenses: mergeListById(local.propertyExpenses, remote.propertyExpenses),
@@ -260,7 +315,7 @@ async function pullAll({reload=true}={}){
   }
   finally{applyingRemote=false;}
   status(changed?`Loaded ${changed} cloud update(s).`:`Cloud records are up to date.`);
-  if(changed&&reload)await pushAll("remote-normalised");
+  // pullAll does not re-push
   return rows.length;
 }
 async function initialCloudSync(){

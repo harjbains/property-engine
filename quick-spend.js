@@ -56,8 +56,9 @@ function saveCashflow(x){
   x.bankAccounts.lloyds=num(x.bankAccounts.lloyds);
   x.bankAccounts.zempler=0;
   x.bank=x.bankAccounts.lloyds;
-  x.bankUpdatedAt=x.bankUpdatedAt||new Date().toISOString();
-  x.updatedAt=x.updatedAt||new Date().toISOString();
+  x.bankUpdatedAt=new Date().toISOString();
+  x.updatedAt=new Date().toISOString();
+  x.sourceDevice="mobile";
   localStorage.setItem(cashflowKey(x.month),JSON.stringify(x));
 }
 
@@ -446,6 +447,7 @@ function dedupeCashflowPropertyRents(incomeList){
     if(prop){
       item.propertyId = prop.id;
       item.treatment = "property_income";
+      if(!item.section) item.section = "fixed";
       if(!propMap.has(prop.id)){
         propMap.set(prop.id, item);
         result.push(item);
@@ -510,6 +512,7 @@ function syncMobilePropertyIncome(item, month, expectedAmount, actualAmount, sta
     }
 
     s.savedAt = new Date().toISOString();
+    s.sourceDevice = "mobile";
     localStorage.setItem("tax-engine-v3", JSON.stringify(s));
   }catch(e){
     console.error("Failed to sync property rent to app state:", e);

@@ -633,3 +633,60 @@ test("app.js dedupeCashflowPropertyRents merges fixed and ledger property rent e
   assert.equal(deduped[0].expected, 0, "Must retain 0 expected amount");
   assert.equal(deduped[0].section, "fixed", "Must retain fixed section for checklist display");
 });
+
+test("supabase-sync: mobile authoritative sync adopts mobile items and drops deleted desktop ghost items", () => {
+  const { mergeCashflowPayload } = require("./supabase-sync.js");
+
+  const desktopLocal = JSON.stringify({
+    month: "2026-10",
+    bank: 3820,
+    bankAccounts: { zempler: 200, lloyds: 3620 },
+    bankUpdatedAt: "2026-10-28T16:00:00.000Z",
+    updatedAt: "2026-10-28T16:00:00.000Z",
+    fixed: [
+      { id: "f-home", payment: "Home mortgage", expected: 833, actual: 833, status: "Paid", due: "1 Oct", account: "lloyds" },
+      { id: "f-deleted-council", payment: "Council tax", expected: 134, actual: null, status: "Expected", due: "2 Oct", account: "lloyds" }
+    ],
+    spending: [
+      { id: "s-old-spend", description: "Old groceries", planned: 62, actual: null, status: "Planned", date: "12 Oct" }
+    ],
+    income: [
+      { id: "i-penn", description: "524 Penn Road", expected: 850, actual: null, status: "Expected", date: "24 Oct", propertyId: "prop-penn" }
+    ]
+  });
+
+  const mobileRemote = JSON.stringify({
+    month: "2026-10",
+    sourceDevice: "mobile",
+    bank: 3071.28,
+    bankAccounts: { zempler: 0, lloyds: 3071.28 },
+    bankUpdatedAt: "2026-10-30T10:00:00.000Z",
+    updatedAt: "2026-10-30T10:00:00.000Z",
+    fixed: [
+      { id: "f-home", payment: "Home mortgage", expected: 833, actual: 833, status: "Paid", due: "1 Oct", account: "lloyds" }
+    ],
+    spending: [
+      { id: "s-tesla1", description: "Tesla Inc", category: "Vehicle", planned: 12.36, actual: 12.36, status: "Paid", date: "29 Oct", account: "lloyds" },
+      { id: "s-argos", description: "ARGOS PAY", category: "Shopping", planned: 100, actual: 100, status: "Paid", date: "16 Oct", account: "lloyds" }
+    ],
+    income: [
+      { id: "i-penn", description: "524 Penn Road", expected: 0, actual: null, status: "Expected", date: "26 Oct", propertyId: "prop-penn" }
+    ]
+  });
+
+  const merged = JSON.parse(mergeCashflowPayload(desktopLocal, mobileRemote));
+  assert.equal(merged.bank, 3071.28, "Lloyds bank balance must match mobile exactly");
+  assert.equal(merged.fixed.length, 1, "Deleted council tax must not be kept");
+  assert.equal(merged.fixed[0].payment, "Home mortgage");
+  assert.equal(merged.spending.length, 2, "Must contain exactly the 2 mobile spending items");
+  assert.equal(merged.income.length, 1, "Must contain 524 Penn Road rent item");
+  assert.equal(merged.income[0].expected, 0, "524 Penn Road rent must be 0 from mobile");
+  assert.equal(merged.income[0].section, "fixed", "Property rent must have section='fixed' for checklist display");
+});
+
+test("index.html includes btnSyncMobile and app.js handles mobile sync", () => {
+  const indexHtml = fs.readFileSync("index.html", "utf8");
+  const appJs = fs.readFileSync("app.js", "utf8");
+  assert.ok(indexHtml.includes('id="btnSyncMobile"'), "index.html must have btnSyncMobile button");
+  assert.ok(appJs.includes('by("#btnSyncMobile")?.addEventListener'), "app.js must bind click listener to btnSyncMobile");
+});
