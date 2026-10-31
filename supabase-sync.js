@@ -192,9 +192,14 @@ function mergeCashflowPayload(localStr, remoteStr){
       bankUpdatedAtFinal = "";
     }
 
+    const startingBalanceFinal = remoteIsNewer
+      ? (remote.startingBalance != null ? Number(remote.startingBalance) : (local.startingBalance != null ? Number(local.startingBalance) : null))
+      : (local.startingBalance != null ? Number(local.startingBalance) : (remote.startingBalance != null ? Number(remote.startingBalance) : null));
+
     const merged = {
       ...(remoteIsNewer ? local : remote),
       ...(remoteIsNewer ? remote : local),
+      startingBalance: startingBalanceFinal != null ? startingBalanceFinal : undefined,
       fixed: mergeList(local.fixed, remote.fixed, false),
       spending: mergeList(local.spending, remote.spending, false),
       income: mergeList(local.income, remote.income, true),

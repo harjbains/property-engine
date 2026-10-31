@@ -24,6 +24,8 @@
     .card-expense h3 { color: #b91c1c; }
     .card-income { border-left: 3.5px solid #10b981; }
     .card-income h3 { color: #047857; }
+    .card-start { border-left: 3.5px solid #059669; }
+    .card-start h3 { color: #047857; }
     .card-bank { border-left: 3.5px solid #0284c7; }
     .card-campaign { border-left: 3.5px solid #9333ea; }
     .card-campaign h3 { color: #7e22ce; }
@@ -112,13 +114,22 @@
     </div>
   </section>
 
-  <!-- Bank Account & Campaign Fund Summary -->
+  <!-- Balances: Starting & Current Bank -->
   <div class="mobile-balances">
-    <div class="mobile-balance-card card-bank" style="flex: 1; cursor: pointer;" title="Tap to edit bank balance">
+    <div class="mobile-balance-card card-start" id="cardStartingBalance" style="flex: 1; cursor: pointer;" title="Tap to edit starting balance">
+      <p>Starting Balance</p>
+      <h3 id="balStarting">£0.00</h3>
+      <span class="card-sub">Month start (tap to edit)</span>
+    </div>
+    <div class="mobile-balance-card card-bank" id="cardBankBalance" style="flex: 1; cursor: pointer;" title="Tap to edit bank balance">
       <p>Bank Balance</p>
       <h3 id="balBank">£0.00</h3>
       <span class="card-sub">Current balance (tap to edit)</span>
     </div>
+  </div>
+
+  <!-- Campaign Fund Summary -->
+  <div class="mobile-balances" style="padding-top: 0.25rem;">
     <div class="mobile-balance-card card-campaign" style="flex: 1;">
       <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.25rem;">
         <p style="margin: 0; white-space: nowrap;">Campaign Fund</p>
@@ -245,6 +256,25 @@
       <!-- Injected -->
     </div>
   </section>
+
+  <!-- Edit Starting Balance Modal -->
+  <dialog id="mobileStartingBalanceDialog" style="border: none; border-radius: 0.75rem; padding: 0; max-width: 95vw; width: 380px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.25), 0 10px 10px -5px rgba(0,0,0,0.1); background: white;">
+    <div style="background: #111827; color: white; padding: 1rem 1.25rem; display: flex; justify-content: space-between; align-items: center;">
+      <h3 style="margin: 0; font-size: 1.05rem; font-weight: 600;">Edit Starting Balance</h3>
+      <button type="button" id="closeStartingBalanceDialog" style="background: none; border: none; color: #9ca3af; font-size: 1.5rem; line-height: 1; cursor: pointer; padding: 0;">&times;</button>
+    </div>
+    <form id="mobileStartingBalanceForm" style="padding: 1.25rem; display: flex; flex-direction: column; gap: 0.85rem;">
+      <div class="mobile-form-group">
+        <label for="editStartingBalance">Starting Balance (£)</label>
+        <input type="number" id="editStartingBalance" step="0.01" min="0" required placeholder="2053.81">
+        <span style="font-size: 0.75rem; color: #6b7280; margin-top: 0.2rem; display: block;">Opening bank balance on the 1st of the month.</span>
+      </div>
+      <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+        <button type="submit" class="mobile-submit" style="flex: 2; padding: 0.75rem;">Save Starting Balance</button>
+        <button type="button" id="cancelStartingBalanceDialog" style="flex: 1; background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; border-radius: 0.375rem; font-weight: 600; font-size: 0.9rem; cursor: pointer;">Cancel</button>
+      </div>
+    </form>
+  </dialog>
 
   <!-- Edit Bank Balances Modal -->
   <dialog id="mobileBankBalanceDialog" style="border: none; border-radius: 0.75rem; padding: 0; max-width: 95vw; width: 380px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.25), 0 10px 10px -5px rgba(0,0,0,0.1); background: white;">
@@ -414,7 +444,7 @@
   </dialog>
 
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-  <script src="quick-spend.js?v=110"></script>
-  <script src="supabase-sync.js?v=31"></script>
+  <script src="quick-spend.js?v=111"></script>
+  <script src="supabase-sync.js?v=32"></script>
 </body>
 </html>

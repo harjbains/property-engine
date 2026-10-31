@@ -690,3 +690,32 @@ test("index.html includes btnSyncMobile and app.js handles mobile sync", () => {
   assert.ok(indexHtml.includes('id="btnSyncMobile"'), "index.html must have btnSyncMobile button");
   assert.ok(appJs.includes('by("#btnSyncMobile")?.addEventListener'), "app.js must bind click listener to btnSyncMobile");
 });
+
+test("starting balance: mobile and desktop support editable starting balance container defaulting to £2053.81 for Oct 2026", () => {
+  const quickSpendHtml = fs.readFileSync("quick-spend.html", "utf8");
+  const quickSpendJs = fs.readFileSync("quick-spend.js", "utf8");
+  const appJs = fs.readFileSync("app.js", "utf8");
+  const { mergeCashflowPayload } = require("./supabase-sync.js");
+
+  // 1. Mobile HTML includes card and modal
+  assert.ok(quickSpendHtml.includes('id="cardStartingBalance"'), "quick-spend.html must have cardStartingBalance container");
+  assert.ok(quickSpendHtml.includes('id="balStarting"'), "quick-spend.html must display balStarting");
+  assert.ok(quickSpendHtml.includes('id="mobileStartingBalanceDialog"'), "quick-spend.html must include mobileStartingBalanceDialog modal");
+  assert.ok(quickSpendHtml.includes('id="editStartingBalance"'), "quick-spend.html must include editStartingBalance input");
+
+  // 2. Mobile JS handles load and edit
+  assert.ok(quickSpendJs.includes('base.startingBalance'), "quick-spend.js must initialize startingBalance");
+  assert.ok(quickSpendJs.includes('2053.81'), "quick-spend.js must default October 2026 to 2053.81");
+  assert.ok(quickSpendJs.includes('openStartingBalanceModal'), "quick-spend.js must have openStartingBalanceModal");
+
+  // 3. Desktop app.js includes starting balance card and editor
+  assert.ok(appJs.includes('Starting balance</span>'), "app.js cashflow-cards must have Starting balance container");
+  assert.ok(appJs.includes('edit-starting-balance'), "app.js must provide edit-starting-balance cash action");
+  assert.ok(appJs.includes('starting-balance'), "app.js editor must handle starting-balance");
+
+  // 4. Cloud sync merges startingBalance
+  const local = JSON.stringify({ month: "2026-10", startingBalance: 2053.81, bank: 2053.81 });
+  const remote = JSON.stringify({ month: "2026-10", startingBalance: 2100.00, bank: 2100.00, sourceDevice: "mobile", updatedAt: "2026-10-31T12:00:00Z" });
+  const merged = JSON.parse(mergeCashflowPayload(local, remote));
+  assert.equal(merged.startingBalance, 2100.00, "supabase-sync must merge remote startingBalance");
+});

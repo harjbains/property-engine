@@ -27,6 +27,7 @@ function loadCashflow(month){
   base.bankAccounts=base.bankAccounts||{zempler:0,lloyds:num(base.bank)};
   if(base.bankAccounts.zempler){base.bankAccounts.lloyds=num(base.bankAccounts.lloyds)+num(base.bankAccounts.zempler);base.bankAccounts.zempler=0;}
   base.bankAccounts.lloyds=num(base.bankAccounts.lloyds);base.bankAccounts.zempler=0;base.bank=base.bankAccounts.lloyds;
+  if(base.startingBalance==null){base.startingBalance=(month==="2026-10"||(!month&&typeof currentMonth!=="undefined"&&currentMonth==="2026-10"))?2053.81:num(base.bank);}else{base.startingBalance=num(base.startingBalance);}
   const normDate=item=>{
     if(!item)return item;
     if(item.date&&/^\d{4}-\d{2}-\d{1,2}/.test(String(item.date).trim()))item.date=formatCashDate(item.date,month);
@@ -678,7 +679,11 @@ function renderItem(i,isPending){
 function render(){
   const x=loadCashflow(currentMonth);
 
-  // Render Single Bank Balance (Lloyds in back-end)
+  // Render Starting Balance & Single Bank Balance (Lloyds in back-end)
+  const startingCard=by("#balStarting");
+  const startingVal=x.startingBalance!=null?num(x.startingBalance):((x.month==="2026-10"||currentMonth==="2026-10")?2053.81:num(x.bank));
+  if(startingCard)startingCard.textContent=money.format(startingVal);
+
   const bankCard=by("#balBank");
   if(bankCard)bankCard.textContent=money.format(getBankBalance(x));
 
@@ -1492,6 +1497,34 @@ function init(){
     if(by("#editLloydsBalance"))by("#editLloydsBalance").value=lloyds;
     by("#mobileBankBalanceDialog")?.showModal();
   }
+
+  function openStartingBalanceModal(){
+    const x=loadCashflow(currentMonth);
+    const startVal=x.startingBalance!=null?num(x.startingBalance):((x.month==="2026-10"||currentMonth==="2026-10")?2053.81:num(x.bank));
+    if(by("#editStartingBalance"))by("#editStartingBalance").value=startVal?startVal.toFixed(2):"";
+    by("#mobileStartingBalanceDialog")?.showModal();
+  }
+
+  by(".card-start")?.addEventListener("click",openStartingBalanceModal);
+  by("#closeStartingBalanceDialog")?.addEventListener("click",()=>by("#mobileStartingBalanceDialog")?.close());
+  by("#cancelStartingBalanceDialog")?.addEventListener("click",()=>by("#mobileStartingBalanceDialog")?.close());
+  by("#mobileStartingBalanceForm")?.addEventListener("submit",e=>{
+    e.preventDefault();
+    const x=loadCashflow(currentMonth);
+    const startVal=parseFloat(by("#editStartingBalance")?.value)||0;
+    const oldStart=x.startingBalance!=null?num(x.startingBalance):((x.month==="2026-10"||currentMonth==="2026-10")?2053.81:num(x.bank));
+    const diff=startVal-oldStart;
+    x.startingBalance=Math.max(0,startVal);
+    x.bankAccounts=x.bankAccounts||{zempler:0,lloyds:0};
+    x.bankAccounts.lloyds=Math.max(0,num(x.bankAccounts.lloyds)+diff);
+    x.bank=x.bankAccounts.lloyds;
+    x.bankUpdatedAt=new Date().toISOString();
+    x.updatedAt=new Date().toISOString();
+    x.sourceDevice="mobile";
+    saveCashflow(x);
+    by("#mobileStartingBalanceDialog")?.close();
+    render();
+  });
 
   by(".card-bank")?.addEventListener("click",openBankBalanceModal);
   by("#closeBankBalanceDialog")?.addEventListener("click",()=>by("#mobileBankBalanceDialog")?.close());
