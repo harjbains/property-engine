@@ -90,6 +90,32 @@
     <section class="view" data-panel="properties">
       <div class="section-intro"><div><p class="eyebrow">RENTAL PORTFOLIO</p><h2>Properties and performance</h2><p>Cashflow is the source of truth. This page reports rent, costs and tenancy details by property.</p></div><button class="primary" data-open="propertyDialog">Create property</button></div>
       <div class="metrics compact" id="propertyMetrics"></div>
+      <div class="card property-annual-card">
+        <div class="card-head">
+          <div>
+            <p class="eyebrow">TAX YEAR SUMMARY</p>
+            <h2>Monthly property breakdown</h2>
+            <p>Annual grid showing rent, mortgage interest, repairs, legal &amp; professional fees, council tax, insurance, other costs, total costs and net profit by month.</p>
+          </div>
+          <div class="top-actions" style="margin-bottom:0;">
+            <label>Tax year
+              <select id="propertySummaryYear">
+                <option value="2026-27">2026/27</option>
+                <option value="2025-26">2025/26</option>
+              </select>
+            </label>
+            <label>Property
+              <select id="propertySummaryFilter">
+                <option value="">All properties</option>
+              </select>
+            </label>
+          </div>
+        </div>
+        <div class="metrics compact" id="propertySummaryMetrics" style="margin-bottom:18px;"></div>
+        <div class="property-summary-wrap">
+          <div class="table records property-summary-table" id="propertySummaryTable"></div>
+        </div>
+      </div>
       <div class="card"><div class="card-head"><div><p class="eyebrow">PROPERTY RECORDS</p><h2>Tenancies</h2></div></div><div class="table records" id="propertyTable"></div></div>
       <div class="property-actions"><button class="primary" data-open-cashflow-workspace>Open Cashflow</button><button class="ghost" data-open="rentDialog">Raise rent</button></div><div class="property-ledger-month" id="propertyLedgerMonthControls"></div>
       <div class="grid two property-ledgers"><div class="card"><div class="card-head"><div><p class="eyebrow">INCOME LEDGER</p><h2>Rent received</h2></div><label>Property filter<select id="propertyIncomeFilter"><option value="">All properties</option></select></label></div><div class="table records" id="propertyIncomeTable"></div></div><div class="card"><div class="card-head"><div><p class="eyebrow">EXPENSE LEDGER</p><h2>Property costs</h2></div></div><div class="table records" id="propertyExpenseTable"></div></div></div>

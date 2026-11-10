@@ -86,7 +86,7 @@ let state=hydrateState();const current=()=>state.settingsByYear[state.year];func
 for(const pensionYear of Object.values(state.settingsByYear)){pensionYear.forecast.pensionIncome=8295;Object.assign(pensionYear.moduleData.pension,{annual:8295,taxDeducted:691.20,taxProvided:true,inputBasis:"gross"});}
 function calculationInputs(){const s=current(),m=s.modules,f=s.forecast,d=s.moduleData,recorded=f.method==="recorded",weeks=state.uber.length,weekly=sum(state.uber,"payments")+sum(state.uber,"tips")-sum(state.uber,"fee"),propertyIncomeAll=propertyIncomeRecords(),propertyExpenseAll=propertyExpenseRecords(),finance=propertyExpenseAll.filter(x=>x.category==="Mortgage interest"),allowable=propertyExpenseAll.filter(x=>x.category!=="Mortgage interest"&&x.category!=="Capital cost"),pensionAnnual=recorded?sum(state.pension,"amount"):d.pension.annual,pensionRecordedTax=sum(state.pension,"tax"),pensionGross=d.pension.inputBasis==="net"?pensionAnnual+(recorded?pensionRecordedTax:d.pension.taxDeducted):pensionAnnual,employmentGross=recorded?sum(state.employment,"gross")+sum(state.employment,"benefits"):d.employment.gross+(!d.employment.benefitsEnabled?0:d.employment.benefits),employmentTax=recorded?sum(state.employment,"tax"):d.employment.payeTax,employmentTaxProvided=recorded?state.employment.some(x=>x.taxProvided):d.employment.payeTaxProvided,pensionTaxProvided=recorded?state.pension.some(x=>x.taxProvided):d.pension.taxProvided;return{year:state.year,rules:s.rules,modules:m,employmentIncome:employmentGross,employmentTaxCode:(recorded?state.employment.findLast?.(x=>x.taxCode)?.taxCode:null)||d.employment.taxCode,payeTax:employmentTax,payeTaxProvided:employmentTaxProvided,pensionIncome:pensionGross,pensionTaxCode:(recorded?state.pension.findLast?.(x=>x.taxCode)?.taxCode:null)||d.pension.taxCode,pensionTaxDeducted:recorded?pensionRecordedTax:d.pension.taxDeducted,pensionTaxProvided,otherIncome:d.other.amount,otherTaxDeducted:d.other.taxDeducted,savingsIncome:d.savings.interest,personalSavingsAllowance:d.savings.personalAllowance,startingSavingsRateEnabled:d.savings.startingRateEnabled,savingsBasicRate:d.savings.basicRate,savingsHigherRate:d.savings.higherRate,savingsAdditionalRate:d.savings.additionalRate,dividendIncome:d.dividends.income,dividendAllowance:d.dividends.allowance,dividendBasicRate:d.dividends.basicRate,dividendHigherRate:d.dividends.higherRate,dividendAdditionalRate:d.dividends.additionalRate,propertyIncome:recorded?sum(propertyIncomeAll,"amount"):f.propertyIncome,propertyExpenses:recorded?sum(allowable,"amount"):f.propertyExpenses,financeCosts:recorded?sum(finance,"amount"):d.property.disallowedInterest,carriedFinanceCosts:d.property.carriedFinanceCosts,propertyTreatment:d.property.treatment,propertyBasicRate:d.property.basicRate,propertyHigherRate:d.property.higherRate,propertyAdditionalRate:d.property.additionalRate,financeRestrictionEnabled:d.property.financeRestriction,financeCreditRate:s.rules.financeCreditRate,propertyAllowanceEnabled:d.property.propertyAllowanceEnabled,propertyAllowanceAmount:d.property.propertyAllowanceAmount,uberIncome:recorded&&weeks?weekly/weeks*52:f.uberForecast,uberOtherExpenses:f.uberOtherExpenses,businessMiles:recorded&&weeks?sum(state.uber,"miles")/weeks*52:f.annualMiles,simplifiedMileage:d.uber.simplifiedMileage,hmrcPaid:sum(state.payments,"amount"),hmrcReserve:s.hmrc.reserve,standardMonthlyProvision:s.hmrc.standardMonthly,catchupShortfall:s.hmrc.catchupShortfall,catchupMonths:s.hmrc.catchupMonths,minimumPayment:s.hmrc.minimumPayment,roundPaymentTo:s.hmrc.roundTo,monthsRemaining:f.monthsRemaining};}
 const calc=()=>(syncPropertyManagementExpenses(state),TaxEngine.calculate(state.year==="2025-26"?actualDashboardInputs():forecastDashboardInputs())),metric=(l,v,n,a="")=>`<div class="metric ${a}"><span>${l}</span><strong>${v}</strong><small>${n}</small></div>`,row=(l,v,c="")=>`<div class="tr ${c}"><span>${l}</span><span>${v}</span></div>`;
-function render(){const r=calc(),s=current();by("#taxYear").value=state.year;by("#entryYearFilter").value=entryYearFilter;by("#ruleNote").textContent=`${s.rules.label}: ${Math.round(s.rules.mileageFirst*100)}p for the first ${num(s.rules.mileageBand).toLocaleString()} miles. Rules updated ${s.rules.lastUpdated}.`;renderRecordMetrics(r);renderPayePensionTables();renderPaymentTable();renderPropertyTables();sortExpenseRows();renderArrears();prioritiseArrearsRows();applyEntryDisplay();renderReport(r);renderActualReport(r);renderEnhancements(r);renderSettings();renderModuleVisibility();populatePropertySelects();renderDashboardMode();save();}
+function render(){const r=calc(),s=current();by("#taxYear").value=state.year;by("#entryYearFilter").value=entryYearFilter;by("#ruleNote").textContent=`${s.rules.label}: ${Math.round(s.rules.mileageFirst*100)}p for the first ${num(s.rules.mileageBand).toLocaleString()} miles. Rules updated ${s.rules.lastUpdated}.`;renderRecordMetrics(r);renderPayePensionTables();renderPaymentTable();renderPropertyTables();renderPropertySummary();sortExpenseRows();renderArrears();prioritiseArrearsRows();applyEntryDisplay();renderReport(r);renderActualReport(r);renderEnhancements(r);renderSettings();renderModuleVisibility();populatePropertySelects();renderDashboardMode();save();}
 function records(t,h,rows,cols){by(t).style.setProperty("--cols",cols);by(t).innerHTML=`<div class="tr header">${h.map(x=>`<span>${x}</span>`).join("")}</div>`+(rows.length?rows.join(""):`<div class="empty">No records yet</div>`);}function cells(v){return`<div class="tr">${v.map(x=>`<span>${x}</span>`).join("")}</div>`;}function del(t,id){return`<button class="delete" data-delete="${t}" data-id="${id}">Delete</button>`;}
 function renderRecordMetrics(r){const source=current().forecast.method==="recorded"?"Digital property records":"Annual forecast settings",employmentSource=current().forecast.method==="recorded"?"Digital PAYE records":"Annual PAYE settings",inputs=calculationInputs();by("#employmentMetrics").innerHTML=metric("Employment income",money.format(r.employment),employmentSource)+metric("PAYE tax credited",money.format(r.payeCredit),`${inputs.payeTaxProvided?"Actual deduction":"Estimated from tax code"}  -  ${inputs.employmentTaxCode}`)+metric("NI already deducted",money.format(current().forecast.method==="recorded"?sum(state.employment,"ni"):current().moduleData.employment.niDeducted),"Recorded for reference");by("#propertyMetrics").innerHTML=metric("Property income",money.format(r.propertyIncome),source)+metric("Allowable expenses",money.format(r.propertyExpenses),`${source}; excludes mortgage interest`)+metric("Property profit",money.format(r.propertyProfit),`${money.format(r.financeCosts)} finance costs tracked`);by("#paymentMetrics").innerHTML=metric("Estimated liability",money.format(r.liability),r.year)+metric("Paid and reserved",money.format(r.paid+r.reserve),`${state.payments.length} HMRC payment(s)`)+metric("Outstanding",money.format(r.outstanding),`${money.format(r.monthlyPayment)} recommended monthly`,r.outstanding?"alert":"");}
 function renderReport(r){const m=current().modules,lines=[];if(m.employment)lines.push(row("Employment income",money.format(r.employment)));if(m.uber)lines.push(row("Uber profit",money.format(r.uberProfit)));if(m.property)lines.push(row("Property profit",money.format(r.propertyProfit)));if(m.pension)lines.push(row("Pension income",money.format(r.pension)));if(m.savings)lines.push(row("Savings interest",money.format(r.savings)),row("Savings tax",money.format(r.savingsTax)));if(m.dividends)lines.push(row("Dividend income",money.format(r.dividends)),row("Dividend tax",money.format(r.dividendTax)));if(m.other)lines.push(row(current().moduleData.other.description||"Other income",money.format(r.other)));by("#report").innerHTML=`<div class="report-title"><div><p class="eyebrow">TAX ENGINE</p><h2>${r.rules.label} year projection</h2></div><strong>${r.rules.country}</strong></div><p>Enabled modules only. Forecast method: ${current().forecast.method}.</p>${lines.join("")}${row("Total income",money.format(r.totalIncome))}${row("Personal Allowance",`(${money.format(r.allowance)})`)}${row("Taxable income",money.format(r.taxableIncome),"total")}${row("Income Tax before relief",money.format(r.grossIncomeTax))}${row("Finance-cost credit",`(${money.format(r.financeCostCredit)})`)}${row("Class 4 NI",money.format(r.nationalInsurance))}${row("Tax deducted at source",`(${money.format(r.taxAtSource)})`)}${row("Estimated HMRC liability",money.format(r.liability),"total")}<p><strong>Source:</strong> ${r.rules.source}. Rules last updated ${r.rules.lastUpdated}. Planning estimate only.</p>`;}
@@ -108,7 +108,7 @@ ${moduleCard("other","Other income",`${field("Description","other_description",d
 function moduleCard(k,title,body){return`<article class="card module-card" data-module-card="${k}" ${current().modules[k]?"":"hidden"}><div class="card-head"><div><p class="eyebrow">MODULE SETTINGS</p><h3>${title}</h3></div></div><div class="settings-grid">${body}</div></article>`;}
 function renderModuleVisibility(){const m=current().modules;m.uber=true;all("[data-module-nav]").forEach(x=>x.hidden=!m[x.dataset.moduleNav]);all("[data-module-card]").forEach(x=>x.hidden=!m[x.dataset.moduleCard]);const panel=by('.view.active')?.dataset.panel;if(panel==="employment"&&!m.employment||panel==="properties"&&!m.property||panel==="pension"&&!m.pension)show("dashboard");}
 function readSettings(form){const fd=new FormData(form),s=current(),r=s.rules,f=s.forecast,h=s.hmrc,d=s.moduleData;for(const k of Object.keys(MODULE_LABELS))s.modules[k]=fd.get(`module_${k}`)==="on";const rawBankingBuffer=fd.get("banking_safetyBuffer");s.banking=s.banking||{};s.banking.safetyBuffer=rawBankingBuffer!==null&&rawBankingBuffer!==""?num(rawBankingBuffer):2000;state.banking=state.banking||{};state.banking.safetyBuffer=s.banking.safetyBuffer;localStorage.setItem("tax-engine-safety-buffer",String(s.banking.safetyBuffer));Object.assign(r,{label:fd.get("rule_label"),country:fd.get("rule_country"),allowance:num(fd.get("rule_allowance")),basicRate:pct(fd.get("rule_basicRate")),basicBand:num(fd.get("rule_basicBand")),higherRate:pct(fd.get("rule_higherRate")),additionalRate:pct(fd.get("rule_additionalRate")),additionalThreshold:num(fd.get("rule_additionalThreshold")),lastUpdated:fd.get("rule_lastUpdated"),source:fd.get("rule_source"),class4Lower:num(fd.get("rule_class4Lower")),class4Upper:num(fd.get("rule_class4Upper")),class4Main:pct(fd.get("rule_class4Main")),class4UpperRate:pct(fd.get("rule_class4UpperRate")),mileageBand:num(fd.get("rule_mileageBand")),mileageFirst:pct(fd.get("rule_mileageFirst")),mileageAfter:pct(fd.get("rule_mileageAfter")),financeCreditRate:pct(fd.get("rule_financeCreditRate"))});Object.assign(f,{monthsRemaining:num(fd.get("forecast_months"))||12,method:fd.get("forecast_method"),scenario:fd.get("forecast_scenario"),uberForecast:num(fd.get("forecast_uber")),annualMiles:num(fd.get("forecast_miles")),uberOtherExpenses:num(fd.get("forecast_uberExpenses")),propertyIncome:num(fd.get("forecast_propertyIncome")),propertyExpenses:num(fd.get("forecast_propertyExpenses"))});Object.assign(h,{reserve:num(fd.get("hmrc_reserve")),standardMonthly:num(fd.get("hmrc_standard")),preferredDay:num(fd.get("hmrc_day"))||28,catchupShortfall:num(fd.get("hmrc_shortfall")),catchupMonths:num(fd.get("hmrc_catchupMonths"))||12,minimumPayment:num(fd.get("hmrc_minimum")),roundTo:num(fd.get("hmrc_round"))||10});Object.assign(d.uber,{simplifiedMileage:fd.get("uber_simplified")==="on"});Object.assign(d.property,{treatment:fd.get("property_treatment")||"standard",basicRate:pct(fd.get("property_basicRate")),higherRate:pct(fd.get("property_higherRate")),additionalRate:pct(fd.get("property_additionalRate")),financeRestriction:fd.get("property_financeRestriction")==="on",disallowedInterest:num(fd.get("property_interest")),carriedFinanceCosts:num(fd.get("property_carried")),propertyAllowanceEnabled:fd.get("property_allowanceEnabled")==="on",propertyAllowanceAmount:num(fd.get("property_allowance"))});Object.assign(d.pension,{annual:num(fd.get("pension_annual")),taxDeducted:num(fd.get("pension_tax")),inputBasis:fd.get("pension_basis")||"gross",includeState:fd.get("pension_state")==="on"});Object.assign(d.employment,{gross:num(fd.get("employment_gross")),payeTax:num(fd.get("employment_paye")),niDeducted:num(fd.get("employment_ni")),benefitsEnabled:fd.get("employment_benefitsEnabled")==="on",benefits:num(fd.get("employment_benefits"))});Object.assign(d.savings,{interest:num(fd.get("savings_interest")),personalAllowance:num(fd.get("savings_allowance")),startingRateEnabled:fd.get("savings_startingRate")==="on",basicRate:pct(fd.get("savings_basicRate")),higherRate:pct(fd.get("savings_higherRate")),additionalRate:pct(fd.get("savings_additionalRate"))});Object.assign(d.dividends,{income:num(fd.get("dividend_income")),allowance:num(fd.get("dividend_allowance")),basicRate:pct(fd.get("dividend_basicRate")),higherRate:pct(fd.get("dividend_higherRate")),additionalRate:pct(fd.get("dividend_additionalRate"))});Object.assign(d.other,{description:fd.get("other_description"),amount:num(fd.get("other_amount")),category:fd.get("other_category"),taxDeducted:num(fd.get("other_tax"))});}
-function propertyName(id){return state.properties.find(x=>x.id===id)?.property||"Unknown property";}function populatePropertySelects(){const o=state.properties.map(x=>`<option value="${x.id}">${x.property}</option>`).join("");all("[data-property-select]").forEach(x=>x.innerHTML=o||"<option value=''>Create a property first</option>");}
+function propertyName(id){return state.properties.find(x=>x.id===id)?.property||"Unknown property";}function populatePropertySelects(){const o=state.properties.map(x=>`<option value="${x.id}">${x.property}</option>`).join("");all("[data-property-select]").forEach(x=>x.innerHTML=o||"<option value=''>Create a property first</option>");const propSummarySelect=by("#propertySummaryFilter");if(propSummarySelect){const currentVal=propertySummaryPropFilter||propSummarySelect.value;const opts=state.properties.slice().sort((a,b)=>a.property.localeCompare(b.property)).map(x=>`<option value="${x.id}" ${x.id===currentVal?"selected":""}>${x.property}</option>`).join("");propSummarySelect.innerHTML=`<option value="">All properties</option>${opts}`;propSummarySelect.value=currentVal;}}
 all("[data-view],[data-view-link]").forEach(b=>b.addEventListener("click",()=>show(b.dataset.view||b.dataset.viewLink)));document.addEventListener("click",e=>{const b=e.target.closest("[data-open-cashflow-workspace]");if(!b)return;dashboardView="actual";taxWorkspaceTab="cashflow";show("dashboard");renderDashboardMode();renderDashboardSurface();});function show(n){ if(n==="campaigns") { typeof renderCampaignsList !== "undefined" && renderCampaignsList(); }all(".view").forEach(x=>x.classList.toggle("active",x.dataset.panel===n));all("#nav button").forEach(x=>x.classList.toggle("active",x.dataset.view===n));by("#pageTitle").textContent=({dashboard:"Banking",campaigns:"Campaigns",monthly:"Monthly Entry",employment:"PAYE",uber:"Uber",properties:"Properties",pension:"Pension",mtd:"MTD Quarterly Updates",payments:"HMRC Payments",calculation:"Tax Calculation",returnprep:"Return Preparation",audit:"Audit Checks",reports:"Reports",settings:"Settings"})[n];}
 by("#taxYear").addEventListener("change",e=>{state.year=e.target.value;render();});all("[data-open]").forEach(b=>b.addEventListener("click",()=>by(`#${b.dataset.open}`).showModal()));document.addEventListener("click",e=>{const b=e.target.closest("[data-close-dialog]");if(b){e.preventDefault();b.closest("dialog")?.close("cancel");}});
 function onForm(id,type,map){by(id).addEventListener("submit",e=>{e.preventDefault();const f=new FormData(e.target);state[type].push({id:uid(),...map(f)});e.target.reset();e.target.closest("dialog").close();render();});}onForm("#employmentForm","employment",f=>({date:f.get("date"),employer:f.get("employer"),gross:num(f.get("gross")),tax:num(f.get("tax")),ni:num(f.get("ni")),benefits:num(f.get("benefits")),notes:f.get("notes")}));onForm("#uberForm","uber",f=>({date:f.get("date"),payments:num(f.get("payments")),fee:num(f.get("fee")),tips:num(f.get("tips")),miles:num(f.get("miles")),notes:f.get("notes")}));onForm("#propertyForm","properties",f=>({property:f.get("property"),tenant:f.get("tenant"),rent:num(f.get("rent")),deposit:num(f.get("deposit")),start:f.get("start"),end:f.get("end")}));onForm("#incomeForm","propertyIncome",f=>({propertyId:f.get("propertyId"),date:f.get("date"),amount:num(f.get("amount")),period:f.get("period"),notes:f.get("notes")}));onForm("#expenseForm","propertyExpenses",f=>({propertyId:f.get("propertyId"),date:f.get("date"),category:f.get("category"),amount:num(f.get("amount")),notes:f.get("notes")}));onForm("#pensionForm","pension",f=>{const net=num(f.get("net")),tax=num(f.get("tax"));return{date:f.get("date"),provider:f.get("provider"),net,tax,amount:net+tax,pensionNumber:f.get("pensionNumber"),notes:f.get("notes")};});onForm("#paymentForm","payments",f=>({date:f.get("date"),amount:num(f.get("amount")),reference:f.get("reference"),notes:f.get("notes")}));by("#rentForm").addEventListener("submit",e=>{e.preventDefault();const f=new FormData(e.target),p=state.properties.find(x=>x.id===f.get("propertyId"));if(!p)return;const rent=num(f.get("rent"));state.rentChanges.push({id:uid(),propertyId:p.id,date:f.get("date"),previousRent:p.rent,newRent:rent,notes:f.get("notes")});p.rent=rent;e.target.reset();e.target.closest("dialog").close();render();});
@@ -123,6 +123,243 @@ function propertyLedgerSelectedMonth(){return propertyLedgerMonth||dashboardMont
 function shiftPropertyLedgerMonth(step){const current=propertyLedgerSelectedMonth(),d=new Date(`${current}-01T00:00:00Z`);d.setUTCMonth(d.getUTCMonth()+step);propertyLedgerMonth=`${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,"0")}`;renderPropertyTables();applyEntryDisplay();}
 function propertyLedgerMonthControls(month){return`<button class="ghost small" data-property-ledger-month="-1">&larr;</button><strong>${workspaceMonthLabel(month)}</strong><button class="ghost small" data-property-ledger-month="1">&rarr;</button>`;}
 function renderPropertyTables(){const action=(kind,id)=>`<span class="row-actions"><button class="ghost small" data-edit-${kind}="${id}">Edit</button>${del(kind==="property"?"properties":"propertyIncome",id)}</span>`,cashTag=`<span class="entry-tag">Cashflow</span>`,ledgerMonth=propertyLedgerSelectedMonth(),inMonth=x=>cashDateMonth(x.date,ledgerMonth)===ledgerMonth,filtered=propertyIncomeRecords().filter(x=>(!incomePropertyFilter||x.propertyId===incomePropertyFilter)&&inMonth(x)).slice().sort((a,b)=>String(b.date).localeCompare(String(a.date))),expenseRows=propertyExpenseRecords().filter(inMonth).slice().sort((a,b)=>String(b.date).localeCompare(String(a.date)));records("#propertyTable",["Property","Tenant","Monthly rent","Tenancy","Deposit","Action"],state.properties.slice().sort((a,b)=>a.property.localeCompare(b.property)).map(x=>cells([x.property,x.tenant||"—",money.format(x.rent),`${x.start||"—"} to ${x.end||"ongoing"}`,money.format(x.deposit),action("property",x.id)])),6);records("#propertyIncomeTable",["Date","Property","Amount","Period","Action"],filtered.map(x=>cells([x.date,propertyName(x.propertyId),money.format(x.amount),x.period||"—",x.cashflowSource?`<span class="property-action-stack">${cashTag} ${managementFeeAction(x)}</span>`:action("income",x.id)])),5);records("#propertyExpenseTable",["Date","Property","Category","Amount","Action"],expenseRows.map(x=>cells([x.date,propertyName(x.propertyId),x.category,money.format(x.amount),x.cashflowSource?cashTag:del("propertyExpenses",x.id)])),5);const controls=by("#propertyLedgerMonthControls");if(controls)controls.innerHTML=propertyLedgerMonthControls(ledgerMonth);const filter=by("#propertyIncomeFilter"),options=state.properties.slice().sort((a,b)=>a.property.localeCompare(b.property)).map(x=>`<option value="${x.id}" ${x.id===incomePropertyFilter?"selected":""}>${x.property}</option>`).join("");filter.innerHTML=`<option value="">All properties</option>${options}`;}
+
+function classifyPropertyExpense(record) {
+  const cat = String(record.category || "").trim().toLowerCase();
+  const notes = String(record.notes || "").trim().toLowerCase();
+  const desc = String(record.description || "").trim().toLowerCase();
+  const text = (cat + " " + notes + " " + desc).toLowerCase();
+
+  if (record.treatment === "property_interest" || /mortgage interest/i.test(cat) || /mortgage|accord|topaz|rosinca|ucb home|rbs|royal bank/i.test(text)) {
+    return "mortgage";
+  }
+  if (/repair|maintenance|decorator|carpenter|plumb|boiler|roof|screwfix|locksmith|handyman/i.test(text)) {
+    return "repairs";
+  }
+  if (/agent|management|letting|legal|solicitor|professional|accountant|abratax/i.test(text)) {
+    return "legal";
+  }
+  if (/council tax|rates|severn trent|water|eon|e\.on|scottish power|british gas|electric|gas|broadband|utilities/i.test(text)) {
+    return "councilTax";
+  }
+  if (/insurance|directline|direct line|policy expert|acorn|landlord/i.test(text)) {
+    return "insurance";
+  }
+  return "other";
+}
+
+function getPropertyMonthlyBreakdown(yearKey, propertyFilter = "") {
+  const startYear = parseInt(String(yearKey || "2026-27").slice(0, 4), 10);
+  const endYear = startYear + 1;
+  const monthKeys = [];
+  for (let m = 4; m <= 12; m++) monthKeys.push(`${startYear}-${String(m).padStart(2, "0")}`);
+  for (let m = 1; m <= 3; m++) monthKeys.push(`${endYear}-${String(m).padStart(2, "0")}`);
+
+  const propObj = state.properties.find(p => p.id === propertyFilter);
+  const propName = propObj ? propObj.property.toLowerCase() : "";
+
+  function matchesProp(r) {
+    if (!propertyFilter) return true;
+    if (r.propertyId && r.propertyId === propertyFilter) return true;
+    if (!r.propertyId && propName) {
+      const text = `${r.property || ""} ${r.notes || ""} ${r.description || ""}`.toLowerCase();
+      return text.includes(propName);
+    }
+    return false;
+  }
+
+  const rows = [];
+  let totRent = 0, totMortgage = 0, totRepairs = 0, totLegal = 0, totCouncilTax = 0, totInsurance = 0, totOther = 0;
+
+  for (const m of monthKeys) {
+    const dObj = new Date(Date.UTC(Number(m.slice(0, 4)), Number(m.slice(5, 7)) - 1, 1));
+    const label = dObj.toLocaleString("en-GB", { month: "short", year: "numeric", timeZone: "UTC" });
+
+    const incomes = propertyIncomeRecords(m).filter(matchesProp);
+    const rent = incomes.reduce((sum, r) => sum + num(r.amount), 0);
+
+    const expenses = propertyExpenseRecords(m).filter(matchesProp);
+
+    let mortgage = 0, repairs = 0, legal = 0, councilTax = 0, insurance = 0, other = 0;
+    for (const exp of expenses) {
+      const amt = num(exp.amount);
+      if (amt <= 0) continue;
+      const bucket = classifyPropertyExpense(exp);
+      if (bucket === "mortgage") mortgage += amt;
+      else if (bucket === "repairs") repairs += amt;
+      else if (bucket === "legal") legal += amt;
+      else if (bucket === "councilTax") councilTax += amt;
+      else if (bucket === "insurance") insurance += amt;
+      else other += amt;
+    }
+
+    const totalCosts = mortgage + repairs + legal + councilTax + insurance + other;
+    const netProfit = rent - totalCosts;
+
+    totRent += rent;
+    totMortgage += mortgage;
+    totRepairs += repairs;
+    totLegal += legal;
+    totCouncilTax += councilTax;
+    totInsurance += insurance;
+    totOther += other;
+
+    rows.push({
+      month: m,
+      label,
+      rent,
+      mortgage,
+      repairs,
+      legal,
+      councilTax,
+      insurance,
+      other,
+      totalCosts,
+      netProfit
+    });
+  }
+
+  const totCosts = totMortgage + totRepairs + totLegal + totCouncilTax + totInsurance + totOther;
+  const totNet = totRent - totCosts;
+
+  return {
+    rows,
+    totals: {
+      rent: totRent,
+      mortgage: totMortgage,
+      repairs: totRepairs,
+      legal: totLegal,
+      councilTax: totCouncilTax,
+      insurance: totInsurance,
+      other: totOther,
+      totalCosts: totCosts,
+      netProfit: totNet
+    }
+  };
+}
+
+let propertySummaryYearFilter = "";
+let propertySummaryPropFilter = "";
+
+window.classifyPropertyExpense = classifyPropertyExpense;
+window.getPropertyMonthlyBreakdown = getPropertyMonthlyBreakdown;
+window.renderPropertySummary = renderPropertySummary;
+function renderPropertySummary() {
+  const yearSelect = by("#propertySummaryYear");
+  const filterSelect = by("#propertySummaryFilter");
+  if (!yearSelect || !filterSelect) return;
+
+  if (propertySummaryYearFilter) {
+    yearSelect.value = propertySummaryYearFilter;
+  } else {
+    yearSelect.value = state.year || "2026-27";
+    propertySummaryYearFilter = yearSelect.value;
+  }
+
+  const year = propertySummaryYearFilter;
+  const propId = propertySummaryPropFilter;
+
+  const { rows, totals } = getPropertyMonthlyBreakdown(year, propId);
+
+  const yearLabel = (TaxEngine.YEARS[year]?.label || year).replace("-", "/");
+  const propObj = state.properties.find(p => p.id === propId);
+  const propLabel = propObj ? propObj.property : "All properties";
+
+  const metricsEl = by("#propertySummaryMetrics");
+  if (metricsEl) {
+    const totOperating = totals.repairs + totals.legal + totals.councilTax + totals.insurance + totals.other;
+    metricsEl.innerHTML =
+      metric("Rental income", money.format(totals.rent), `${propLabel} · ${yearLabel}`) +
+      metric("Mortgage interest", money.format(totals.mortgage), "Finance costs") +
+      metric("Operating costs", money.format(totOperating), "Repairs, management, council tax, ins.") +
+      metric("Net profit", money.format(totals.netProfit), totals.netProfit >= 0 ? "Surplus before tax" : "Operating deficit", totals.netProfit < 0 ? "alert" : "");
+  }
+
+  const tableEl = by("#propertySummaryTable");
+  if (!tableEl) return;
+
+  const headers = [
+    "Month",
+    "Rent",
+    "Mortgage",
+    "Repairs",
+    "Legal & Prof",
+    "Council Tax",
+    "Insurance",
+    "Other",
+    "Total Costs",
+    "Net Profit"
+  ];
+
+  const fmt = (v) => (v > 0 ? money.format(v) : "—");
+  const fmtNet = (v) => `<strong class="${v > 0 ? "profit-pos" : v < 0 ? "profit-neg" : ""}">${money.format(v)}</strong>`;
+
+  const renderedRows = rows.map((r) => {
+    return `<div class="tr property-month-row" data-month="${r.month}" style="cursor:pointer;" title="Click to view details for ${r.label} in ledgers below">
+      <span><strong>${r.label}</strong></span>
+      <span>${fmt(r.rent)}</span>
+      <span>${fmt(r.mortgage)}</span>
+      <span>${fmt(r.repairs)}</span>
+      <span>${fmt(r.legal)}</span>
+      <span>${fmt(r.councilTax)}</span>
+      <span>${fmt(r.insurance)}</span>
+      <span>${fmt(r.other)}</span>
+      <span><strong>${money.format(r.totalCosts)}</strong></span>
+      <span>${fmtNet(r.netProfit)}</span>
+    </div>`;
+  });
+
+  const totalRow = `<div class="tr total-row">
+    <span><strong>TAX YEAR TOTAL</strong></span>
+    <span><strong>${money.format(totals.rent)}</strong></span>
+    <span><strong>${money.format(totals.mortgage)}</strong></span>
+    <span><strong>${money.format(totals.repairs)}</strong></span>
+    <span><strong>${money.format(totals.legal)}</strong></span>
+    <span><strong>${money.format(totals.councilTax)}</strong></span>
+    <span><strong>${money.format(totals.insurance)}</strong></span>
+    <span><strong>${money.format(totals.other)}</strong></span>
+    <span><strong>${money.format(totals.totalCosts)}</strong></span>
+    <span>${fmtNet(totals.netProfit)}</span>
+  </div>`;
+
+  renderedRows.push(totalRow);
+
+  records("#propertySummaryTable", headers, renderedRows, 10);
+}
+
+// Attach change listeners for summary controls
+if (typeof by === "function") {
+  const summaryYr = by("#propertySummaryYear");
+  if (summaryYr) {
+    summaryYr.addEventListener("change", () => {
+      propertySummaryYearFilter = summaryYr.value;
+      renderPropertySummary();
+    });
+  }
+  const summaryFltr = by("#propertySummaryFilter");
+  if (summaryFltr) {
+    summaryFltr.addEventListener("change", () => {
+      propertySummaryPropFilter = summaryFltr.value;
+      renderPropertySummary();
+    });
+  }
+  document.addEventListener("click", (e) => {
+    const row = e.target.closest(".property-month-row");
+    if (row && row.dataset.month) {
+      if (typeof propertyLedgerMonth !== "undefined") {
+        propertyLedgerMonth = row.dataset.month;
+      }
+      if (typeof renderPropertyTables === "function") {
+        renderPropertyTables();
+      }
+      const ledger = by("#propertyIncomeTable");
+      if (ledger) {
+        ledger.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+    }
+  });
+}
+
 by("#propertyIncomeFilter").addEventListener("change",e=>{incomePropertyFilter=e.target.value;renderPropertyTables();applyEntryDisplay();});document.addEventListener("click",e=>{const pb=e.target.closest("[data-edit-property]"),ib=e.target.closest("[data-edit-income]");if(pb){const x=state.properties.find(v=>v.id===pb.dataset.editProperty),f=by("#editPropertyForm");for(const k of["id","property","tenant","ownership","rent","deposit","start","end"])f.elements[k].value=x[k]??"";by("#editPropertyDialog").showModal();}if(ib){const x=state.propertyIncome.find(v=>v.id===ib.dataset.editIncome),f=by("#editIncomeForm");for(const k of["id","propertyId","date","amount","period","notes"])f.elements[k].value=x[k]??"";by("#editIncomeDialog").showModal();}});by("#editPropertyForm").addEventListener("submit",e=>{e.preventDefault();const f=new FormData(e.target),x=state.properties.find(v=>v.id===f.get("id"));if(x)Object.assign(x,{property:f.get("property"),tenant:f.get("tenant"),ownership:num(f.get("ownership")),rent:num(f.get("rent")),deposit:num(f.get("deposit")),start:f.get("start"),end:f.get("end")});e.target.closest("dialog").close();render();});by("#editIncomeForm").addEventListener("submit",e=>{e.preventDefault();const f=new FormData(e.target),x=state.propertyIncome.find(v=>v.id===f.get("id"));if(x)Object.assign(x,{propertyId:f.get("propertyId"),date:f.get("date"),amount:num(f.get("amount")),period:f.get("period"),notes:f.get("notes")});e.target.closest("dialog").close();render();});
 function dateInTaxYear(date,year){const r=TaxEngine.YEARS[year];return!!r&&date>=r.start&&date<=r.end;}function formatUKDate(date){if(!/^\d{4}-\d{2}-\d{2}$/.test(date||""))return date;const[y,m,d]=date.split("-");return`${d}/${m}/${y}`;}function applyEntryDisplay(){const tables=["employmentTable","uberTable","propertyIncomeTable","propertyExpenseTable","rentHistoryTable","pensionTable","paymentTable"];for(const id of tables)for(const row of all(`#${id} .tr:not(.header)`)){const cell=row.querySelector("span"),iso=cell?.textContent?.trim();if(!/^\d{4}-\d{2}-\d{2}$/.test(iso||""))continue;row.hidden=entryYearFilter!=="all"&&!dateInTaxYear(iso,entryYearFilter);cell.textContent=formatUKDate(iso);}for(const row of all("#propertyTable .tr:not(.header)")){const cell=row.children[3];if(cell)cell.textContent=cell.textContent.replace(/\d{4}-\d{2}-\d{2}/g,formatUKDate);}}by("#entryYearFilter").addEventListener("change",e=>{entryYearFilter=e.target.value;render();});by("#propertyIncomeFilter").addEventListener("change",()=>applyEntryDisplay());
 function arrearsSchedule(){const today=new Date(),todayIso=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`,rows=[];for(const p of state.properties){if(!p.start||!p.rent)continue;const[startY,startM,startD]=p.start.split("-").map(Number),end=p.end||"9999-12-31";let includedUpcoming=false;for(let i=0;i<240;i++){const cursor=new Date(Date.UTC(startY,startM-1+i,1)),y=cursor.getUTCFullYear(),m=cursor.getUTCMonth()+1,last=new Date(Date.UTC(y,m,0)).getUTCDate(),date=`${y}-${String(m).padStart(2,"0")}-${String(Math.min(startD,last)).padStart(2,"0")}`;if(date>end)break;if(date>todayIso){if(includedUpcoming)break;includedUpcoming=true;}const period=date.slice(0,7),received=propertyIncomeRecords().filter(x=>x.propertyId===p.id&&(x.period||x.date?.slice(0,7))===period).reduce((a,x)=>a+num(x.amount),0),outstanding=Math.max(0,num(p.rent)-received),future=date>todayIso,status=future?"Upcoming":outstanding===0?"Paid":received>0?"Part-paid":"Overdue",days=future||!outstanding?0:Math.max(0,Math.floor((Date.parse(todayIso)-Date.parse(date))/86400000));rows.push({propertyId:p.id,property:p.property,date,period,expected:num(p.rent),received,outstanding,status,days});if(includedUpcoming)break;}}return rows;}
