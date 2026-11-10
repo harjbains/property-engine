@@ -110,3 +110,65 @@
   color: var(--red, #c2414b) !important;
   font-weight: 700;
 }
+
+
+/* Uber Tax Year Monthly Summary Grid */
+.uber-annual-card {
+  margin-bottom: 24px;
+}
+.uber-summary-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 8px;
+  border: 1px solid #edf0f4;
+  background: #ffffff;
+}
+.uber-summary-table {
+  min-width: 1040px;
+  width: 100%;
+}
+.uber-summary-table .tr {
+  font-variant-numeric: tabular-nums;
+  transition: background-color 0.15s ease;
+}
+.uber-summary-table .tr span:not(:first-child) {
+  text-align: right;
+}
+.uber-summary-table .tr.header span:not(:first-child) {
+  text-align: right;
+}
+.uber-summary-table .tr.total-row {
+  background: #f8fafc;
+  border-top: 2px solid var(--line);
+  font-weight: 800;
+}
+.uber-summary-table .tr.total-row span {
+  color: var(--ink);
+}
+.uber-summary-table .tr.uber-month-row:hover {
+  background: #f0f4f9;
+}
+.uber-summary-table .tax-pot-cell {
+  color: #0d9488;
+  font-weight: 700;
+}
+.metrics.uber-summary-metrics {
+  grid-template-columns: repeat(5, 1fr);
+}
+.metric.tax-pot {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+.metric.tax-pot strong {
+  color: #0f766e;
+}
+@media (max-width: 1200px) {
+  .metrics.uber-summary-metrics {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+@media (max-width: 768px) {
+  .metrics.uber-summary-metrics {
+    grid-template-columns: 1fr;
+  }
+}

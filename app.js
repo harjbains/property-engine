@@ -4,7 +4,106 @@ const KEY="tax-engine-v3",LEGACY_KEY="tax-engine-v2",money=new Intl.NumberFormat
 function logToUI(msg) {
   const div = document.createElement("div");
   div.style = "position:fixed; top:10px; right:10px; background:rgba(0,0,0,0.8); color:white; padding:10px; z-index:9999; border-radius:5px; font-family:monospace; max-width:400px; word-wrap:break-word; margin-bottom:5px;";
+  div.textContent = msg; console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg);
+  document.body.appendChild(div);
+  setTimeout(() => div.remove(), 10000);
+}
+
+
+function logToUI(msg) {
+  const div = document.createElement("div");
+  div.style = "position:fixed; top:10px; right:10px; background:rgba(0,0,0,0.8); color:white; padding:10px; z-index:9999; border-radius:5px; font-family:monospace; max-width:400px; word-wrap:break-word; margin-bottom:5px;";
+  div.textContent = msg; console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg);
+  document.body.appendChild(div);
+  setTimeout(() => div.remove(), 10000);
+}
+
+
+function logToUI(msg) {
+  const div = document.createElement("div");
+  div.style = "position:fixed; top:10px; right:10px; background:rgba(0,0,0,0.8); color:white; padding:10px; z-index:9999; border-radius:5px; font-family:monospace; max-width:400px; word-wrap:break-word; margin-bottom:5px;";
+  div.textContent = msg; console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg);
+  document.body.appendChild(div);
+  setTimeout(() => div.remove(), 10000);
+}
+
+
+function logToUI(msg) {
+  const div = document.createElement("div");
+  div.style = "position:fixed; top:10px; right:10px; background:rgba(0,0,0,0.8); color:white; padding:10px; z-index:9999; border-radius:5px; font-family:monospace; max-width:400px; word-wrap:break-word; margin-bottom:5px;";
+  div.textContent = msg; console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg);
+  document.body.appendChild(div);
+  setTimeout(() => div.remove(), 10000);
+}
+
+
+function logToUI(msg) {
+  const div = document.createElement("div");
+  div.style = "position:fixed; top:10px; right:10px; background:rgba(0,0,0,0.8); color:white; padding:10px; z-index:9999; border-radius:5px; font-family:monospace; max-width:400px; word-wrap:break-word; margin-bottom:5px;";
+  div.textContent = msg; console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg);
+  document.body.appendChild(div);
+  setTimeout(() => div.remove(), 10000);
+}
+
+
+function logToUI(msg) {
+  const div = document.createElement("div");
+  div.style = "position:fixed; top:10px; right:10px; background:rgba(0,0,0,0.8); color:white; padding:10px; z-index:9999; border-radius:5px; font-family:monospace; max-width:400px; word-wrap:break-word; margin-bottom:5px;";
+  div.textContent = msg; console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg);
+  document.body.appendChild(div);
+  setTimeout(() => div.remove(), 10000);
+}
+
+
+function logToUI(msg) {
+  const div = document.createElement("div");
+  div.style = "position:fixed; top:10px; right:10px; background:rgba(0,0,0,0.8); color:white; padding:10px; z-index:9999; border-radius:5px; font-family:monospace; max-width:400px; word-wrap:break-word; margin-bottom:5px;";
+  div.textContent = msg; console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg);
+  document.body.appendChild(div);
+  setTimeout(() => div.remove(), 10000);
+}
+
+
+function logToUI(msg) {
+  const div = document.createElement("div");
+  div.style = "position:fixed; top:10px; right:10px; background:rgba(0,0,0,0.8); color:white; padding:10px; z-index:9999; border-radius:5px; font-family:monospace; max-width:400px; word-wrap:break-word; margin-bottom:5px;";
+  div.textContent = msg; console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg);
+  document.body.appendChild(div);
+  setTimeout(() => div.remove(), 10000);
+}
+
+
+function logToUI(msg) {
+  const div = document.createElement("div");
+  div.style = "position:fixed; top:10px; right:10px; background:rgba(0,0,0,0.8); color:white; padding:10px; z-index:9999; border-radius:5px; font-family:monospace; max-width:400px; word-wrap:break-word; margin-bottom:5px;";
+  div.textContent = msg; console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg);
+  document.body.appendChild(div);
+  setTimeout(() => div.remove(), 10000);
+}
+
+
+function logToUI(msg) {
+  const div = document.createElement("div");
+  div.style = "position:fixed; top:10px; right:10px; background:rgba(0,0,0,0.8); color:white; padding:10px; z-index:9999; border-radius:5px; font-family:monospace; max-width:400px; word-wrap:break-word; margin-bottom:5px;";
+  div.textContent = msg; console.log(msg); console.log(msg); console.log(msg); console.log(msg);
+  document.body.appendChild(div);
+  setTimeout(() => div.remove(), 10000);
+}
+
+
+function logToUI(msg) {
+  const div = document.createElement("div");
+  div.style = "position:fixed; top:10px; right:10px; background:rgba(0,0,0,0.8); color:white; padding:10px; z-index:9999; border-radius:5px; font-family:monospace; max-width:400px; word-wrap:break-word; margin-bottom:5px;";
   div.textContent = msg; console.log(msg); console.log(msg); console.log(msg);
+  document.body.appendChild(div);
+  setTimeout(() => div.remove(), 10000);
+}
+
+
+function logToUI(msg) {
+  const div = document.createElement("div");
+  div.style = "position:fixed; top:10px; right:10px; background:rgba(0,0,0,0.8); color:white; padding:10px; z-index:9999; border-radius:5px; font-family:monospace; max-width:400px; word-wrap:break-word; margin-bottom:5px;";
+  div.textContent = msg; console.log(msg); console.log(msg);
   document.body.appendChild(div);
   setTimeout(() => div.remove(), 10000);
 }
@@ -86,7 +185,7 @@ let state=hydrateState();const current=()=>state.settingsByYear[state.year];func
 for(const pensionYear of Object.values(state.settingsByYear)){pensionYear.forecast.pensionIncome=8295;Object.assign(pensionYear.moduleData.pension,{annual:8295,taxDeducted:691.20,taxProvided:true,inputBasis:"gross"});}
 function calculationInputs(){const s=current(),m=s.modules,f=s.forecast,d=s.moduleData,recorded=f.method==="recorded",weeks=state.uber.length,weekly=sum(state.uber,"payments")+sum(state.uber,"tips")-sum(state.uber,"fee"),propertyIncomeAll=propertyIncomeRecords(),propertyExpenseAll=propertyExpenseRecords(),finance=propertyExpenseAll.filter(x=>x.category==="Mortgage interest"),allowable=propertyExpenseAll.filter(x=>x.category!=="Mortgage interest"&&x.category!=="Capital cost"),pensionAnnual=recorded?sum(state.pension,"amount"):d.pension.annual,pensionRecordedTax=sum(state.pension,"tax"),pensionGross=d.pension.inputBasis==="net"?pensionAnnual+(recorded?pensionRecordedTax:d.pension.taxDeducted):pensionAnnual,employmentGross=recorded?sum(state.employment,"gross")+sum(state.employment,"benefits"):d.employment.gross+(!d.employment.benefitsEnabled?0:d.employment.benefits),employmentTax=recorded?sum(state.employment,"tax"):d.employment.payeTax,employmentTaxProvided=recorded?state.employment.some(x=>x.taxProvided):d.employment.payeTaxProvided,pensionTaxProvided=recorded?state.pension.some(x=>x.taxProvided):d.pension.taxProvided;return{year:state.year,rules:s.rules,modules:m,employmentIncome:employmentGross,employmentTaxCode:(recorded?state.employment.findLast?.(x=>x.taxCode)?.taxCode:null)||d.employment.taxCode,payeTax:employmentTax,payeTaxProvided:employmentTaxProvided,pensionIncome:pensionGross,pensionTaxCode:(recorded?state.pension.findLast?.(x=>x.taxCode)?.taxCode:null)||d.pension.taxCode,pensionTaxDeducted:recorded?pensionRecordedTax:d.pension.taxDeducted,pensionTaxProvided,otherIncome:d.other.amount,otherTaxDeducted:d.other.taxDeducted,savingsIncome:d.savings.interest,personalSavingsAllowance:d.savings.personalAllowance,startingSavingsRateEnabled:d.savings.startingRateEnabled,savingsBasicRate:d.savings.basicRate,savingsHigherRate:d.savings.higherRate,savingsAdditionalRate:d.savings.additionalRate,dividendIncome:d.dividends.income,dividendAllowance:d.dividends.allowance,dividendBasicRate:d.dividends.basicRate,dividendHigherRate:d.dividends.higherRate,dividendAdditionalRate:d.dividends.additionalRate,propertyIncome:recorded?sum(propertyIncomeAll,"amount"):f.propertyIncome,propertyExpenses:recorded?sum(allowable,"amount"):f.propertyExpenses,financeCosts:recorded?sum(finance,"amount"):d.property.disallowedInterest,carriedFinanceCosts:d.property.carriedFinanceCosts,propertyTreatment:d.property.treatment,propertyBasicRate:d.property.basicRate,propertyHigherRate:d.property.higherRate,propertyAdditionalRate:d.property.additionalRate,financeRestrictionEnabled:d.property.financeRestriction,financeCreditRate:s.rules.financeCreditRate,propertyAllowanceEnabled:d.property.propertyAllowanceEnabled,propertyAllowanceAmount:d.property.propertyAllowanceAmount,uberIncome:recorded&&weeks?weekly/weeks*52:f.uberForecast,uberOtherExpenses:f.uberOtherExpenses,businessMiles:recorded&&weeks?sum(state.uber,"miles")/weeks*52:f.annualMiles,simplifiedMileage:d.uber.simplifiedMileage,hmrcPaid:sum(state.payments,"amount"),hmrcReserve:s.hmrc.reserve,standardMonthlyProvision:s.hmrc.standardMonthly,catchupShortfall:s.hmrc.catchupShortfall,catchupMonths:s.hmrc.catchupMonths,minimumPayment:s.hmrc.minimumPayment,roundPaymentTo:s.hmrc.roundTo,monthsRemaining:f.monthsRemaining};}
 const calc=()=>(syncPropertyManagementExpenses(state),TaxEngine.calculate(state.year==="2025-26"?actualDashboardInputs():forecastDashboardInputs())),metric=(l,v,n,a="")=>`<div class="metric ${a}"><span>${l}</span><strong>${v}</strong><small>${n}</small></div>`,row=(l,v,c="")=>`<div class="tr ${c}"><span>${l}</span><span>${v}</span></div>`;
-function render(){const r=calc(),s=current();by("#taxYear").value=state.year;by("#entryYearFilter").value=entryYearFilter;by("#ruleNote").textContent=`${s.rules.label}: ${Math.round(s.rules.mileageFirst*100)}p for the first ${num(s.rules.mileageBand).toLocaleString()} miles. Rules updated ${s.rules.lastUpdated}.`;renderRecordMetrics(r);renderPayePensionTables();renderPaymentTable();renderPropertyTables();renderPropertySummary();sortExpenseRows();renderArrears();prioritiseArrearsRows();applyEntryDisplay();renderReport(r);renderActualReport(r);renderEnhancements(r);renderSettings();renderModuleVisibility();populatePropertySelects();renderDashboardMode();save();}
+function render(){const r=calc(),s=current();by("#taxYear").value=state.year;by("#entryYearFilter").value=entryYearFilter;by("#ruleNote").textContent=`${s.rules.label}: ${Math.round(s.rules.mileageFirst*100)}p for the first ${num(s.rules.mileageBand).toLocaleString()} miles. Rules updated ${s.rules.lastUpdated}.`;renderRecordMetrics(r);renderPayePensionTables();renderPaymentTable();renderPropertyTables();renderPropertySummary();renderUberSummary();sortExpenseRows();renderArrears();prioritiseArrearsRows();applyEntryDisplay();renderReport(r);renderActualReport(r);renderEnhancements(r);renderSettings();renderModuleVisibility();populatePropertySelects();renderDashboardMode();save();}
 function records(t,h,rows,cols){by(t).style.setProperty("--cols",cols);by(t).innerHTML=`<div class="tr header">${h.map(x=>`<span>${x}</span>`).join("")}</div>`+(rows.length?rows.join(""):`<div class="empty">No records yet</div>`);}function cells(v){return`<div class="tr">${v.map(x=>`<span>${x}</span>`).join("")}</div>`;}function del(t,id){return`<button class="delete" data-delete="${t}" data-id="${id}">Delete</button>`;}
 function renderRecordMetrics(r){const source=current().forecast.method==="recorded"?"Digital property records":"Annual forecast settings",employmentSource=current().forecast.method==="recorded"?"Digital PAYE records":"Annual PAYE settings",inputs=calculationInputs();by("#employmentMetrics").innerHTML=metric("Employment income",money.format(r.employment),employmentSource)+metric("PAYE tax credited",money.format(r.payeCredit),`${inputs.payeTaxProvided?"Actual deduction":"Estimated from tax code"}  -  ${inputs.employmentTaxCode}`)+metric("NI already deducted",money.format(current().forecast.method==="recorded"?sum(state.employment,"ni"):current().moduleData.employment.niDeducted),"Recorded for reference");by("#propertyMetrics").innerHTML=metric("Property income",money.format(r.propertyIncome),source)+metric("Allowable expenses",money.format(r.propertyExpenses),`${source}; excludes mortgage interest`)+metric("Property profit",money.format(r.propertyProfit),`${money.format(r.financeCosts)} finance costs tracked`);by("#paymentMetrics").innerHTML=metric("Estimated liability",money.format(r.liability),r.year)+metric("Paid and reserved",money.format(r.paid+r.reserve),`${state.payments.length} HMRC payment(s)`)+metric("Outstanding",money.format(r.outstanding),`${money.format(r.monthlyPayment)} recommended monthly`,r.outstanding?"alert":"");}
 function renderReport(r){const m=current().modules,lines=[];if(m.employment)lines.push(row("Employment income",money.format(r.employment)));if(m.uber)lines.push(row("Uber profit",money.format(r.uberProfit)));if(m.property)lines.push(row("Property profit",money.format(r.propertyProfit)));if(m.pension)lines.push(row("Pension income",money.format(r.pension)));if(m.savings)lines.push(row("Savings interest",money.format(r.savings)),row("Savings tax",money.format(r.savingsTax)));if(m.dividends)lines.push(row("Dividend income",money.format(r.dividends)),row("Dividend tax",money.format(r.dividendTax)));if(m.other)lines.push(row(current().moduleData.other.description||"Other income",money.format(r.other)));by("#report").innerHTML=`<div class="report-title"><div><p class="eyebrow">TAX ENGINE</p><h2>${r.rules.label} year projection</h2></div><strong>${r.rules.country}</strong></div><p>Enabled modules only. Forecast method: ${current().forecast.method}.</p>${lines.join("")}${row("Total income",money.format(r.totalIncome))}${row("Personal Allowance",`(${money.format(r.allowance)})`)}${row("Taxable income",money.format(r.taxableIncome),"total")}${row("Income Tax before relief",money.format(r.grossIncomeTax))}${row("Finance-cost credit",`(${money.format(r.financeCostCredit)})`)}${row("Class 4 NI",money.format(r.nationalInsurance))}${row("Tax deducted at source",`(${money.format(r.taxAtSource)})`)}${row("Estimated HMRC liability",money.format(r.liability),"total")}<p><strong>Source:</strong> ${r.rules.source}. Rules last updated ${r.rules.lastUpdated}. Planning estimate only.</p>`;}
@@ -359,6 +458,234 @@ if (typeof by === "function") {
     }
   });
 }
+
+let uberSummaryYearFilter = "";
+let uberMonthFilter = "";
+
+function getUberMonthlyBreakdown(yearKey) {
+  const startYear = parseInt(String(yearKey || "2026-27").slice(0, 4), 10);
+  const endYear = startYear + 1;
+  const monthKeys = [];
+  for (let m = 4; m <= 12; m++) monthKeys.push(`${startYear}-${String(m).padStart(2, "0")}`);
+  for (let m = 1; m <= 3; m++) monthKeys.push(`${endYear}-${String(m).padStart(2, "0")}`);
+
+  const rules = TaxEngine.YEARS[yearKey] || TaxEngine.YEARS["2026-27"];
+  const rows = [];
+
+  let totTurnover = 0;
+  let totThirdParty = 0;
+  let totUberFee = 0;
+  let totTips = 0;
+  let totAdjustments = 0;
+  let totNetPayout = 0;
+  let totTaxPot = 0;
+  let totMiles = 0;
+  let totMileageAllowance = 0;
+  let totNetProfit = 0;
+
+  let cumMiles = 0;
+
+  for (const m of monthKeys) {
+    const dObj = new Date(Date.UTC(Number(m.slice(0, 4)), Number(m.slice(5, 7)) - 1, 1));
+    const label = dObj.toLocaleString("en-GB", { month: "short", year: "numeric", timeZone: "UTC" });
+
+    const monthRecords = (state.uber || []).filter(x => {
+      const d = x.date || x.weekEnd || x.weekStart || "";
+      return d.slice(0, 7) === m;
+    });
+
+    const turnover = monthRecords.reduce((acc, x) => acc + uberCustomerTurnover(x), 0);
+    const thirdParty = monthRecords.reduce((acc, x) => acc + uberGovernmentFees(x), 0);
+    const uberFee = monthRecords.reduce((acc, x) => acc + uberServiceFee(x), 0);
+    const tips = monthRecords.reduce((acc, x) => acc + num(x.tips), 0);
+    const adjustments = monthRecords.reduce((acc, x) => acc + uberOtherAdjustments(x), 0);
+    const netPayout = monthRecords.reduce((acc, x) => acc + uberNetPayment(x), 0);
+
+    // Tax Pot: calculated at 25% of net pay
+    const taxPot = Math.round(netPayout * 0.25 * 100) / 100;
+
+    const miles = monthRecords.reduce((acc, x) => acc + num(x.businessMiles ?? x.miles), 0);
+
+    // Mileage allowance: HMRC cumulative threshold across the tax year
+    const priorMiles = cumMiles;
+    cumMiles += miles;
+    const mileageAllowance = TaxEngine.mileageAllowance(cumMiles, rules) - TaxEngine.mileageAllowance(priorMiles, rules);
+
+    const netProfit = monthRecords.length > 0 ? Math.round((netPayout - mileageAllowance) * 100) / 100 : 0;
+
+    totTurnover += turnover;
+    totThirdParty += thirdParty;
+    totUberFee += uberFee;
+    totTips += tips;
+    totAdjustments += adjustments;
+    totNetPayout += netPayout;
+    totTaxPot += taxPot;
+    totMiles += miles;
+    totMileageAllowance += mileageAllowance;
+    totNetProfit += netProfit;
+
+    rows.push({
+      month: m,
+      label,
+      count: monthRecords.length,
+      turnover,
+      thirdParty,
+      uberFee,
+      tips,
+      adjustments,
+      netPayout,
+      taxPot,
+      miles,
+      mileageAllowance,
+      netProfit
+    });
+  }
+
+  const finalTaxPot = Math.round(totTaxPot * 100) / 100;
+
+  return {
+    year: yearKey,
+    rows,
+    totals: {
+      turnover: totTurnover,
+      thirdParty: totThirdParty,
+      uberFee: totUberFee,
+      tips: totTips,
+      adjustments: totAdjustments,
+      netPayout: totNetPayout,
+      taxPot: finalTaxPot,
+      miles: totMiles,
+      mileageAllowance: Math.round(totMileageAllowance * 100) / 100,
+      netProfit: Math.round(totNetProfit * 100) / 100
+    }
+  };
+}
+
+window.getUberMonthlyBreakdown = getUberMonthlyBreakdown;
+window.renderUberSummary = renderUberSummary;
+window.renderUberTable = renderUberTable;
+
+function renderUberSummary() {
+  const yearSelect = by("#uberSummaryYear");
+  if (!yearSelect) return;
+
+  if (uberSummaryYearFilter) {
+    yearSelect.value = uberSummaryYearFilter;
+  } else {
+    yearSelect.value = state.year || "2026-27";
+    uberSummaryYearFilter = yearSelect.value;
+  }
+
+  const year = uberSummaryYearFilter;
+  const { rows, totals } = getUberMonthlyBreakdown(year);
+
+  const yearLabel = (TaxEngine.YEARS[year]?.label || year).replace("-", "/");
+
+  const metricsEl = by("#uberSummaryMetrics");
+  if (metricsEl) {
+    metricsEl.innerHTML =
+      metric("Annual turnover", money.format(totals.turnover + totals.tips), `${yearLabel} · Fares & tips`) +
+      metric("Net bank payout", money.format(totals.netPayout), "Total paid into bank") +
+      metric("Tax Pot (25%)", money.format(totals.taxPot), "25% of net pay set aside for tax return", "tax-pot") +
+      metric("Tax-year miles", totals.miles.toLocaleString(), `${money.format(totals.mileageAllowance)} HMRC deduction`) +
+      metric("Taxable profit", money.format(totals.netProfit), totals.netProfit >= 0 ? "Net payout less mileage deduction" : "Operating deficit", totals.netProfit < 0 ? "alert" : "");
+  }
+
+  const tableEl = by("#uberSummaryTable");
+  if (!tableEl) return;
+
+  const headers = [
+    "Month",
+    "Turnover",
+    "Third-party",
+    "Uber Fee",
+    "Tips",
+    "Adjustments",
+    "Net Payout",
+    "Tax Pot (25%)",
+    "Miles",
+    "Mileage Allow.",
+    "Net Profit"
+  ];
+
+  const fmt = (v) => (v > 0 ? money.format(v) : "—");
+  const fmtMiles = (v) => (v > 0 ? v.toLocaleString() : "—");
+  const fmtTaxPot = (v) => (v > 0 ? `<span class="tax-pot-cell">${money.format(v)}</span>` : "—");
+  const fmtNet = (v, count) => (!count && v === 0 ? "—" : `<strong class="${v > 0 ? "profit-pos" : v < 0 ? "profit-neg" : ""}">${money.format(v)}</strong>`);
+
+  const renderedRows = rows.map((r) => {
+    const isSelected = uberMonthFilter === r.month;
+    const selectedStyle = isSelected ? "background:#e0f2fe;border:1px solid #7dd3fc;" : "";
+    return `<div class="tr uber-month-row ${isSelected ? "selected" : ""}" data-month="${r.month}" style="cursor:pointer;${selectedStyle}" title="Click to filter weekly entries below to ${r.label}">
+      <span><strong>${r.label}</strong></span>
+      <span>${fmt(r.turnover)}</span>
+      <span>${fmt(r.thirdParty)}</span>
+      <span>${fmt(r.uberFee)}</span>
+      <span>${fmt(r.tips)}</span>
+      <span>${fmt(r.adjustments)}</span>
+      <span>${r.count ? money.format(r.netPayout) : "—"}</span>
+      <span>${fmtTaxPot(r.taxPot)}</span>
+      <span>${fmtMiles(r.miles)}</span>
+      <span>${fmt(r.mileageAllowance)}</span>
+      <span>${fmtNet(r.netProfit, r.count)}</span>
+    </div>`;
+  });
+
+  const totalRow = `<div class="tr total-row">
+    <span><strong>TAX YEAR TOTAL</strong></span>
+    <span><strong>${money.format(totals.turnover)}</strong></span>
+    <span><strong>${money.format(totals.thirdParty)}</strong></span>
+    <span><strong>${money.format(totals.uberFee)}</strong></span>
+    <span><strong>${money.format(totals.tips)}</strong></span>
+    <span><strong>${money.format(totals.adjustments)}</strong></span>
+    <span><strong>${money.format(totals.netPayout)}</strong></span>
+    <span><strong class="tax-pot-cell">${money.format(totals.taxPot)}</strong></span>
+    <span><strong>${totals.miles.toLocaleString()}</strong></span>
+    <span><strong>${money.format(totals.mileageAllowance)}</strong></span>
+    <span><strong class="${totals.netProfit >= 0 ? "profit-pos" : "profit-neg"}">${money.format(totals.netProfit)}</strong></span>
+  </div>`;
+
+  renderedRows.push(totalRow);
+
+  records("#uberSummaryTable", headers, renderedRows, 11);
+}
+
+if (typeof by === "function") {
+  const uberYr = by("#uberSummaryYear");
+  if (uberYr) {
+    uberYr.addEventListener("change", () => {
+      uberSummaryYearFilter = uberYr.value;
+      renderUberSummary();
+    });
+  }
+
+  const clearUberMonth = by("#uberClearMonthFilter");
+  if (clearUberMonth) {
+    clearUberMonth.addEventListener("click", () => {
+      uberMonthFilter = "";
+      renderUberTable();
+      renderUberSummary();
+    });
+  }
+
+  document.addEventListener("click", (e) => {
+    const row = e.target.closest(".uber-month-row");
+    if (row && row.dataset.month) {
+      if (uberMonthFilter === row.dataset.month) {
+        uberMonthFilter = "";
+      } else {
+        uberMonthFilter = row.dataset.month;
+      }
+      renderUberTable();
+      renderUberSummary();
+      const table = by("#uberTable");
+      if (table) {
+        table.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+    }
+  });
+}
+
 
 by("#propertyIncomeFilter").addEventListener("change",e=>{incomePropertyFilter=e.target.value;renderPropertyTables();applyEntryDisplay();});document.addEventListener("click",e=>{const pb=e.target.closest("[data-edit-property]"),ib=e.target.closest("[data-edit-income]");if(pb){const x=state.properties.find(v=>v.id===pb.dataset.editProperty),f=by("#editPropertyForm");for(const k of["id","property","tenant","ownership","rent","deposit","start","end"])f.elements[k].value=x[k]??"";by("#editPropertyDialog").showModal();}if(ib){const x=state.propertyIncome.find(v=>v.id===ib.dataset.editIncome),f=by("#editIncomeForm");for(const k of["id","propertyId","date","amount","period","notes"])f.elements[k].value=x[k]??"";by("#editIncomeDialog").showModal();}});by("#editPropertyForm").addEventListener("submit",e=>{e.preventDefault();const f=new FormData(e.target),x=state.properties.find(v=>v.id===f.get("id"));if(x)Object.assign(x,{property:f.get("property"),tenant:f.get("tenant"),ownership:num(f.get("ownership")),rent:num(f.get("rent")),deposit:num(f.get("deposit")),start:f.get("start"),end:f.get("end")});e.target.closest("dialog").close();render();});by("#editIncomeForm").addEventListener("submit",e=>{e.preventDefault();const f=new FormData(e.target),x=state.propertyIncome.find(v=>v.id===f.get("id"));if(x)Object.assign(x,{propertyId:f.get("propertyId"),date:f.get("date"),amount:num(f.get("amount")),period:f.get("period"),notes:f.get("notes")});e.target.closest("dialog").close();render();});
 function dateInTaxYear(date,year){const r=TaxEngine.YEARS[year];return!!r&&date>=r.start&&date<=r.end;}function formatUKDate(date){if(!/^\d{4}-\d{2}-\d{2}$/.test(date||""))return date;const[y,m,d]=date.split("-");return`${d}/${m}/${y}`;}function applyEntryDisplay(){const tables=["employmentTable","uberTable","propertyIncomeTable","propertyExpenseTable","rentHistoryTable","pensionTable","paymentTable"];for(const id of tables)for(const row of all(`#${id} .tr:not(.header)`)){const cell=row.querySelector("span"),iso=cell?.textContent?.trim();if(!/^\d{4}-\d{2}-\d{2}$/.test(iso||""))continue;row.hidden=entryYearFilter!=="all"&&!dateInTaxYear(iso,entryYearFilter);cell.textContent=formatUKDate(iso);}for(const row of all("#propertyTable .tr:not(.header)")){const cell=row.children[3];if(cell)cell.textContent=cell.textContent.replace(/\d{4}-\d{2}-\d{2}/g,formatUKDate);}}by("#entryYearFilter").addEventListener("change",e=>{entryYearFilter=e.target.value;render();});by("#propertyIncomeFilter").addEventListener("change",()=>applyEntryDisplay());
@@ -1191,7 +1518,7 @@ const readSettingsFundingBase=readSettings;readSettings=function(form){readSetti
 document.addEventListener("click",event=>{const button=event.target.closest("[data-audit-property-month]");if(!button)return;propertyLedgerMonth=button.dataset.auditPropertyMonth;show("properties");renderPropertyTables();applyEntryDisplay();});
 function backfillCashflowManagementFees(){let propertyChanged=false;for(const x of allCashflowStates()){const changes=ensurePropertyManagementFees(x);if(changes.cashChanged){normaliseCashflowAccounts(x);localStorage.setItem(cashflowKey(x.month),JSON.stringify(x));}propertyChanged=propertyChanged||changes.propertyChanged;}if(propertyChanged)save();}
 function ensureFundingPaymentOptions(){const select=by('#paymentForm [name="paymentType"]');if(select&&![...select.options].some(option=>option.value==="Catch-up payment")){const option=document.createElement("option");option.value=option.textContent="Catch-up payment";select.insertBefore(option,[...select.options].find(item=>item.value==="Balancing payment")||null);}}
-const renderBase=render;render=function(){backfillCashflowManagementFees();renderBase();renderProvisionForecastSettings();renderTaxCalculationPropertyDisclosure();renderProvisionForecast();renderUberTable();renderMtd();augmentTaxPaymentSummary();renderDashboardSurface();renderCurrentAccruedTaxPosition();ensureFundingPaymentOptions();renderFinancialAuditDetailed();const reconciliation=renderHmrcReconciliation();appendHmrcReconciliationAudit(reconciliation);};
+const renderBase=render;render=function(){backfillCashflowManagementFees();renderBase();renderProvisionForecastSettings();renderTaxCalculationPropertyDisclosure();renderProvisionForecast();renderUberTable();renderUberSummary();renderMtd();augmentTaxPaymentSummary();renderDashboardSurface();renderCurrentAccruedTaxPosition();ensureFundingPaymentOptions();renderFinancialAuditDetailed();const reconciliation=renderHmrcReconciliation();appendHmrcReconciliationAudit(reconciliation);};
 window.TaxEngineReloadFromStorage=()=>{state=hydrateState();render();};
 dashboardView = "actual"; taxWorkspaceTab = "cashflow"; render();
 // Campaigns logic

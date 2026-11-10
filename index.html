@@ -86,7 +86,53 @@
     </section>
     <section class="view" data-panel="employment"><div class="section-intro"><div><p class="eyebrow">EMPLOYMENT RECORDS</p><h2>PAYE income</h2><p>Record each payslip or consolidated employment payment with tax and National Insurance already deducted.</p></div><button class="primary" data-open="employmentDialog">Record PAYE income</button></div><div class="metrics compact" id="employmentMetrics"></div><div class="card"><div class="table records" id="employmentTable"></div></div></section>
 
-    <section class="view" data-panel="uber"><div class="section-intro"><div><p class="eyebrow">DIGITAL RECORDS</p><h2>Weekly Uber entries</h2><p>Record customer payments, separate Uber fees, the net bank payment and business miles from the weekly statement.</p></div><button class="primary" data-open="uberDialog">Add week</button></div><div class="metrics compact" id="uberMetrics"></div><div class="card"><div class="table records" id="uberTable"></div></div></section>
+    <section class="view" data-panel="uber">
+      <div class="section-intro">
+        <div>
+          <p class="eyebrow">SELF EMPLOYMENT</p>
+          <h2>Uber earnings and performance</h2>
+          <p>Record customer payments, platform fees, mileage, 25% tax pot provision and compare monthly net earnings.</p>
+        </div>
+        <button class="primary" data-open="uberDialog">Add week</button>
+      </div>
+
+      <div class="card uber-annual-card">
+        <div class="card-head">
+          <div>
+            <p class="eyebrow">TAX YEAR SUMMARY</p>
+            <h2>Monthly Uber breakdown</h2>
+            <p>Annual grid showing turnover, platform fees, net payout, 25% tax pot provision, mileage and taxable profit by month.</p>
+          </div>
+          <div class="top-actions" style="margin-bottom:0;">
+            <label>Tax year
+              <select id="uberSummaryYear">
+                <option value="2026-27">2026/27</option>
+                <option value="2025-26">2025/26</option>
+              </select>
+            </label>
+          </div>
+        </div>
+        <div class="metrics compact uber-summary-metrics" id="uberSummaryMetrics" style="margin-bottom:18px;"></div>
+        <div class="uber-summary-wrap">
+          <div class="table records uber-summary-table" id="uberSummaryTable"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <p class="eyebrow">DIGITAL RECORDS</p>
+            <h2>Weekly Uber entries</h2>
+            <p id="uberWeeklyNote">Record customer payments, separate Uber fees, the net bank payment and business miles from the weekly statement.</p>
+          </div>
+          <div class="top-actions" style="margin-bottom:0;">
+            <button class="ghost small" id="uberClearMonthFilter" style="display:none;">Show all weeks</button>
+          </div>
+        </div>
+        <div class="metrics compact" id="uberMetrics"></div>
+        <div class="table records" id="uberTable"></div>
+      </div>
+    </section>
     <section class="view" data-panel="properties">
       <div class="section-intro"><div><p class="eyebrow">RENTAL PORTFOLIO</p><h2>Properties and performance</h2><p>Cashflow is the source of truth. This page reports rent, costs and tenancy details by property.</p></div><button class="primary" data-open="propertyDialog">Create property</button></div>
       <div class="metrics compact" id="propertyMetrics"></div>
