@@ -163,7 +163,7 @@
         </div>
       </div>
       <div class="card"><div class="card-head"><div><p class="eyebrow">PROPERTY RECORDS</p><h2>Tenancies</h2></div></div><div class="table records" id="propertyTable"></div></div>
-      <div class="property-actions"><button class="primary" data-open-cashflow-workspace>Open Cashflow</button><button class="ghost" data-open="rentDialog">Raise rent</button></div><div class="property-ledger-month" id="propertyLedgerMonthControls"></div>
+      <div class="property-actions"><button class="primary" data-open-cashflow-workspace>Open Cashflow</button><button class="ghost" data-open="rentDialog">Raise rent</button><button class="ghost" id="btnOpenTenantStatements">Tenant statements</button></div><div class="property-ledger-month" id="propertyLedgerMonthControls"></div>
       <div class="grid two property-ledgers"><div class="card"><div class="card-head"><div><p class="eyebrow">INCOME LEDGER</p><h2>Rent received</h2></div><label>Property filter<select id="propertyIncomeFilter"><option value="">All properties</option></select></label></div><div class="table records" id="propertyIncomeTable"></div></div><div class="card"><div class="card-head"><div><p class="eyebrow">EXPENSE LEDGER</p><h2>Property costs</h2></div></div><div class="table records" id="propertyExpenseTable"></div></div></div>
       <div class="card"><div class="card-head"><div><p class="eyebrow">RENT HISTORY</p><h2>Rent changes</h2></div></div><div class="table records" id="rentHistoryTable"></div></div>
       <div class="card arrears-card"><div class="card-head"><div><p class="eyebrow">ARREARS CONTROL</p><h2>Rent due and outstanding</h2><p>Scheduled rent is matched against receipts by property and rental month.</p></div><label>Property filter<select id="arrearsPropertyFilter"><option value="">All properties</option></select></label></div><div class="metrics compact" id="arrearsMetrics"></div><div class="table records" id="arrearsTable"></div></div>
@@ -195,9 +195,9 @@
 
   <dialog id="uberDialog"><form method="dialog" id="uberForm"><h2>Add Uber week</h2><p>Enter fees as positive amounts. Use Other adjustments for a deduction or credit not shown elsewhere.</p><div class="form-grid"><label>Week start<input name="weekStart" type="date" required></label><label>Week end<input name="weekEnd" type="date" required></label><label>Amount paid by customers<input name="customerPayments" type="number" min="0" step="0.01" required></label><label>Government taxes and third-party fees<input name="governmentThirdPartyFees" type="number" min="0" step="0.01" value="0" required></label><label>Uber service fee<input name="uberServiceFee" type="number" min="0" step="0.01" required></label><label>Tips<input name="tips" type="number" min="0" step="0.01" value="0" required></label><label>Other adjustments<input name="otherAdjustments" type="number" step="0.01" value="0"></label><label>Net Uber payment<input name="netUberPayment" type="number" min="0" step="0.01" required></label><label>Business miles<input name="businessMiles" type="number" min="0" step="0.1" required></label><label class="wide">Adjustment explanation / notes<input name="notes"></label></div><p id="uberReconciliation" class="form-note" aria-live="polite"></p><div class="dialog-actions"><button type="button" data-close-dialog class="ghost">Cancel</button><button value="default" class="primary">Save week</button></div></form></dialog>
   <dialog id="employmentDialog"><form method="dialog" id="employmentForm"><h2>Record PAYE income</h2><div class="form-grid"><label>Payment date<input name="date" type="date" required></label><label>Employer<input name="employer" required></label><label>Tax code<input name="taxCode" value="1257L" required></label><label>Gross pay<input name="gross" type="number" min="0" step="0.01" required></label><label>PAYE tax deducted<input name="tax" type="number" min="0" step="0.01" placeholder="Leave blank to estimate"></label><label>National Insurance deducted<input name="ni" type="number" min="0" step="0.01" value="0"></label><label>Benefits in kind<input name="benefits" type="number" min="0" step="0.01" value="0"></label><label class="wide">Notes<input name="notes"></label></div><div class="dialog-actions"><button type="button" data-close-dialog class="ghost">Cancel</button><button value="default" class="primary">Save PAYE record</button></div></form></dialog>
-  <dialog id="propertyDialog"><form method="dialog" id="propertyForm"><h2>Create property</h2><div class="form-grid"><label>Property name<input name="property" required placeholder="Wolverhampton rental"></label><label>Tenant name<input name="tenant" required></label><label>Ownership percentage<input name="ownership" type="number" min="0" max="100" step="0.01" value="100" required></label><label>Monthly rent<input name="rent" type="number" min="0" step="0.01" required></label><label>Deposit<input name="deposit" type="number" min="0" step="0.01" required></label><label>Tenancy start<input name="start" type="date" required></label><label>Tenancy end<input name="end" type="date"></label></div><div class="dialog-actions"><button type="button" data-close-dialog class="ghost">Cancel</button><button value="default" class="primary">Create property</button></div></form></dialog>
+  <dialog id="propertyDialog"><form method="dialog" id="propertyForm"><h2>Create property</h2><div class="form-grid"><label>Property name<input name="property" required placeholder="Wolverhampton rental"></label><label>Tenant name<input name="tenant" required></label><label>Tenant email<input name="tenantEmail" type="email" placeholder="tenant@example.com"></label><label>Ownership percentage<input name="ownership" type="number" min="0" max="100" step="0.01" value="100" required></label><label>Monthly rent<input name="rent" type="number" min="0" step="0.01" required></label><label>Deposit<input name="deposit" type="number" min="0" step="0.01" required></label><label>Tenancy start<input name="start" type="date" required></label><label>Tenancy end<input name="end" type="date"></label></div><div class="dialog-actions"><button type="button" data-close-dialog class="ghost">Cancel</button><button value="default" class="primary">Create property</button></div></form></dialog>
   <dialog id="incomeDialog"><form method="dialog" id="incomeForm"><h2>Record property income</h2><div class="form-grid"><label>Property<select name="propertyId" data-property-select required></select></label><label>Date received<input name="date" type="date" required></label><label>Amount<input name="amount" type="number" min="0" step="0.01" required></label><label>Rent period<input name="period" type="month"></label><label class="wide">Notes<input name="notes"></label></div><div class="dialog-actions"><button type="button" data-close-dialog class="ghost">Cancel</button><button value="default" class="primary">Record income</button></div></form></dialog>
-  <dialog id="editPropertyDialog"><form method="dialog" id="editPropertyForm"><input name="id" type="hidden"><h2>Edit property</h2><div class="form-grid"><label>Property name<input name="property" required></label><label>Tenant name<input name="tenant" required></label><label>Ownership percentage<input name="ownership" type="number" min="0" max="100" step="0.01" required></label><label>Monthly rent<input name="rent" type="number" min="0" step="0.01" required></label><label>Deposit<input name="deposit" type="number" min="0" step="0.01" required></label><label>Tenancy start<input name="start" type="date" required></label><label>Tenancy end<input name="end" type="date"></label></div><div class="dialog-actions"><button type="button" data-close-dialog class="ghost">Cancel</button><button class="primary">Save changes</button></div></form></dialog>
+  <dialog id="editPropertyDialog"><form method="dialog" id="editPropertyForm"><input name="id" type="hidden"><h2>Edit property</h2><div class="form-grid"><label>Property name<input name="property" required></label><label>Tenant name<input name="tenant" required></label><label>Tenant email<input name="tenantEmail" type="email" placeholder="tenant@example.com"></label><label>Ownership percentage<input name="ownership" type="number" min="0" max="100" step="0.01" required></label><label>Monthly rent<input name="rent" type="number" min="0" step="0.01" required></label><label>Deposit<input name="deposit" type="number" min="0" step="0.01" required></label><label>Tenancy start<input name="start" type="date" required></label><label>Tenancy end<input name="end" type="date"></label></div><div class="dialog-actions"><button type="button" data-close-dialog class="ghost">Cancel</button><button class="primary">Save changes</button></div></form></dialog>
   <dialog id="editIncomeDialog"><form method="dialog" id="editIncomeForm"><input name="id" type="hidden"><h2>Edit rent receipt</h2><div class="form-grid"><label>Property<select name="propertyId" data-property-select required></select></label><label>Date received<input name="date" type="date" required></label><label>Amount<input name="amount" type="number" min="0" step="0.01" required></label><label>Rent period<input name="period" type="month"></label><label class="wide">Notes<input name="notes"></label></div><div class="dialog-actions"><button type="button" data-close-dialog class="ghost">Cancel</button><button class="primary">Save changes</button></div></form></dialog>
   <dialog id="rentDialog"><form method="dialog" id="rentForm"><h2>Raise rent</h2><div class="form-grid"><label>Property<select name="propertyId" data-property-select required></select></label><label>Effective date<input name="date" type="date" required></label><label>New monthly rent<input name="rent" type="number" min="0" step="0.01" required></label><label class="wide">Reason / notes<input name="notes"></label></div><div class="dialog-actions"><button type="button" data-close-dialog class="ghost">Cancel</button><button value="default" class="primary">Save rent change</button></div></form></dialog>
   <dialog id="expenseDialog"><form method="dialog" id="expenseForm"><h2>Record property expense</h2><div class="form-grid"><label>Property<select name="propertyId" data-property-select required></select></label><label>Date paid<input name="date" type="date" required></label><label>Category<select name="category"><option>Repairs</option><option>Insurance</option><option>Agent fees</option><option>Utilities</option><option>Mortgage interest</option><option>Other</option></select></label><label>Amount<input name="amount" type="number" min="0" step="0.01" required></label><label class="wide">Supplier / notes<input name="notes"></label></div><div class="dialog-actions"><button type="button" data-close-dialog class="ghost">Cancel</button><button value="default" class="primary">Record expense</button></div></form></dialog>
@@ -255,6 +255,56 @@
         <button type="submit" class="primary">Save transaction</button>
       </div>
     </form>
+  </dialog>
+  <dialog id="tenantStatementDialog" class="statement-dialog">
+    <div class="statement-container">
+      <div class="statement-header">
+        <div>
+          <p class="eyebrow">ANNUAL RENT STATEMENT</p>
+          <h2 id="statementPropertyTitle">Tenant Rent Statement</h2>
+          <p id="statementPropertyAddress">Calendar year statement (Jan - Dec)</p>
+        </div>
+        <div class="top-actions" style="margin-bottom:0;">
+          <label>Property
+            <select id="tenantStatementPropertySelect"></select>
+          </label>
+          <label>Calendar year
+            <select id="tenantStatementYearSelect">
+              <option value="2026">2026</option>
+              <option value="2025">2025</option>
+              <option value="2024">2024</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div class="tenant-contact-bar">
+        <div class="tenant-meta-left">
+          <span>Tenant: <strong id="statementTenantName">—</strong></span>
+          <span>Tenancy: <span id="statementTenancyDates">—</span></span>
+          <span>Monthly rent: <strong id="statementRentRate">—</strong></span>
+        </div>
+        <div class="tenant-meta-right">
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;margin:0;">
+            Tenant email:
+            <input id="statementTenantEmail" type="email" placeholder="tenant@example.com" style="padding:4px 8px;font-size:12px;width:200px;">
+            <button type="button" id="btnSaveTenantEmail" class="ghost small">Save email</button>
+          </label>
+        </div>
+      </div>
+
+      <div class="statement-table-wrap">
+        <div class="table records statement-table" id="tenantStatementTable"></div>
+      </div>
+
+      <div id="statementSummaryBox" class="statement-summary-box"></div>
+
+      <div class="dialog-actions statement-dialog-actions">
+        <button type="button" data-close-dialog class="ghost">Close</button>
+        <button type="button" id="btnPrintStatement" class="ghost">Print / Save PDF</button>
+        <button type="button" id="btnEmailTenant" class="primary">Email to tenant</button>
+      </div>
+    </div>
   </dialog>
   <script src="tax-engine.js?v=24"></script><script src="financial-controls.js?v=4"></script><script src="property-records.js?v=1"></script><script src="abratax-export.js?v=1"></script><script src="app.js?v=173"></script><script src="supabase-sync.js?v=32"></script>
 </body></html>
