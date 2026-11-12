@@ -4,6 +4,69 @@ const KEY="tax-engine-v3",LEGACY_KEY="tax-engine-v2",money=new Intl.NumberFormat
 function logToUI(msg) {
   const div = document.createElement("div");
   div.style = "position:fixed; top:10px; right:10px; background:rgba(0,0,0,0.8); color:white; padding:10px; z-index:9999; border-radius:5px; font-family:monospace; max-width:400px; word-wrap:break-word; margin-bottom:5px;";
+  div.textContent = msg; console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg);
+  document.body.appendChild(div);
+  setTimeout(() => div.remove(), 10000);
+}
+
+
+function logToUI(msg) {
+  const div = document.createElement("div");
+  div.style = "position:fixed; top:10px; right:10px; background:rgba(0,0,0,0.8); color:white; padding:10px; z-index:9999; border-radius:5px; font-family:monospace; max-width:400px; word-wrap:break-word; margin-bottom:5px;";
+  div.textContent = msg; console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg);
+  document.body.appendChild(div);
+  setTimeout(() => div.remove(), 10000);
+}
+
+
+function logToUI(msg) {
+  const div = document.createElement("div");
+  div.style = "position:fixed; top:10px; right:10px; background:rgba(0,0,0,0.8); color:white; padding:10px; z-index:9999; border-radius:5px; font-family:monospace; max-width:400px; word-wrap:break-word; margin-bottom:5px;";
+  div.textContent = msg; console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg);
+  document.body.appendChild(div);
+  setTimeout(() => div.remove(), 10000);
+}
+
+
+function logToUI(msg) {
+  const div = document.createElement("div");
+  div.style = "position:fixed; top:10px; right:10px; background:rgba(0,0,0,0.8); color:white; padding:10px; z-index:9999; border-radius:5px; font-family:monospace; max-width:400px; word-wrap:break-word; margin-bottom:5px;";
+  div.textContent = msg; console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg);
+  document.body.appendChild(div);
+  setTimeout(() => div.remove(), 10000);
+}
+
+
+function logToUI(msg) {
+  const div = document.createElement("div");
+  div.style = "position:fixed; top:10px; right:10px; background:rgba(0,0,0,0.8); color:white; padding:10px; z-index:9999; border-radius:5px; font-family:monospace; max-width:400px; word-wrap:break-word; margin-bottom:5px;";
+  div.textContent = msg; console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg);
+  document.body.appendChild(div);
+  setTimeout(() => div.remove(), 10000);
+}
+
+
+function logToUI(msg) {
+  const div = document.createElement("div");
+  div.style = "position:fixed; top:10px; right:10px; background:rgba(0,0,0,0.8); color:white; padding:10px; z-index:9999; border-radius:5px; font-family:monospace; max-width:400px; word-wrap:break-word; margin-bottom:5px;";
+  div.textContent = msg; console.log(msg); console.log(msg); console.log(msg); console.log(msg);
+  document.body.appendChild(div);
+  setTimeout(() => div.remove(), 10000);
+}
+
+
+function logToUI(msg) {
+  const div = document.createElement("div");
+  div.style = "position:fixed; top:10px; right:10px; background:rgba(0,0,0,0.8); color:white; padding:10px; z-index:9999; border-radius:5px; font-family:monospace; max-width:400px; word-wrap:break-word; margin-bottom:5px;";
+  div.textContent = msg; console.log(msg); console.log(msg); console.log(msg);
+  document.body.appendChild(div);
+  setTimeout(() => div.remove(), 10000);
+}
+
+
+function logToUI(msg) {
+  const div = document.createElement("div");
+  div.style = "position:fixed; top:10px; right:10px; background:rgba(0,0,0,0.8); color:white; padding:10px; z-index:9999; border-radius:5px; font-family:monospace; max-width:400px; word-wrap:break-word; margin-bottom:5px;";
   div.textContent = msg; console.log(msg); console.log(msg);
   document.body.appendChild(div);
   setTimeout(() => div.remove(), 10000);
@@ -33,7 +96,67 @@ function yearSettings(year){const r={...TaxEngine.rulesFor(year)};return{rules:r
 function ranelaghRentDates(){return Array.from({length:16},(_,i)=>{const d=new Date(Date.UTC(2025,3+i,1));return`${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,"0")}-01`;});}function demo(){const ranelaghId=uid(),rentMonths=ranelaghRentDates().map(date=>({id:uid(),propertyId:ranelaghId,date,amount:550,period:date.slice(0,7),notes:"Monthly rent received on the 1st"}));return{version:3,year:"2026-27",settingsByYear:{"2025-26":yearSettings("2025-26"),"2026-27":yearSettings("2026-27")},employment:[],uber:[],properties:[{id:ranelaghId,property:"5a Ranelagh Road",tenant:"Not entered",ownership:100,rent:550,deposit:0,start:"2025-04-01",end:""}],propertyIncome:rentMonths,propertyExpenses:[],rentChanges:[],pension:[],payments:[]};}
 function ensureRanelagh(base){const removed=new Set(base.properties.filter(x=>x.property==="Wolverhampton rental").map(x=>x.id));base.properties=base.properties.filter(x=>!removed.has(x.id));base.propertyIncome=base.propertyIncome.filter(x=>!removed.has(x.propertyId));base.propertyExpenses=base.propertyExpenses.filter(x=>!removed.has(x.propertyId));base.rentChanges=base.rentChanges.filter(x=>!removed.has(x.propertyId));let p=base.properties.find(x=>x.property==="5a Ranelagh Road");if(!p){p={id:uid(),property:"5a Ranelagh Road",tenant:"Not entered",ownership:100,rent:550,deposit:0,start:"2025-04-01",end:""};base.properties.push(p);}p.ownership=p.ownership||100;const existing=new Set(base.propertyIncome.filter(x=>x.propertyId===p.id).map(x=>x.date));for(const date of ranelaghRentDates())if(!existing.has(date))base.propertyIncome.push({id:uid(),propertyId:p.id,date,amount:550,period:date.slice(0,7),notes:"Monthly rent received on the 1st"});return base;}
 function ensureLeslie(base){let p=base.properties.find(x=>x.property==="35 Leslie Road");if(!p){p={id:uid(),property:"35 Leslie Road",tenant:"Santosh Rani",ownership:100,rent:850,deposit:0,start:"2025-04-01",end:"2025-12-01"};base.properties.push(p);}Object.assign(p,{tenant:"Santosh Rani",tenantEmail:p.tenantEmail||"santosh.rani@example.com",rent:850,ownership:p.ownership||100});const existing=new Set(base.propertyIncome.filter(x=>x.propertyId===p.id).map(x=>x.date));for(let month=4;month<=12;month++){const date=`2025-${String(month).padStart(2,"0")}-01`;if(!existing.has(date))base.propertyIncome.push({id:uid(),propertyId:p.id,date,amount:850,period:date.slice(0,7),notes:"Monthly rent received on the 1st"});}return base;}
-function ensurePenn(base){let p=base.properties.find(x=>x.property==="524 Penn Road");if(!p){p={id:uid(),property:"524 Penn Road",tenant:"Jennifer Powell",ownership:100,rent:850,deposit:0,start:"2025-04-26",end:""};base.properties.push(p);}Object.assign(p,{tenant:"Jennifer Powell",tenantEmail:p.tenantEmail||"jennifer.powell@example.com",rent:850,ownership:p.ownership||100});const existing=new Set(base.propertyIncome.filter(x=>x.propertyId===p.id).map(x=>x.date));for(let i=0;i<14;i++){const d=new Date(Date.UTC(2025,3+i,26)),date=`${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,"0")}-26`;if(date!=="2026-06-26"&&!existing.has(date))base.propertyIncome.push({id:uid(),propertyId:p.id,date,amount:850,period:date.slice(0,7),notes:"Monthly rent received on the 26th"});}return base;}
+function ensurePenn(base){
+  let p = base.properties.find(x => x.property === "524 Penn Road");
+  if(!p){
+    p = { id: uid(), property: "524 Penn Road", tenant: "Jennifer Powell", ownership: 100, rent: 850, deposit: 0, start: "2025-04-26", end: "" };
+    base.properties.push(p);
+  }
+  Object.assign(p, { tenant: "Jennifer Powell", tenantEmail: p.tenantEmail || "jennifer.powell@example.com", rent: 850, ownership: p.ownership || 100 });
+  const pennIncome = base.propertyIncome.filter(x => x.propertyId === p.id);
+  const existingPeriods = new Set(pennIncome.map(x => x.period || (x.date ? x.date.slice(0, 7) : "")));
+  const existingDates = new Set(pennIncome.map(x => x.date));
+
+  // Historic months Apr 2025 to May 2026
+  for(let i = 0; i < 14; i++){
+    const d = new Date(Date.UTC(2025, 3 + i, 26)),
+          date = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-26`,
+          period = date.slice(0, 7);
+    if(!existingPeriods.has(period) && !existingDates.has(date)){
+      base.propertyIncome.push({ id: uid(), propertyId: p.id, date, amount: 850, period, notes: "Monthly rent received on the 26th" });
+      existingPeriods.add(period);
+      existingDates.add(date);
+    }
+  }
+
+  // June 2026 is intentionally unpaid (arrears)
+
+  // July 2026 paid
+  if(!existingPeriods.has("2026-07") && !existingDates.has("2026-07-26")){
+    base.propertyIncome.push({ id: uid(), propertyId: p.id, date: "2026-07-26", amount: 850, period: "2026-07", notes: "Monthly rent received on the 26th" });
+    existingPeriods.add("2026-07");
+    existingDates.add("2026-07-26");
+  }
+
+  // August 2026 paid
+  if(!existingPeriods.has("2026-08") && !existingDates.has("2026-08-26")){
+    base.propertyIncome.push({ id: uid(), propertyId: p.id, date: "2026-08-26", amount: 850, period: "2026-08", notes: "Monthly rent received on the 26th" });
+    existingPeriods.add("2026-08");
+    existingDates.add("2026-08-26");
+  }
+
+  // September 2026 was paid late on 12/10/2026
+  const lateRec = base.propertyIncome.find(x => x.propertyId === p.id && x.date === "2026-10-12");
+  if(lateRec){
+    lateRec.period = "2026-09";
+    if(!lateRec.notes || !lateRec.notes.toLowerCase().includes("september")){
+      lateRec.notes = "September rent received late on 12/10/2026";
+    }
+    existingPeriods.add("2026-09");
+  } else if(!existingPeriods.has("2026-09")){
+    base.propertyIncome.push({ id: uid(), propertyId: p.id, date: "2026-10-12", amount: 850, period: "2026-09", notes: "September rent received late on 12/10/2026" });
+    existingPeriods.add("2026-09");
+  }
+
+  // October 2026 remains unpaid
+  base.propertyIncome = base.propertyIncome.filter(x => {
+    if(x.propertyId !== p.id) return true;
+    if(x.period === "2026-10" || (x.date === "2026-10-26" && !x.period)) return false;
+    return true;
+  });
+
+  return base;
+}
 function ensureRecurringPropertyExpenses(base){const today=new Date(),todayIso=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`,plans=[{property:"524 Penn Road",supplier:"UCB Home Loans",amount:277,day:26,category:"Mortgage interest"},{property:"35 Leslie Road",supplier:"Accord Mortgages",amount:301,day:1,category:"Mortgage interest"},{property:"5a Ranelagh Road",supplier:"Topaz",amount:428,day:4,category:"Mortgage interest"},{property:"5a Ranelagh Road",supplier:"Direct Line",amount:72.64,day:4,category:"Insurance"}];for(const plan of plans){const p=base.properties.find(x=>x.property===plan.property);if(!p)continue;for(let i=0;i<24;i++){const d=new Date(Date.UTC(2025,3+i,plan.day)),date=`${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,"0")}-${String(d.getUTCDate()).padStart(2,"0")}`;if(date>todayIso)break;const exists=base.propertyExpenses.some(x=>x.propertyId===p.id&&x.date===date&&x.notes===plan.supplier);if(!exists)base.propertyExpenses.push({id:uid(),propertyId:p.id,date,category:plan.category,amount:plan.amount,notes:plan.supplier});}}return base;}
 function ensurePropertyMasters(base){
   const removed=new Set(base.properties.filter(x=>x.property==="Wolverhampton rental").map(x=>x.id));
@@ -111,7 +234,16 @@ function readSettings(form){const fd=new FormData(form),s=current(),r=s.rules,f=
 function propertyName(id){return state.properties.find(x=>x.id===id)?.property||"Unknown property";}function populatePropertySelects(){const o=state.properties.map(x=>`<option value="${x.id}">${x.property}</option>`).join("");all("[data-property-select]").forEach(x=>x.innerHTML=o||"<option value=''>Create a property first</option>");const propSummarySelect=by("#propertySummaryFilter");if(propSummarySelect){const currentVal=propertySummaryPropFilter||propSummarySelect.value;const opts=state.properties.slice().sort((a,b)=>a.property.localeCompare(b.property)).map(x=>`<option value="${x.id}" ${x.id===currentVal?"selected":""}>${x.property}</option>`).join("");propSummarySelect.innerHTML=`<option value="">All properties</option>${opts}`;propSummarySelect.value=currentVal;}}
 all("[data-view],[data-view-link]").forEach(b=>b.addEventListener("click",()=>show(b.dataset.view||b.dataset.viewLink)));document.addEventListener("click",e=>{const b=e.target.closest("[data-open-cashflow-workspace]");if(!b)return;dashboardView="actual";taxWorkspaceTab="cashflow";show("dashboard");renderDashboardMode();renderDashboardSurface();});function show(n){ if(n==="campaigns") { typeof renderCampaignsList !== "undefined" && renderCampaignsList(); }all(".view").forEach(x=>x.classList.toggle("active",x.dataset.panel===n));all("#nav button").forEach(x=>x.classList.toggle("active",x.dataset.view===n));by("#pageTitle").textContent=({dashboard:"Banking",campaigns:"Campaigns",monthly:"Monthly Entry",employment:"PAYE",uber:"Uber",properties:"Properties",pension:"Pension",mtd:"MTD Quarterly Updates",payments:"HMRC Payments",calculation:"Tax Calculation",returnprep:"Return Preparation",audit:"Audit Checks",reports:"Reports",settings:"Settings"})[n];}
 by("#taxYear").addEventListener("change",e=>{state.year=e.target.value;render();});all("[data-open]").forEach(b=>b.addEventListener("click",()=>by(`#${b.dataset.open}`).showModal()));document.addEventListener("click",e=>{const b=e.target.closest("[data-close-dialog]");if(b){e.preventDefault();b.closest("dialog")?.close("cancel");}});
-function onForm(id,type,map){by(id).addEventListener("submit",e=>{e.preventDefault();const f=new FormData(e.target);state[type].push({id:uid(),...map(f)});e.target.reset();e.target.closest("dialog").close();render();});}onForm("#employmentForm","employment",f=>({date:f.get("date"),employer:f.get("employer"),gross:num(f.get("gross")),tax:num(f.get("tax")),ni:num(f.get("ni")),benefits:num(f.get("benefits")),notes:f.get("notes")}));onForm("#uberForm","uber",f=>({date:f.get("date"),payments:num(f.get("payments")),fee:num(f.get("fee")),tips:num(f.get("tips")),miles:num(f.get("miles")),notes:f.get("notes")}));onForm("#propertyForm","properties",f=>({property:f.get("property"),tenant:f.get("tenant"),tenantEmail:f.get("tenantEmail")||"",rent:num(f.get("rent")),deposit:num(f.get("deposit")),start:f.get("start"),end:f.get("end")}));onForm("#incomeForm","propertyIncome",f=>({propertyId:f.get("propertyId"),date:f.get("date"),amount:num(f.get("amount")),period:f.get("period"),notes:f.get("notes")}));onForm("#expenseForm","propertyExpenses",f=>({propertyId:f.get("propertyId"),date:f.get("date"),category:f.get("category"),amount:num(f.get("amount")),notes:f.get("notes")}));onForm("#pensionForm","pension",f=>{const net=num(f.get("net")),tax=num(f.get("tax"));return{date:f.get("date"),provider:f.get("provider"),net,tax,amount:net+tax,pensionNumber:f.get("pensionNumber"),notes:f.get("notes")};});onForm("#paymentForm","payments",f=>({date:f.get("date"),amount:num(f.get("amount")),reference:f.get("reference"),notes:f.get("notes")}));by("#rentForm").addEventListener("submit",e=>{e.preventDefault();const f=new FormData(e.target),p=state.properties.find(x=>x.id===f.get("propertyId"));if(!p)return;const rent=num(f.get("rent"));state.rentChanges.push({id:uid(),propertyId:p.id,date:f.get("date"),previousRent:p.rent,newRent:rent,notes:f.get("notes")});p.rent=rent;e.target.reset();e.target.closest("dialog").close();render();});
+function onForm(id,type,map){by(id).addEventListener("submit",e=>{e.preventDefault();const f=new FormData(e.target);state[type].push({id:uid(),...map(f)});e.target.reset();e.target.closest("dialog").close();render();});}onForm("#employmentForm","employment",f=>({date:f.get("date"),employer:f.get("employer"),gross:num(f.get("gross")),tax:num(f.get("tax")),ni:num(f.get("ni")),benefits:num(f.get("benefits")),notes:f.get("notes")}));onForm("#uberForm","uber",f=>({date:f.get("date"),payments:num(f.get("payments")),fee:num(f.get("fee")),tips:num(f.get("tips")),miles:num(f.get("miles")),notes:f.get("notes")}));onForm("#propertyForm","properties",f=>({property:f.get("property"),tenant:f.get("tenant"),tenantEmail:f.get("tenantEmail")||"",rent:num(f.get("rent")),deposit:num(f.get("deposit")),start:f.get("start"),end:f.get("end")}));onForm("#incomeForm","propertyIncome",f=>{
+  const p = state.properties.find(x => x.id === f.get("propertyId"));
+  const date = f.get("date");
+  const notes = f.get("notes") || "";
+  let period = f.get("period");
+  if(!period){
+    period = resolveReceiptPeriod({ date, notes, propertyId: p?.id }, p);
+  }
+  return { propertyId: f.get("propertyId"), date, amount: num(f.get("amount")), period, notes };
+});onForm("#expenseForm","propertyExpenses",f=>({propertyId:f.get("propertyId"),date:f.get("date"),category:f.get("category"),amount:num(f.get("amount")),notes:f.get("notes")}));onForm("#pensionForm","pension",f=>{const net=num(f.get("net")),tax=num(f.get("tax"));return{date:f.get("date"),provider:f.get("provider"),net,tax,amount:net+tax,pensionNumber:f.get("pensionNumber"),notes:f.get("notes")};});onForm("#paymentForm","payments",f=>({date:f.get("date"),amount:num(f.get("amount")),reference:f.get("reference"),notes:f.get("notes")}));by("#rentForm").addEventListener("submit",e=>{e.preventDefault();const f=new FormData(e.target),p=state.properties.find(x=>x.id===f.get("propertyId"));if(!p)return;const rent=num(f.get("rent"));state.rentChanges.push({id:uid(),propertyId:p.id,date:f.get("date"),previousRent:p.rent,newRent:rent,notes:f.get("notes")});p.rent=rent;e.target.reset();e.target.closest("dialog").close();render();});
 document.addEventListener("click",e=>{const b=e.target.closest("[data-delete]");if(!b)return;const t=b.dataset.delete,id=b.dataset.id;if(t==="properties"){state.propertyIncome=state.propertyIncome.filter(x=>x.propertyId!==id);state.propertyExpenses=state.propertyExpenses.filter(x=>x.propertyId!==id);state.rentChanges=state.rentChanges.filter(x=>x.propertyId!==id);}state[t]=state[t].filter(x=>x.id!==id);render();});
 by("#settingsForm").addEventListener("change",e=>{if(!e.target.matches("[data-module-toggle]"))return;current().modules[e.target.dataset.moduleToggle]=e.target.checked;renderModuleVisibility();});by("#settingsForm").addEventListener("submit",e=>{e.preventDefault();readSettings(e.target);by("#settingsWarning").textContent="";render();show("dashboard");});by("#resetYearSettings").addEventListener("click",()=>{if(confirm(`Reset ${current().rules.label} settings to defaults?`)){state.settingsByYear[state.year]=yearSettings(state.year);render();}});by("#copySettings").addEventListener("click",()=>{const other=state.year==="2026-27"?"2025-26":"2026-27",rules={...current().rules};state.settingsByYear[state.year]=JSON.parse(JSON.stringify(state.settingsByYear[other]));state.settingsByYear[state.year].rules=rules;render();});
 by("#btnSyncMobile")?.addEventListener("click",async()=>{if(window.TaxEngineSync){logToUI("Syncing latest mobile transactions...");try{const count=await window.TaxEngineSync.pullAll({reload:true});state=hydrateState();render();logToUI(`Synced from mobile (${count} records checked). Forecast and transactions updated.`);}catch(err){logToUI(`Sync error: ${err.message}`);}}else{state=hydrateState();render();}});by("#resetDemo").addEventListener("click",()=>{if(confirm("Replace local records and settings with the default data?")){state=demo();render();}});by("#printReport").addEventListener("click",()=>window.print());by("#exportCsv").addEventListener("click",()=>{const r=calc(),rows=[["Tax year",r.rules.label],["Total income",r.totalIncome],["Taxable income",r.taxableIncome],["Income Tax",r.netIncomeTax],["Class 4 NI",r.nationalInsurance],["Tax deducted at source",r.taxAtSource],["Estimated liability",r.liability]];const blob=new Blob([rows.map(x=>x.join(",")).join("\n")],{type:"text/csv"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`tax-engine-${state.year}.csv`;a.click();URL.revokeObjectURL(a.href);});
@@ -588,9 +720,15 @@ if (typeof by === "function") {
 }
 
 
-by("#propertyIncomeFilter").addEventListener("change",e=>{incomePropertyFilter=e.target.value;renderPropertyTables();applyEntryDisplay();});document.addEventListener("click",e=>{const pb=e.target.closest("[data-edit-property]"),ib=e.target.closest("[data-edit-income]");if(pb){const x=state.properties.find(v=>v.id===pb.dataset.editProperty),f=by("#editPropertyForm");for(const k of["id","property","tenant","tenantEmail","ownership","rent","deposit","start","end"])f.elements[k].value=x[k]??"";by("#editPropertyDialog").showModal();}if(ib){const x=state.propertyIncome.find(v=>v.id===ib.dataset.editIncome),f=by("#editIncomeForm");for(const k of["id","propertyId","date","amount","period","notes"])f.elements[k].value=x[k]??"";by("#editIncomeDialog").showModal();}});by("#editPropertyForm").addEventListener("submit",e=>{e.preventDefault();const f=new FormData(e.target),x=state.properties.find(v=>v.id===f.get("id"));if(x)Object.assign(x,{property:f.get("property"),tenant:f.get("tenant"),tenantEmail:f.get("tenantEmail")||"",ownership:num(f.get("ownership")),rent:num(f.get("rent")),deposit:num(f.get("deposit")),start:f.get("start"),end:f.get("end")});e.target.closest("dialog").close();render();});by("#editIncomeForm").addEventListener("submit",e=>{e.preventDefault();const f=new FormData(e.target),x=state.propertyIncome.find(v=>v.id===f.get("id"));if(x)Object.assign(x,{propertyId:f.get("propertyId"),date:f.get("date"),amount:num(f.get("amount")),period:f.get("period"),notes:f.get("notes")});e.target.closest("dialog").close();render();});
+by("#propertyIncomeFilter").addEventListener("change",e=>{incomePropertyFilter=e.target.value;renderPropertyTables();applyEntryDisplay();});document.addEventListener("click",e=>{const pb=e.target.closest("[data-edit-property]"),ib=e.target.closest("[data-edit-income]");if(pb){const x=state.properties.find(v=>v.id===pb.dataset.editProperty),f=by("#editPropertyForm");for(const k of["id","property","tenant","tenantEmail","ownership","rent","deposit","start","end"])f.elements[k].value=x[k]??"";by("#editPropertyDialog").showModal();}if(ib){const x=state.propertyIncome.find(v=>v.id===ib.dataset.editIncome),f=by("#editIncomeForm");for(const k of["id","propertyId","date","amount","period","notes"])f.elements[k].value=x[k]??"";by("#editIncomeDialog").showModal();}});by("#editPropertyForm").addEventListener("submit",e=>{e.preventDefault();const f=new FormData(e.target),x=state.properties.find(v=>v.id===f.get("id"));if(x)Object.assign(x,{property:f.get("property"),tenant:f.get("tenant"),tenantEmail:f.get("tenantEmail")||"",ownership:num(f.get("ownership")),rent:num(f.get("rent")),deposit:num(f.get("deposit")),start:f.get("start"),end:f.get("end")});e.target.closest("dialog").close();render();});by("#editIncomeForm").addEventListener("submit",e=>{e.preventDefault();const f=new FormData(e.target),x=state.propertyIncome.find(v=>v.id===f.get("id"));if(x){
+  const p = state.properties.find(xp => xp.id === f.get("propertyId"));
+  const date = f.get("date");
+  const notes = f.get("notes") || "";
+  let period = f.get("period") || resolveReceiptPeriod({ date, notes, propertyId: p?.id }, p);
+  Object.assign(x,{propertyId:f.get("propertyId"),date,amount:num(f.get("amount")),period,notes});
+}e.target.closest("dialog").close();render();});
 function dateInTaxYear(date,year){const r=TaxEngine.YEARS[year];return!!r&&date>=r.start&&date<=r.end;}function formatUKDate(date){if(!/^\d{4}-\d{2}-\d{2}$/.test(date||""))return date;const[y,m,d]=date.split("-");return`${d}/${m}/${y}`;}function applyEntryDisplay(){const tables=["employmentTable","uberTable","propertyIncomeTable","propertyExpenseTable","rentHistoryTable","pensionTable","paymentTable"];for(const id of tables)for(const row of all(`#${id} .tr:not(.header)`)){const cell=row.querySelector("span"),iso=cell?.textContent?.trim();if(!/^\d{4}-\d{2}-\d{2}$/.test(iso||""))continue;row.hidden=entryYearFilter!=="all"&&!dateInTaxYear(iso,entryYearFilter);cell.textContent=formatUKDate(iso);}for(const row of all("#propertyTable .tr:not(.header)")){const cell=row.children[3];if(cell)cell.textContent=cell.textContent.replace(/\d{4}-\d{2}-\d{2}/g,formatUKDate);}}by("#entryYearFilter").addEventListener("change",e=>{entryYearFilter=e.target.value;render();});by("#propertyIncomeFilter").addEventListener("change",()=>applyEntryDisplay());
-function arrearsSchedule(){const today=new Date(),todayIso=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`,rows=[];for(const p of state.properties){if(!p.start||!p.rent)continue;const[startY,startM,startD]=p.start.split("-").map(Number),end=p.end||"9999-12-31";let includedUpcoming=false;for(let i=0;i<240;i++){const cursor=new Date(Date.UTC(startY,startM-1+i,1)),y=cursor.getUTCFullYear(),m=cursor.getUTCMonth()+1,last=new Date(Date.UTC(y,m,0)).getUTCDate(),date=`${y}-${String(m).padStart(2,"0")}-${String(Math.min(startD,last)).padStart(2,"0")}`;if(date>end)break;if(date>todayIso){if(includedUpcoming)break;includedUpcoming=true;}const period=date.slice(0,7),received=propertyIncomeRecords().filter(x=>x.propertyId===p.id&&(x.period||x.date?.slice(0,7))===period).reduce((a,x)=>a+num(x.amount),0),outstanding=Math.max(0,num(p.rent)-received),future=date>todayIso,status=future?"Upcoming":outstanding===0?"Paid":received>0?"Part-paid":"Overdue",days=future||!outstanding?0:Math.max(0,Math.floor((Date.parse(todayIso)-Date.parse(date))/86400000));rows.push({propertyId:p.id,property:p.property,date,period,expected:num(p.rent),received,outstanding,status,days});if(includedUpcoming)break;}}return rows;}
+function arrearsSchedule(){const today=new Date(),todayIso=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`,rows=[];for(const p of state.properties){if(!p.start||!p.rent)continue;const[startY,startM,startD]=p.start.split("-").map(Number),end=p.end||"9999-12-31";let includedUpcoming=false;for(let i=0;i<240;i++){const cursor=new Date(Date.UTC(startY,startM-1+i,1)),y=cursor.getUTCFullYear(),m=cursor.getUTCMonth()+1,last=new Date(Date.UTC(y,m,0)).getUTCDate(),date=`${y}-${String(m).padStart(2,"0")}-${String(Math.min(startD,last)).padStart(2,"0")}`;if(date>end)break;if(date>todayIso){if(includedUpcoming)break;includedUpcoming=true;}const period=date.slice(0,7),received=propertyIncomeRecords().filter(x=>x.propertyId===p.id&&(x.period||resolveReceiptPeriod(x,p)||x.date?.slice(0,7))===period).reduce((a,x)=>a+num(x.amount),0),outstanding=Math.max(0,num(p.rent)-received),future=date>todayIso,status=future?"Upcoming":outstanding===0?"Paid":received>0?"Part-paid":"Overdue",days=future||!outstanding?0:Math.max(0,Math.floor((Date.parse(todayIso)-Date.parse(date))/86400000));rows.push({propertyId:p.id,property:p.property,date,period,expected:num(p.rent),received,outstanding,status,days});if(includedUpcoming)break;}}return rows;}
 function renderArrears(){let rows=arrearsSchedule().filter(x=>(!arrearsPropertyFilter||x.propertyId===arrearsPropertyFilter)&&(entryYearFilter==="all"||dateInTaxYear(x.date,entryYearFilter))),overdue=rows.filter(x=>x.status==="Overdue"||x.status==="Part-paid"),total=overdue.reduce((a,x)=>a+x.outstanding,0),oldest=overdue.slice().sort((a,b)=>a.date.localeCompare(b.date))[0],under30=overdue.filter(x=>x.days<30).reduce((a,x)=>a+x.outstanding,0),d30=overdue.filter(x=>x.days>=30&&x.days<60).reduce((a,x)=>a+x.outstanding,0),d60=overdue.filter(x=>x.days>=60&&x.days<90).reduce((a,x)=>a+x.outstanding,0),d90=overdue.filter(x=>x.days>=90).reduce((a,x)=>a+x.outstanding,0);by("#arrearsMetrics").innerHTML=metric("Current arrears",money.format(total),`${overdue.length} overdue instalment(s)`,total?"alert":"")+metric("Oldest unpaid",oldest?formatUKDate(oldest.date):"None",oldest?`${oldest.days} days overdue`:"All due rent paid")+metric("Under 30 days",money.format(under30),`30-59: ${money.format(d30)}`)+metric("60+ days",money.format(d60+d90),`90+: ${money.format(d90)}`);records("#arrearsTable",["Due date","Property","Expected","Received","Outstanding","Status","Action"],rows.sort((a,b)=>b.date.localeCompare(a.date)||a.property.localeCompare(b.property)).map(x=>cells([formatUKDate(x.date),x.property,money.format(x.expected),money.format(x.received),money.format(x.outstanding),`<span class="status-badge ${x.status.toLowerCase()}">${x.status}${x.days?`  -  ${x.days}d`:""}</span>`,x.outstanding&&x.status!=="Upcoming"?`<button class="primary small" data-arrears-pay="${x.propertyId}" data-period="${x.period}" data-amount="${x.outstanding}">Record payment</button><button class="ghost small" data-statement-property="${x.propertyId}">Statement</button>`:"-"])),7);const f=by("#arrearsPropertyFilter"),o=state.properties.slice().sort((a,b)=>a.property.localeCompare(b.property)).map(x=>`<option value="${x.id}" ${x.id===arrearsPropertyFilter?"selected":""}>${x.property}</option>`).join("");f.innerHTML=`<option value="">All properties</option>${o}`;}
 by("#arrearsPropertyFilter").addEventListener("change",e=>{arrearsPropertyFilter=e.target.value;renderArrears();});document.addEventListener("click",e=>{const b=e.target.closest("[data-arrears-pay]");if(!b)return;const f=by("#incomeForm"),today=new Date();f.elements.propertyId.value=b.dataset.arrearsPay;f.elements.date.value=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;f.elements.amount.value=b.dataset.amount;f.elements.period.value=b.dataset.period;f.elements.notes.value=`Arrears payment for ${b.dataset.period}`;by("#incomeDialog").showModal();});
 function prioritiseArrearsRows(){const table=by("#arrearsTable"),priority={Overdue:0,"Part-paid":1,Upcoming:2},dateValue=row=>{const[d,m,y]=(row.children[0]?.textContent||"").split("/");return`${y}-${m}-${d}`;},status=row=>Object.keys(priority).find(k=>(row.children[5]?.textContent||"").startsWith(k))||"Paid",rows=all("#arrearsTable .tr:not(.header)");rows.filter(row=>status(row)==="Paid").forEach(row=>row.remove());rows.filter(row=>status(row)!=="Paid").sort((a,b)=>{const sa=status(a),sb=status(b),p=priority[sa]-priority[sb];return p||dateValue(b).localeCompare(dateValue(a));}).forEach(row=>table.appendChild(row));}by("#arrearsPropertyFilter").addEventListener("change",()=>prioritiseArrearsRows());
@@ -1202,11 +1340,45 @@ function attrValue(v){return String(v??"").replace(/&/g,"&amp;").replace(/"/g,"&
 function managementFeeExists(income){return income.cashflowSource||state.propertyExpenses.some(expense=>expense.propertyId===income.propertyId&&expense.category==="Property Management"&&expense.date===income.date&&Math.abs(num(expense.amount)-managementFeeAmount(income))<.01);}
 function managementFeeAction(income){if(!income.cashflowSource)return"";if(managementFeeExists(income))return"";const fee=managementFeeAmount(income),desc=income.notes||"Rent receipt",property=propertyName(income.propertyId);return`<button type="button" class="ghost small" title="Create a 10% management-fee expense for ${attrValue(property)}" aria-label="Add ${money.format(fee)} management fee for ${attrValue(property)}" data-property-action="add-management-fee" data-income-id="${attrValue(income.sourceId)}" data-month="${attrValue(income.sourceMonth||income.period||workspaceMonth())}" data-date="${attrValue(income.date)}" data-property-id="${attrValue(income.propertyId)}" data-amount="${attrValue(income.amount)}" data-description="${attrValue(desc)}">Add ${money.format(fee)} fee</button>`;}
 function refreshPropertyLedgersAfterFee(){renderPropertyTables();applyEntryDisplay();}
-function addManagementFeeFromCashflow(button){const incomeId=button.dataset.incomeId,month=button.dataset.month||workspaceMonth(),x=cashflowStateForMonth(month);let income=(x.income||[]).find(i=>i.id===incomeId&&i.treatment==="property_income"&&i.status==="Received");if(!income){income={id:incomeId||`cashflow-rent-${button.dataset.date||month}`,date:button.dataset.date||`${month}-01`,description:button.dataset.description||"Rent receipt",actual:num(button.dataset.amount),expected:num(button.dataset.amount),propertyId:button.dataset.propertyId,treatment:"property_income",status:"Received"};x.income.push(income);}const amount=num(income.actual??income.expected),propertyId=income.propertyId;if(!amount||!propertyId){logToUI("This rent receipt is missing the amount or property, so the management fee could not be created.");return;}saveCashflowState(x);button.disabled=true;button.textContent="Fee recorded";refreshPropertyLedgersAfterFee();}function cashflowPropertyIncomeRecords(month=""){return allCashflowStates().flatMap(x=>cashflowPropertyIncomeItems(x,x.month).map(i=>({id:`cashflow-${i.id}`,sourceId:i.id,sourceMonth:x.month,propertyId:i.propertyId,date:cashDateIso(i.date,x.month),amount:num(i.actual),period:x.month,notes:i.notes||i.description||"Cashflow rent receipt",cashflowSource:true,sourceSection:i.section||"ledger"}))).filter(i=>!month||i.date?.slice(0,7)===month);}
+function addManagementFeeFromCashflow(button){const incomeId=button.dataset.incomeId,month=button.dataset.month||workspaceMonth(),x=cashflowStateForMonth(month);let income=(x.income||[]).find(i=>i.id===incomeId&&i.treatment==="property_income"&&i.status==="Received");if(!income){income={id:incomeId||`cashflow-rent-${button.dataset.date||month}`,date:button.dataset.date||`${month}-01`,description:button.dataset.description||"Rent receipt",actual:num(button.dataset.amount),expected:num(button.dataset.amount),propertyId:button.dataset.propertyId,treatment:"property_income",status:"Received"};x.income.push(income);}const amount=num(income.actual??income.expected),propertyId=income.propertyId;if(!amount||!propertyId){logToUI("This rent receipt is missing the amount or property, so the management fee could not be created.");return;}saveCashflowState(x);button.disabled=true;button.textContent="Fee recorded";refreshPropertyLedgersAfterFee();}function cashflowPropertyIncomeRecords(month=""){return allCashflowStates().flatMap(x=>cashflowPropertyIncomeItems(x,x.month).map(i=>{const p=(state.properties||[]).find(xp=>xp.id===i.propertyId);const recPeriod=resolveReceiptPeriod({period:x.month,notes:i.notes||i.description,date:cashDateIso(i.date,x.month),propertyId:i.propertyId},p);return{id:`cashflow-${i.id}`,sourceId:i.id,sourceMonth:x.month,propertyId:i.propertyId,date:cashDateIso(i.date,x.month),amount:num(i.actual),period:recPeriod||x.month,notes:i.notes||i.description||"Cashflow rent receipt",cashflowSource:true,sourceSection:i.section||"ledger"};})).filter(i=>!month||(i.period||i.date?.slice(0,7))===month);}
 function cashflowUberExpenseRecords(month=""){return allCashflowStates().flatMap(x=>[...x.fixed.map(i=>({...i,date:i.due,description:i.payment,source:"fixed"})),...x.spending.map(i=>({...i,source:"spending"}))].filter(i=>i.treatment==="uber_expense"&&cashDateMonth(i.date,x.month)===x.month&&num(i.actual)>0&&(i.status==="Paid"||i.status==="Part-paid")).map(i=>({id:`cashflow-uber-${i.id}`,date:cashDateIso(i.date,x.month),category:i.category||i.description||"Private-hire business expense",description:i.description||i.payment||i.category||"Private-hire business expense",amount:num(i.actual),notes:i.notes||"",treatment:i.treatment,cashflowSource:true,sourceSection:i.source}))).filter(i=>!month||i.date?.slice(0,7)===month);}
 const actualDashboardInputsBase=actualDashboardInputs;actualDashboardInputs=function(){const result=actualDashboardInputsBase(),cutoff=dashboardDates().cutoff;result.uberOtherExpenses=cashflowUberExpenseRecords().filter(x=>dateInTaxYear(x.date,state.year)&&x.date<=cutoff).reduce((sum,x)=>sum+num(x.amount),0);return result;};
 function cashflowPropertyExpenseRecords(month=""){return allCashflowStates().flatMap(x=>{const paid=paidCashflowPropertyItems(x,x.month,false).filter(i=>!isPropertyManagementFee(i)).map(i=>({id:`cashflow-${i.id}`,propertyId:i.propertyId,date:cashDateIso(i.date,x.month),category:i.treatment==="property_interest"?"Mortgage interest":i.treatment==="property_capital"?"Capital cost":i.category||i.description||"Property expense",amount:num(i.actual),notes:i.notes||i.description||"Cashflow property payment",treatment:i.treatment,cashflowSource:true,sourceSection:i.source})),fees=cashflowPropertyIncomeItems(x,x.month).map(i=>({id:`cashflow-management-${i.id}`,propertyId:i.propertyId,date:cashDateIso(i.date,x.month),category:"Property Management",amount:Math.round(num(i.actual)*10)/100,notes:`Automatic 10% management fee on ${i.description}`,treatment:"property_expense",cashflowSource:true,sourceSection:"derived"}));return[...paid,...fees];}).filter(i=>!month||i.date?.slice(0,7)===month);}
-function manualPropertyIncomeRecords(month=""){return state.propertyIncome.filter(i=>!month||i.date?.slice(0,7)===month);}function propertyIncomeRecords(month=""){
+function resolveReceiptPeriod(rec, property){
+  if(!rec) return "";
+  if(rec.period && /^\d{4}-\d{2}$/.test(rec.period)) return rec.period;
+  const text = `${rec.notes || ""} ${rec.description || ""}`.toLowerCase();
+  const yearMatch = text.match(/\b(202\d)\b/);
+  const recYear = yearMatch ? yearMatch[1] : (rec.date ? rec.date.slice(0, 4) : "2026");
+  const months = [
+    ["jan", "01"], ["feb", "02"], ["mar", "03"], ["apr", "04"],
+    ["may", "05"], ["jun", "06"], ["jul", "07"], ["aug", "08"],
+    ["sep", "09"], ["oct", "10"], ["nov", "11"], ["dec", "12"]
+  ];
+  for(const [mName, mNum] of months){
+    if(new RegExp(`\\b${mName}`).test(text)){
+      return `${recYear}-${mNum}`;
+    }
+  }
+  const prop = property || (typeof state !== "undefined" && state.properties ? state.properties.find(p => p.id === rec.propertyId) : null);
+  if(prop && rec.date){
+    const [, , startD] = (prop.start || "2020-01-01").split("-").map(Number);
+    const [recY, recM, recD] = rec.date.split("-").map(Number);
+    const dueDay = startD || 1;
+    if(recD < dueDay){
+      const prevDate = new Date(Date.UTC(recY, recM - 2, 1));
+      return `${prevDate.getUTCFullYear()}-${String(prevDate.getUTCMonth() + 1).padStart(2, "0")}`;
+    }
+  }
+  return rec.date ? rec.date.slice(0, 7) : "";
+}
+function manualPropertyIncomeRecords(month=""){
+  return state.propertyIncome.filter(i=>{
+    if(!month) return true;
+    const p = (state.properties || []).find(x => x.id === i.propertyId);
+    return resolveReceiptPeriod(i, p) === month || (!i.period && i.date?.slice(0, 7) === month);
+  });
+}function propertyIncomeRecords(month=""){
   if(month){
     const cash=dedupeMoneyRecords(cashflowPropertyIncomeRecords(month));
     if(cash.length) return cash;
@@ -1228,7 +1400,7 @@ function manualPropertyIncomeRecords(month=""){return state.propertyIncome.filte
     }catch{}
     return manual;
   }
-  const months=new Set([...state.propertyIncome.map(i=>i.date?.slice(0,7)),...cashflowPropertyIncomeRecords().map(i=>i.date?.slice(0,7))].filter(Boolean));
+  const months=new Set([...state.propertyIncome.map(i=>{const p=(state.properties||[]).find(x=>x.id===i.propertyId);return resolveReceiptPeriod(i,p)||i.date?.slice(0,7);}),...cashflowPropertyIncomeRecords().map(i=>i.period||i.date?.slice(0,7))].filter(Boolean));
   return dedupeMoneyRecords([...months].flatMap(m=>propertyIncomeRecords(m)));
 }
 function manualPropertyExpenseRecords(month=""){return state.propertyExpenses.filter(i=>!month||i.date?.slice(0,7)===month);}function dedupePropertyExpenseRecords(rows){const seen=new Set();return rows.filter(i=>{const raw=String(i.category||"").trim().toLowerCase(),category=raw==="agent fees"||raw==="property management"?"agent fees":raw,key=`${i.propertyId||""}:${i.date||""}:${num(i.amount).toFixed(2)}:${category}`;if(seen.has(key))return false;seen.add(key);return true;});}function propertyExpenseRecords(month=""){const manual=manualPropertyExpenseRecords(month),cash=cashflowPropertyExpenseRecords(month);return dedupePropertyExpenseRecords([...cash,...manual]);}function paidCashflowPropertyItems(x,month,includeLedger=true){const all=[...x.fixed.map(i=>normaliseCashItem({...i,date:i.due,description:i.payment,source:"fixed"})),...x.spending.map(i=>normaliseCashItem({...i,source:"spending"}))],cash=all.filter(i=>i.treatment&&i.treatment!=="cashflow"&&i.treatment!=="room_rent"&&i.treatment!=="transfer"&&i.propertyId&&cashDateMonth(i.date,month)===month&&num(i.actual)>0&&(i.status==="Paid"||i.status==="Part-paid"));return includeLedger?FinancialControls.propertyPayslipItems(propertyExpenseRecords(month)):cash;}
@@ -1864,6 +2036,7 @@ function getTenantAnnualStatement(propertyId, calendarYear) {
   let runningBalance = openingBalance;
   let totalChargedYear = 0;
   let totalPaidYear = 0;
+  let currentArrearsBalance = openingBalance;
 
   for (let m = 1; m <= 12; m++) {
     const monthKey = `${yearNum}-${String(m).padStart(2, "0")}`;
@@ -1879,8 +2052,8 @@ function getTenantAnnualStatement(propertyId, calendarYear) {
 
     const receipts = propertyIncomeRecords().filter(x => {
       if (x.propertyId !== p.id) return false;
-      const period = x.period || (x.date ? x.date.slice(0, 7) : "");
-      return period === monthKey;
+      const recPeriod = resolveReceiptPeriod(x, p);
+      return recPeriod === monthKey;
     });
 
     const amountPaid = receipts.reduce((sum, x) => sum + num(x.amount), 0);
@@ -1891,10 +2064,27 @@ function getTenantAnnualStatement(propertyId, calendarYear) {
     }
     totalPaidYear += amountPaid;
 
+    let displayCumulative = null;
     if (isTenancyActive) {
-      runningBalance = Math.round((runningBalance + rentDue - amountPaid) * 100) / 100;
+      if (!isFuture) {
+        runningBalance = Math.round((runningBalance + rentDue - amountPaid) * 100) / 100;
+        currentArrearsBalance = runningBalance;
+        displayCumulative = runningBalance;
+      } else {
+        if (amountPaid > 0) {
+          runningBalance = Math.round((runningBalance - amountPaid) * 100) / 100;
+          currentArrearsBalance = runningBalance;
+          displayCumulative = runningBalance;
+        } else {
+          displayCumulative = null;
+        }
+      }
     } else {
-      runningBalance = Math.round((runningBalance - amountPaid) * 100) / 100;
+      if (amountPaid > 0) {
+        runningBalance = Math.round((runningBalance - amountPaid) * 100) / 100;
+        currentArrearsBalance = runningBalance;
+      }
+      displayCumulative = null;
     }
 
     let status = "Up to date";
@@ -1916,7 +2106,7 @@ function getTenantAnnualStatement(propertyId, calendarYear) {
       rentDue,
       amountPaid,
       paidDates: paidDates || (amountPaid > 0 ? "Paid" : "—"),
-      cumulativeBalance: runningBalance,
+      cumulativeBalance: displayCumulative,
       status,
       isTenancyActive,
       isFuture
@@ -1931,7 +2121,7 @@ function getTenantAnnualStatement(propertyId, calendarYear) {
     totals: {
       totalChargedYear: Math.round(totalChargedYear * 100) / 100,
       totalPaidYear: Math.round(totalPaidYear * 100) / 100,
-      currentOutstanding: runningBalance
+      currentOutstanding: currentArrearsBalance
     }
   };
 }
@@ -1954,7 +2144,17 @@ function formatTenantStatementEmail(data) {
 
   const lines = data.rows
     .filter(r => r.isTenancyActive)
-    .map(r => `- ${r.label}: Due ${money.format(r.rentDue)} | Paid ${r.amountPaid > 0 ? money.format(r.amountPaid) + ' on ' + r.paidDates : 'Unpaid'} | Balance: ${r.cumulativeBalance > 0 ? '£' + r.cumulativeBalance.toFixed(2) + ' Overdue' : r.cumulativeBalance < 0 ? '£' + Math.abs(r.cumulativeBalance).toFixed(2) + ' Credit' : '£0.00'}`);
+    .map(r => {
+      let balStr = "£0.00";
+      if (r.cumulativeBalance == null || (r.isFuture && r.amountPaid === 0)) {
+        balStr = "— (Upcoming)";
+      } else if (r.cumulativeBalance > 0) {
+        balStr = `£${r.cumulativeBalance.toFixed(2)} Overdue`;
+      } else if (r.cumulativeBalance < 0) {
+        balStr = `£${Math.abs(r.cumulativeBalance).toFixed(2)} Credit`;
+      }
+      return `- ${r.label}: Due ${money.format(r.rentDue)} | Paid ${r.amountPaid > 0 ? money.format(r.amountPaid) + ' on ' + r.paidDates : (r.isFuture ? 'Upcoming' : 'Unpaid')} | Balance: ${balStr}`;
+    });
 
   return `Subject: Rent Statement - ${p.property} - ${data.year}
 
@@ -2039,7 +2239,10 @@ function renderTenantStatement(propId, calendarYear) {
   data.rows.forEach(r => {
     let balClass = "bal-clear";
     let balText = "£0.00";
-    if (r.cumulativeBalance > 0) {
+    if (r.cumulativeBalance == null || (r.isFuture && r.amountPaid === 0)) {
+      balClass = "bal-muted";
+      balText = "—";
+    } else if (r.cumulativeBalance > 0) {
       balClass = "bal-arrears";
       balText = `£${r.cumulativeBalance.toFixed(2)} Arrears`;
     } else if (r.cumulativeBalance < 0) {
@@ -2084,7 +2287,8 @@ function renderTenantStatement(propId, calendarYear) {
       summaryBox.className = "statement-summary-box arrears";
       summaryBox.innerHTML = `
         <h3>⚠️ ACCOUNT BALANCE: £${bal.toFixed(2)} OVERDUE</h3>
-        <p>Dear <strong>${p.tenant || "Tenant"}</strong>, as of today, your rent account has an outstanding balance of <strong>£${bal.toFixed(2)}</strong>.</p>
+        <p>Dear <strong>${p.tenant || "Tenant"}</strong>, as of today, your rent account has an overdue balance of <strong>£${bal.toFixed(2)}</strong> across overdue instalment(s).</p>
+        <p style="font-size:12px;color:#7f1d1d;margin-top:4px;">Notice: Upcoming rent instalments are not accrued in this overdue balance. The balance reflects only instalments due on or before today that remain unpaid.</p>
         <p>Please arrange payment as soon as possible to bring your tenancy account up to date.</p>
         <p style="margin-top:10px;"><strong>Payment Remittance Details:</strong><br>
         Bank: <strong>Lloyds Bank</strong> &nbsp;|&nbsp; Account Name: <strong>Harj Bains</strong> &nbsp;|&nbsp; Reference: <strong>${p.property} - Rent</strong></p>
@@ -2109,6 +2313,7 @@ function renderTenantStatement(propId, calendarYear) {
 
 window.state = state;
 window.getProperties = () => state.properties;
+window.arrearsSchedule = arrearsSchedule;
 window.getTenantAnnualStatement = getTenantAnnualStatement;
 window.renderTenantStatement = renderTenantStatement;
 window.formatTenantStatementEmail = formatTenantStatementEmail;
