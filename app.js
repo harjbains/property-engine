@@ -5,58 +5,13 @@ function logToUI(msg) {
   if (typeof document === 'undefined') return;
   const div = document.createElement("div");
   div.style = "position:fixed; top:10px; right:10px; background:rgba(0,0,0,0.8); color:white; padding:10px; z-index:9999; border-radius:5px; font-family:monospace; max-width:400px; word-wrap:break-word; margin-bottom:5px;";
-  div.textContent = msg; console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg);
-  document.body.appendChild(div);
-  setTimeout(() => div.remove(), 10000);
-}
-
-
-function logToUI(msg) {
-  const div = document.createElement("div");
-  div.style = "position:fixed; top:10px; right:10px; background:rgba(0,0,0,0.8); color:white; padding:10px; z-index:9999; border-radius:5px; font-family:monospace; max-width:400px; word-wrap:break-word; margin-bottom:5px;";
-  div.textContent = msg; console.log(msg); console.log(msg); console.log(msg); console.log(msg);
-  document.body.appendChild(div);
-  setTimeout(() => div.remove(), 10000);
-}
-
-
-function logToUI(msg) {
-  const div = document.createElement("div");
-  div.style = "position:fixed; top:10px; right:10px; background:rgba(0,0,0,0.8); color:white; padding:10px; z-index:9999; border-radius:5px; font-family:monospace; max-width:400px; word-wrap:break-word; margin-bottom:5px;";
-  div.textContent = msg; console.log(msg); console.log(msg); console.log(msg);
-  document.body.appendChild(div);
-  setTimeout(() => div.remove(), 10000);
-}
-
-
-function logToUI(msg) {
-  const div = document.createElement("div");
-  div.style = "position:fixed; top:10px; right:10px; background:rgba(0,0,0,0.8); color:white; padding:10px; z-index:9999; border-radius:5px; font-family:monospace; max-width:400px; word-wrap:break-word; margin-bottom:5px;";
-  div.textContent = msg; console.log(msg); console.log(msg);
-  document.body.appendChild(div);
-  setTimeout(() => div.remove(), 10000);
-}
-
-
-function logToUI(msg) {
-  const div = document.createElement("div");
-  div.style = "position:fixed; top:10px; right:10px; background:rgba(0,0,0,0.8); color:white; padding:10px; z-index:9999; border-radius:5px; font-family:monospace; max-width:400px; word-wrap:break-word; margin-bottom:5px;";
   div.textContent = msg; console.log(msg);
   document.body.appendChild(div);
   setTimeout(() => div.remove(), 10000);
 }
 
-
-function logToUI(msg) {
-  const div = document.createElement("div");
-  div.style = "position:fixed; top:10px; right:10px; background:rgba(0,0,0,0.8); color:white; padding:10px; z-index:9999; border-radius:5px; font-family:monospace; max-width:400px; word-wrap:break-word; margin-bottom:5px;";
-  div.textContent = msg;
-  document.body.appendChild(div);
-  setTimeout(() => div.remove(), 10000);
-}
-
 const by=s=>document.querySelector(s),all=s=>[...document.querySelectorAll(s)],uid=()=>crypto.randomUUID(),num=v=>Math.max(0,Number(v)||0),normaliseTaxYear=v=>String(v||"").trim().replace("/","-"),paymentTaxYear=x=>normaliseTaxYear(x.taxYear||x.intendedTaxYear||x.taxYearIntended),paymentsForYear=year=>state.payments.filter(x=>paymentTaxYear(x)===normaliseTaxYear(year)),sum=(a,k)=>(a===state?.payments?paymentsForYear(state.year):a).reduce((t,x)=>t+num(x[k]),0),pct=v=>num(v)/100,showPct=v=>(num(v)*100).toFixed(2).replace(/\.00$/,"");
-const MODULE_LABELS={employment:"Employment/PAYE",uber:"Self-employment/Uber",property:"Property income",pension:"Private pension",savings:"Savings interest",dividends:"Dividends/shares",other:"Other income"};let incomePropertyFilter="",arrearsPropertyFilter="",entryYearFilter="all",dashboardView="actual",dashboardMonth="",propertyLedgerMonth="",mtdPeriodNumber=0,scheduleDetailData={},taxWorkspaceTab="cashflow",cashflowEditor=null,sandboxEditor=null;
+const MODULE_LABELS={employment:"Employment/PAYE",uber:"Self-employment/Uber",property:"Property income",pension:"Private pension",savings:"Savings interest",dividends:"Dividends/shares",other:"Other income"};let incomePropertyFilter="",incomeDateFilter="all",expenseDateFilter="month",arrearsPropertyFilter="",entryYearFilter="all",dashboardView="actual",dashboardMonth="",propertyLedgerMonth="",mtdPeriodNumber=0,scheduleDetailData={},taxWorkspaceTab="cashflow",cashflowEditor=null,sandboxEditor=null;
 function yearSettings(year){const r={...TaxEngine.rulesFor(year)};return{rules:r,modules:{employment:false,uber:true,property:true,pension:true,savings:false,dividends:false,other:false},forecast:{monthsRemaining:12,method:"annual",scenario:"expected",uberForecast:55000,uberWeeklyProvision:750,annualMiles:52000,uberOtherExpenses:0,propertyIncome:32000,propertyExpenses:3000,pensionIncome:8295},hmrc:{reserve:year==="2026-27"?1714.59:0,standardMonthly:0,preferredDay:28,catchupShortfall:0,catchupMonths:12,minimumPayment:0,roundTo:10},banking:{safetyBuffer:2000},moduleData:{employment:{gross:0,taxCode:"1257L",payeTax:0,payeTaxProvided:false,niDeducted:0,benefitsEnabled:false,benefits:0},uber:{simplifiedMileage:true},property:{treatment:"standard",basicRate:r.basicRate,higherRate:r.higherRate,additionalRate:r.additionalRate,financeRestriction:true,disallowedInterest:3700,carriedFinanceCosts:0,propertyAllowanceEnabled:false,propertyAllowanceAmount:r.propertyAllowance},pension:{annual:8295,taxCode:"1257L",taxDeducted:691.20,taxProvided:true,inputBasis:"gross",includeState:false},savings:{interest:0,personalAllowance:r.savingsAllowanceBasic,startingRateEnabled:false,basicRate:r.basicRate,higherRate:r.higherRate,additionalRate:r.additionalRate},dividends:{income:0,allowance:r.dividendAllowance,basicRate:r.dividendBasicRate,higherRate:r.dividendHigherRate,additionalRate:r.dividendAdditionalRate},other:{description:"",amount:0,category:"Other taxable income",taxDeducted:0}}};}
 function ranelaghRentDates(){return Array.from({length:16},(_,i)=>{const d=new Date(Date.UTC(2025,3+i,1));return`${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,"0")}-01`;});}function demo(){const ranelaghId=uid(),rentMonths=ranelaghRentDates().map(date=>({id:uid(),propertyId:ranelaghId,date,amount:550,period:date.slice(0,7),notes:"Monthly rent received on the 1st"}));return{version:3,year:"2026-27",settingsByYear:{"2025-26":yearSettings("2025-26"),"2026-27":yearSettings("2026-27")},employment:[],uber:[],properties:[{id:ranelaghId,property:"5a Ranelagh Road",tenant:"Not entered",ownership:100,rent:550,deposit:0,start:"2025-04-01",end:""}],propertyIncome:rentMonths,propertyExpenses:[],rentChanges:[],pension:[],payments:[]};}
 function ensureRanelagh(base){const removed=new Set(base.properties.filter(x=>x.property==="Wolverhampton rental").map(x=>x.id));base.properties=base.properties.filter(x=>!removed.has(x.id));base.propertyIncome=base.propertyIncome.filter(x=>!removed.has(x.propertyId));base.propertyExpenses=base.propertyExpenses.filter(x=>!removed.has(x.propertyId));base.rentChanges=base.rentChanges.filter(x=>!removed.has(x.propertyId));let p=base.properties.find(x=>x.property==="5a Ranelagh Road");if(!p){p={id:uid(),property:"5a Ranelagh Road",tenant:"Not entered",ownership:100,rent:550,deposit:0,start:"2025-04-01",end:""};base.properties.push(p);}p.ownership=p.ownership||100;const existing=new Set(base.propertyIncome.filter(x=>x.propertyId===p.id).map(x=>x.date));for(const date of ranelaghRentDates())if(!existing.has(date))base.propertyIncome.push({id:uid(),propertyId:p.id,date,amount:550,period:date.slice(0,7),notes:"Monthly rent received on the 1st"});return base;}
@@ -66,8 +21,12 @@ function ensurePenn(base){
   if(!p){
     p = { id: uid(), property: "524 Penn Road", tenant: "Jennifer Powell", ownership: 100, rent: 850, deposit: 0, start: "2025-04-26", end: "" };
     base.properties.push(p);
+  } else {
+    p.start = "2025-04-26";
+    p.end = "";
+    p.rent = 850;
   }
-  Object.assign(p, { tenant: "Jennifer Powell", tenantEmail: p.tenantEmail || "jennifer.powell@example.com", rent: 850, ownership: p.ownership || 100 });
+  Object.assign(p, { tenant: "Jennifer Powell", tenantEmail: p.tenantEmail || "jennifer.powell@example.com", rent: 850, ownership: p.ownership || 100, start: "2025-04-26", end: "" });
   const pennIncome = base.propertyIncome.filter(x => x.propertyId === p.id);
   const existingPeriods = new Set(pennIncome.map(x => x.period || (x.date ? x.date.slice(0, 7) : "")));
   const existingDates = new Set(pennIncome.map(x => x.date));
@@ -85,6 +44,11 @@ function ensurePenn(base){
   }
 
   // June 2026 is intentionally unpaid (arrears)
+  base.propertyIncome = base.propertyIncome.filter(x => {
+    if(x.propertyId !== p.id) return true;
+    if(x.period === "2026-06" || (x.date === "2026-06-26" && !x.period)) return false;
+    return true;
+  });
 
   // July 2026 paid
   if(!existingPeriods.has("2026-07") && !existingDates.has("2026-07-26")){
@@ -100,25 +64,23 @@ function ensurePenn(base){
     existingDates.add("2026-08-26");
   }
 
-  // September 2026 was paid late on 12/10/2026
-  const lateRec = base.propertyIncome.find(x => x.propertyId === p.id && x.date === "2026-10-12");
-  if(lateRec){
-    lateRec.period = "2026-09";
-    if(!lateRec.notes || !lateRec.notes.toLowerCase().includes("september")){
-      lateRec.notes = "September rent received late on 12/10/2026";
-    }
-    existingPeriods.add("2026-09");
-  } else if(!existingPeriods.has("2026-09")){
-    base.propertyIncome.push({ id: uid(), propertyId: p.id, date: "2026-10-12", amount: 850, period: "2026-09", notes: "September rent received late on 12/10/2026" });
-    existingPeriods.add("2026-09");
-  }
-
-  // October 2026 remains unpaid
+  // September 2026 remains unpaid in arrears
   base.propertyIncome = base.propertyIncome.filter(x => {
     if(x.propertyId !== p.id) return true;
-    if(x.period === "2026-10" || (x.date === "2026-10-26" && !x.period)) return false;
+    if(x.period === "2026-09" || (x.date === "2026-09-26" && !x.period)) return false;
     return true;
   });
+
+  // October 2026 was paid late on 12/10/2026
+  const lateRec = base.propertyIncome.find(x => x.propertyId === p.id && x.date === "2026-10-12");
+  if(lateRec){
+    lateRec.period = "2026-10";
+    lateRec.notes = "October rent received late on 12/10/2026";
+    existingPeriods.add("2026-10");
+  } else if(!existingPeriods.has("2026-10")){
+    base.propertyIncome.push({ id: uid(), propertyId: p.id, date: "2026-10-12", amount: 850, period: "2026-10", notes: "October rent received late on 12/10/2026" });
+    existingPeriods.add("2026-10");
+  }
 
   return base;
 }
@@ -163,6 +125,13 @@ function ensurePropertyMasters(base){
   if(!penn){
     penn = { id: uid(), property: "524 Penn Road", tenant: "Jennifer Powell", tenantEmail: "jennifer.powell@example.com", ownership: 100, rent: 850, deposit: 0, start: "2025-04-26", end: "" };
     base.properties.push(penn);
+  } else {
+    penn.start = "2025-04-26";
+    penn.end = "";
+    penn.rent = 850;
+    penn.tenant = "Jennifer Powell";
+    penn.tenantEmail = penn.tenantEmail || "jennifer.powell@example.com";
+    penn.ownership = penn.ownership || 100;
   }
 
   return base;
@@ -176,17 +145,25 @@ function removeLegacyGeneratedPropertyRows(base){
 function defaultMtdPeriods(year){const r=TaxEngine.YEARS[year],[sy]=r.start.split("-").map(Number),bounds=[[r.start,`${sy}-07-05`,`${sy}-08-05`],[`${sy}-07-06`,`${sy}-10-05`,`${sy}-11-05`],[`${sy}-10-06`,`${sy+1}-01-05`,`${sy+1}-02-05`],[`${sy+1}-01-06`,r.end,`${sy+1}-05-05`]];return bounds.map((x,i)=>({number:i+1,start:x[0],end:x[1],deadline:x[2],status:"Open",submittedDate:"",providerReference:"",locked:false}));}
 function materialiseHistoricalRentReceipts(base){
   base.migrations = base.migrations || {};
-  if (base.migrations.cashflowRentReconciliationV4) return base;
+  if (base.migrations.cashflowRentReconciliationV6) return base;
 
   const cutoff = "2026-11",
         isPenn = p => p && String(p.property || "").toLowerCase().includes("penn");
 
-  // Remove any errant receipts for 524 Penn Road for June 2026 and October 2026
+  // Ensure Penn Road master properties has 2025-04-26 start
+  const pennProp = base.properties.find(isPenn);
+  if (pennProp) {
+    pennProp.start = "2025-04-26";
+    pennProp.end = "";
+    pennProp.rent = 850;
+  }
+
+  // Remove any errant receipts for 524 Penn Road for June 2026 and September 2026
   base.propertyIncome = (base.propertyIncome || []).filter(x => {
     const p = (base.properties || []).find(prop => prop.id === x.propertyId);
     if (isPenn(p)) {
       const recPeriod = x.period || resolveReceiptPeriod(x, p) || (x.date ? x.date.slice(0, 7) : "");
-      if (recPeriod === "2026-06" || recPeriod === "2026-10") {
+      if (recPeriod === "2026-06" || recPeriod === "2026-09") {
         return false;
       }
     }
@@ -211,8 +188,8 @@ function materialiseHistoricalRentReceipts(base){
             date = `${y}-${String(m).padStart(2, "0")}-${String(Math.min(startD, last)).padStart(2, "0")}`,
             period = date.slice(0, 7);
       if (date > end || period > cutoff) break;
-      // 524 Penn Road: June and October remain strictly overdue!
-      if (isPenn(p) && (period === "2026-06" || period === "2026-10" || period >= "2026-11")) continue;
+      // 524 Penn Road: June and September remain strictly overdue!
+      if (isPenn(p) && (period === "2026-06" || period === "2026-09" || period >= "2026-11")) continue;
       const key = `${p.id}:${period}`;
       if (existing.has(key)) continue;
       base.propertyIncome.push({
@@ -231,16 +208,15 @@ function materialiseHistoricalRentReceipts(base){
     }
   }
 
-  // Ensure Penn Road 2026-09 has its receipt recorded (from 12/10/2026 payment)
-  const pennProp = base.properties.find(isPenn);
-  if (pennProp && !existing.has(`${pennProp.id}:2026-09`)){
+  // Ensure Penn Road 2026-10 has its receipt recorded (from 12/10/2026 payment)
+  if (pennProp && !existing.has(`${pennProp.id}:2026-10`)){
     base.propertyIncome.push({
       id: uid(),
       propertyId: pennProp.id,
       date: "2026-10-12",
       amount: num(pennProp.rent) || 850,
-      period: "2026-09",
-      notes: "September rent received late on 12/10/2026",
+      period: "2026-10",
+      notes: "October rent received late on 12/10/2026",
       recordSource: "Tenant payment",
       createdAt: new Date().toISOString(),
       modifiedAt: new Date().toISOString(),
@@ -248,8 +224,8 @@ function materialiseHistoricalRentReceipts(base){
     });
   }
 
-  base.migrations.cashflowRentReconciliationV4 = true;
-  base.migrations.cashflowRentReconciliationV4At = new Date().toISOString();
+  base.migrations.cashflowRentReconciliationV6 = true;
+  base.migrations.cashflowRentReconciliationV6At = new Date().toISOString();
   return base;
 }function ensureMtdSettings(base){for(const year of Object.keys(base.settingsByYear)){const s=base.settingsByYear[year];s.mtd={provider:"Unassigned",periods:defaultMtdPeriods(year),...(s.mtd||{})};if(!Array.isArray(s.mtd.periods)||!s.mtd.periods.length)s.mtd.periods=defaultMtdPeriods(year);}return base;}
 function ensureRecordMetadata(base){const now=new Date().toISOString(),decorate=(items,source,category)=>items.forEach(x=>{const year=Object.keys(TaxEngine.YEARS).find(y=>x.date&&dateInTaxYear(x.date,y))||x.taxYear||"";Object.assign(x,{taxYear:x.taxYear||year,accountingPeriod:x.accountingPeriod||x.date?.slice(0,7)||"",recordSource:x.recordSource||source,createdAt:x.createdAt||now,modifiedAt:x.modifiedAt||x.createdAt||now,includedInMtd:x.includedInMtd!==false,exportStatus:x.exportStatus||"Not exported"});if(category&&!x.transactionCategory)x.transactionCategory=typeof category==="function"?category(x):category;});decorate(base.uber,"Uber Driver Portal","Uber income");decorate(base.propertyIncome,"Property records","Rent income");decorate(base.propertyExpenses,"Property records",x=>x.category||"Property expense");decorate(base.employment,"PAYE records","Employment income");decorate(base.pension,"Pension records","Pension income");decorate(base.payments,"HMRC payment record","HMRC payment");return base;}
@@ -258,9 +234,9 @@ function mergeState(saved){const base=demo();base.year=saved.year||base.year;bas
 function ensure2526PayeAndPension(base){const date="2026-03-31",year=base.settingsByYear["2025-26"];year.mode="actual";Object.assign(year.modules,{employment:true,pension:true,property:true,uber:false,savings:false,dividends:false,other:false});year.forecast.method="recorded";if(!base.employment.some(x=>x.date===date&&x.employer==="Automobile Association"))base.employment.push({id:uid(),date,employer:"Automobile Association",gross:21773.59,tax:4354.90,taxProvided:true,ni:933.08,net:16485.91,taxCode:"BR",payrollNumber:"822276",payeRef:"072/2268193",benefits:0,notes:"Payroll 822276  -  PAYE reference 072/2268193  -  Net pay £16,485.91"});if(!base.pension.some(x=>x.date===date&&x.provider==="BT Pension"))base.pension.push({id:uid(),date,provider:"BT Pension",amount:8295,tax:691.20,taxProvided:true,taxCode:"483L",pensionNumber:"0666724",notes:"Pension number 0666724"});return base;}
 function normaliseUberRecords(base){base.uber=(base.uber||[]).map(x=>({...x,date:x.date||x.weekEnd||x.week_end,weekStart:x.weekStart||x.week_start||"",weekEnd:x.weekEnd||x.week_end||x.date,customerPayments:x.customerPayments??x.customer_payments,governmentThirdPartyFees:x.governmentThirdPartyFees??x.government_third_party_fees,uberServiceFee:x.uberServiceFee??x.uber_service_fee,otherAdjustments:x.otherAdjustments??x.other_adjustments,netUberPayment:x.netUberPayment??x.net_uber_payment,businessMiles:x.businessMiles??x.business_miles??x.miles,miles:x.miles??x.businessMiles??x.business_miles,uberBreakdownStatus:x.uberBreakdownStatus||x.uber_breakdown_status}));return base;}
 function currentTaxYearKey(fallback="2026-27"){const now=new Date(),today=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;return Object.keys(TaxEngine.YEARS).find(year=>today>=TaxEngine.YEARS[year].start&&today<=TaxEngine.YEARS[year].end)||fallback;}
-function hydrateState(){const next=ensureRecordMetadata(ensureMtdSettings(syncPropertyManagementExpenses(ensure2526PayeAndPension(normaliseUberRecords(load())))));next.year=currentTaxYearKey(next.year);next.payments.forEach(x=>{if(!x.taxYear)x.taxYear="2025-26";});const pennRoad=next.properties.find(x=>x.property==="524 Penn Road");if(pennRoad)pennRoad.notes="No rent received for June 2026";const s26=next.settingsByYear?.["2026-27"];if(s26?.hmrc&&(!s26.hmrc.reserve||[0,715.5,1500].includes(Number(s26.hmrc.reserve))))s26.hmrc.reserve=1714.59;next.banking=next.banking||{safetyBuffer:2000};for(const y of Object.keys(next.settingsByYear)){next.settingsByYear[y].banking=next.settingsByYear[y].banking||{safetyBuffer:2000};}if(!localStorage.getItem("tax-engine-safety-buffer"))localStorage.setItem("tax-engine-safety-buffer",String(next.banking.safetyBuffer||2000));return next;}
+function hydrateState(){const next=ensureRecordMetadata(ensureMtdSettings(syncPropertyManagementExpenses(ensure2526PayeAndPension(normaliseUberRecords(load())))));next.year=currentTaxYearKey(next.year);next.payments.forEach(x=>{if(!x.taxYear)x.taxYear="2025-26";});const pennRoad=next.properties.find(x=>x.property==="524 Penn Road");if(pennRoad){pennRoad.start="2025-04-26";pennRoad.end="";pennRoad.rent=850;pennRoad.tenant="Jennifer Powell";pennRoad.tenantEmail=pennRoad.tenantEmail||"jennifer.powell@example.com";pennRoad.notes="June 2026 and September 2026 rent in arrears";}const s26=next.settingsByYear?.["2026-27"];if(s26?.hmrc&&(!s26.hmrc.reserve||[0,715.5,1500].includes(Number(s26.hmrc.reserve))))s26.hmrc.reserve=1714.59;next.banking=next.banking||{safetyBuffer:2000};for(const y of Object.keys(next.settingsByYear)){next.settingsByYear[y].banking=next.settingsByYear[y].banking||{safetyBuffer:2000};}if(!localStorage.getItem("tax-engine-safety-buffer"))localStorage.setItem("tax-engine-safety-buffer",String(next.banking.safetyBuffer||2000));return next;}
 let state=hydrateState();const current=()=>state.settingsByYear[state.year];function save(){ensureRecordMetadata(state);localStorage.setItem(KEY,JSON.stringify(state));if(state.banking?.safetyBuffer!=null)localStorage.setItem("tax-engine-safety-buffer",String(state.banking.safetyBuffer));}if(state.migrations?.historicRentReceiptsV1&&!localStorage.getItem(`${KEY}:historic-rent-receipts-v1-saved`)){save();localStorage.setItem(`${KEY}:historic-rent-receipts-v1-saved`,"1");}
-if(state.migrations?.cashflowRentReconciliationV4&&!localStorage.getItem(`${KEY}:cashflow-reconciliation-v4-saved`)){save();localStorage.setItem(`${KEY}:cashflow-reconciliation-v4-saved`,"1");if(window.TaxEngineSync&&typeof window.TaxEngineSync.schedulePush==="function"){window.TaxEngineSync.schedulePush();}}
+if(state.migrations?.cashflowRentReconciliationV6&&!localStorage.getItem(`${KEY}:cashflow-reconciliation-v6-saved`)){save();localStorage.setItem(`${KEY}:cashflow-reconciliation-v6-saved`,"1");if(window.TaxEngineSync&&typeof window.TaxEngineSync.schedulePush==="function"){window.TaxEngineSync.schedulePush();}}
 for(const pensionYear of Object.values(state.settingsByYear)){pensionYear.forecast.pensionIncome=8295;Object.assign(pensionYear.moduleData.pension,{annual:8295,taxDeducted:691.20,taxProvided:true,inputBasis:"gross"});}
 function calculationInputs(){const s=current(),m=s.modules,f=s.forecast,d=s.moduleData,recorded=f.method==="recorded",weeks=state.uber.length,weekly=sum(state.uber,"payments")+sum(state.uber,"tips")-sum(state.uber,"fee"),propertyIncomeAll=propertyIncomeRecords(),propertyExpenseAll=propertyExpenseRecords(),finance=propertyExpenseAll.filter(x=>x.category==="Mortgage interest"),allowable=propertyExpenseAll.filter(x=>x.category!=="Mortgage interest"&&x.category!=="Capital cost"),pensionAnnual=recorded?sum(state.pension,"amount"):d.pension.annual,pensionRecordedTax=sum(state.pension,"tax"),pensionGross=d.pension.inputBasis==="net"?pensionAnnual+(recorded?pensionRecordedTax:d.pension.taxDeducted):pensionAnnual,employmentGross=recorded?sum(state.employment,"gross")+sum(state.employment,"benefits"):d.employment.gross+(!d.employment.benefitsEnabled?0:d.employment.benefits),employmentTax=recorded?sum(state.employment,"tax"):d.employment.payeTax,employmentTaxProvided=recorded?state.employment.some(x=>x.taxProvided):d.employment.payeTaxProvided,pensionTaxProvided=recorded?state.pension.some(x=>x.taxProvided):d.pension.taxProvided;return{year:state.year,rules:s.rules,modules:m,employmentIncome:employmentGross,employmentTaxCode:(recorded?state.employment.findLast?.(x=>x.taxCode)?.taxCode:null)||d.employment.taxCode,payeTax:employmentTax,payeTaxProvided:employmentTaxProvided,pensionIncome:pensionGross,pensionTaxCode:(recorded?state.pension.findLast?.(x=>x.taxCode)?.taxCode:null)||d.pension.taxCode,pensionTaxDeducted:recorded?pensionRecordedTax:d.pension.taxDeducted,pensionTaxProvided,otherIncome:d.other.amount,otherTaxDeducted:d.other.taxDeducted,savingsIncome:d.savings.interest,personalSavingsAllowance:d.savings.personalAllowance,startingSavingsRateEnabled:d.savings.startingRateEnabled,savingsBasicRate:d.savings.basicRate,savingsHigherRate:d.savings.higherRate,savingsAdditionalRate:d.savings.additionalRate,dividendIncome:d.dividends.income,dividendAllowance:d.dividends.allowance,dividendBasicRate:d.dividends.basicRate,dividendHigherRate:d.dividends.higherRate,dividendAdditionalRate:d.dividends.additionalRate,propertyIncome:recorded?sum(propertyIncomeAll,"amount"):f.propertyIncome,propertyExpenses:recorded?sum(allowable,"amount"):f.propertyExpenses,financeCosts:recorded?sum(finance,"amount"):d.property.disallowedInterest,carriedFinanceCosts:d.property.carriedFinanceCosts,propertyTreatment:d.property.treatment,propertyBasicRate:d.property.basicRate,propertyHigherRate:d.property.higherRate,propertyAdditionalRate:d.property.additionalRate,financeRestrictionEnabled:d.property.financeRestriction,financeCreditRate:s.rules.financeCreditRate,propertyAllowanceEnabled:d.property.propertyAllowanceEnabled,propertyAllowanceAmount:d.property.propertyAllowanceAmount,uberIncome:recorded&&weeks?weekly/weeks*52:f.uberForecast,uberOtherExpenses:f.uberOtherExpenses,businessMiles:recorded&&weeks?sum(state.uber,"miles")/weeks*52:f.annualMiles,simplifiedMileage:d.uber.simplifiedMileage,hmrcPaid:sum(state.payments,"amount"),hmrcReserve:s.hmrc.reserve,standardMonthlyProvision:s.hmrc.standardMonthly,catchupShortfall:s.hmrc.catchupShortfall,catchupMonths:s.hmrc.catchupMonths,minimumPayment:s.hmrc.minimumPayment,roundPaymentTo:s.hmrc.roundTo,monthsRemaining:f.monthsRemaining};}
 const calc=()=>(syncPropertyManagementExpenses(state),TaxEngine.calculate(state.year==="2025-26"?actualDashboardInputs():forecastDashboardInputs())),metric=(l,v,n,a="")=>`<div class="metric ${a}"><span>${l}</span><strong>${v}</strong><small>${n}</small></div>`,row=(l,v,c="")=>`<div class="tr ${c}"><span>${l}</span><span>${v}</span></div>`;
@@ -307,9 +283,171 @@ by("#employmentForm").addEventListener("submit",e=>{e.target._taxEntry=new FormD
 by("#pensionForm").addEventListener("input",e=>{const f=e.currentTarget,gross=num(f.elements.net.value)+num(f.elements.tax.value);by("#pensionGrossPreview").textContent=`Gross pension: ${money.format(gross)}`;});by("#pensionForm").addEventListener("submit",e=>{e.target._taxEntry=new FormData(e.target);},true);by("#pensionForm").addEventListener("submit",e=>{const f=e.target._taxEntry,x=state.pension.at(-1);if(x)Object.assign(x,{taxCode:String(f.get("taxCode")||"").toUpperCase(),provider:f.get("provider"),pensionNumber:f.get("pensionNumber"),net:num(f.get("net")),tax:num(f.get("tax")),amount:num(f.get("net"))+num(f.get("tax")),taxProvided:true});render();});
 document.addEventListener("click",e=>{const b=e.target.closest("[data-open-dynamic]");if(b)by(`#${b.dataset.openDynamic}`)?.showModal();});by("#printReturn").addEventListener("click",()=>window.print());by("#propertyForm").addEventListener("submit",e=>{e.target._ownership=num(new FormData(e.target).get("ownership"));},true);by("#propertyForm").addEventListener("submit",e=>{const x=state.properties.at(-1);if(x)x.ownership=e.target._ownership;render();});
 function propertyLedgerSelectedMonth(){return propertyLedgerMonth||dashboardMonth||dashboardDates().cutoff.slice(0,7);}
-function shiftPropertyLedgerMonth(step){const current=propertyLedgerSelectedMonth(),d=new Date(`${current}-01T00:00:00Z`);d.setUTCMonth(d.getUTCMonth()+step);propertyLedgerMonth=`${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,"0")}`;renderPropertyTables();applyEntryDisplay();}
+function shiftPropertyLedgerMonth(step){
+  const current=propertyLedgerSelectedMonth(),d=new Date(`${current}-01T00:00:00Z`);
+  d.setUTCMonth(d.getUTCMonth()+step);
+  propertyLedgerMonth=`${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,"0")}`;
+  if(incomeDateFilter==="month"||/^\d{4}-\d{2}$/.test(incomeDateFilter))incomeDateFilter="month";
+  if(expenseDateFilter==="month"||/^\d{4}-\d{2}$/.test(expenseDateFilter))expenseDateFilter="month";
+  renderPropertyTables();
+  applyEntryDisplay();
+}
 function propertyLedgerMonthControls(month){return`<button class="ghost small" data-property-ledger-month="-1">&larr;</button><strong>${workspaceMonthLabel(month)}</strong><button class="ghost small" data-property-ledger-month="1">&rarr;</button>`;}
-function renderPropertyTables(){const action=(kind,id)=>kind==="property"?`<span class="row-actions"><button class="ghost small" data-statement-property="${id}">Statement</button><button class="ghost small" data-edit-${kind}="${id}">Edit</button>${del("properties",id)}</span>`:`<span class="row-actions"><button class="ghost small" data-edit-${kind}="${id}">Edit</button>${del("propertyIncome",id)}</span>`,cashTag=`<span class="entry-tag">Cashflow</span>`,ledgerMonth=propertyLedgerSelectedMonth(),inMonth=x=>cashDateMonth(x.date,ledgerMonth)===ledgerMonth,filtered=propertyIncomeRecords().filter(x=>(!incomePropertyFilter||x.propertyId===incomePropertyFilter)&&inMonth(x)).slice().sort((a,b)=>String(b.date).localeCompare(String(a.date))),expenseRows=propertyExpenseRecords().filter(inMonth).slice().sort((a,b)=>String(b.date).localeCompare(String(a.date)));records("#propertyTable",["Property","Tenant","Monthly rent","Tenancy","Deposit","Action"],state.properties.slice().sort((a,b)=>a.property.localeCompare(b.property)).map(x=>cells([x.property,x.tenant||"—",money.format(x.rent),`${x.start||"—"} to ${x.end||"ongoing"}`,money.format(x.deposit),action("property",x.id)])),6);records("#propertyIncomeTable",["Date","Property","Amount","Period","Action"],filtered.map(x=>cells([x.date,propertyName(x.propertyId),money.format(x.amount),x.period||"—",x.cashflowSource?`<span class="property-action-stack">${cashTag} ${managementFeeAction(x)}</span>`:action("income",x.id)])),5);records("#propertyExpenseTable",["Date","Property","Category","Amount","Action"],expenseRows.map(x=>cells([x.date,propertyName(x.propertyId),x.category,money.format(x.amount),x.cashflowSource?cashTag:del("propertyExpenses",x.id)])),5);const controls=by("#propertyLedgerMonthControls");if(controls)controls.innerHTML=propertyLedgerMonthControls(ledgerMonth);const filter=by("#propertyIncomeFilter"),options=state.properties.slice().sort((a,b)=>a.property.localeCompare(b.property)).map(x=>`<option value="${x.id}" ${x.id===incomePropertyFilter?"selected":""}>${x.property}</option>`).join("");filter.innerHTML=`<option value="">All properties</option>${options}`;}
+function renderPropertyTables(){
+  const action=(kind,id)=>kind==="property"?`<span class="row-actions"><button class="ghost small" data-statement-property="${id}">Statement</button><button class="ghost small" data-edit-${kind}="${id}">Edit</button>${del("properties",id)}</span>`:`<span class="row-actions"><button class="ghost small" data-edit-${kind}="${id}">Edit</button>${del("propertyIncome",id)}</span>`,
+        cashTag=`<span class="entry-tag">Cashflow</span>`,
+        ledgerMonth=propertyLedgerSelectedMonth();
+
+  const matchIncomeDate=(date,period)=>{
+    if(incomeDateFilter==="all")return true;
+    if(incomeDateFilter==="2026-27"||incomeDateFilter==="2025-26")return dateInTaxYear(date,incomeDateFilter);
+    const target=incomeDateFilter==="month"?ledgerMonth:incomeDateFilter;
+    return cashDateMonth(date,target)===target||period===target;
+  };
+  const matchExpenseDate=(date)=>{
+    if(expenseDateFilter==="all")return true;
+    if(expenseDateFilter==="2026-27"||expenseDateFilter==="2025-26")return dateInTaxYear(date,expenseDateFilter);
+    const target=expenseDateFilter==="month"?ledgerMonth:expenseDateFilter;
+    return cashDateMonth(date,target)===target;
+  };
+
+  // 1. Properties Tenancies table
+  records("#propertyTable",["Property","Tenant","Monthly rent","Tenancy","Deposit","Action"],
+    state.properties.slice().sort((a,b)=>a.property.localeCompare(b.property)).map(x=>cells([
+      x.property,x.tenant||"—",money.format(x.rent),`${x.start||"—"} to ${x.end||"ongoing"}`,money.format(x.deposit),action("property",x.id)
+    ])),6);
+
+  // 2. Rent Received Ledger / Schedule table
+  let incomeRows = [];
+  if (incomePropertyFilter) {
+    const sched = arrearsSchedule().filter(x => x.propertyId === incomePropertyFilter);
+    const receipts = propertyIncomeRecords().filter(x => x.propertyId === incomePropertyFilter);
+    const receiptByPeriod = new Map();
+    receipts.forEach(r => {
+      const p = state.properties.find(xp => xp.id === r.propertyId);
+      const per = r.period || resolveReceiptPeriod(r, p) || r.date?.slice(0, 7);
+      if (per && !receiptByPeriod.has(per)) receiptByPeriod.set(per, r);
+    });
+
+    const filteredSched = sched.filter(x => matchIncomeDate(x.date, x.period));
+    incomeRows = filteredSched.slice().sort((a,b) => String(b.date).localeCompare(String(a.date))).map(x => {
+      const matchingReceipt = receiptByPeriod.get(x.period);
+      const displayDate = matchingReceipt?.date || x.date;
+      const statusBadge = `<span class="status-badge ${x.status.toLowerCase()}">${x.status}${x.days ? ` (${x.days}d)` : ""}</span>`;
+      let act = "";
+      if (matchingReceipt) {
+        act = `${action("income", matchingReceipt.id)} <button class="ghost small" data-statement-property="${x.propertyId}">Statement</button>`;
+      } else if (x.status === "Overdue" || x.status === "Part-paid") {
+        act = `<button class="primary small" data-arrears-pay="${x.propertyId}" data-period="${x.period}" data-amount="${x.outstanding}">Record payment</button> <button class="ghost small" data-statement-property="${x.propertyId}">Statement</button>`;
+      } else {
+        act = `<button class="ghost small" data-statement-property="${x.propertyId}">Statement</button>`;
+      }
+      const displayAmount = matchingReceipt ? money.format(matchingReceipt.amount) : (x.status === "Upcoming" ? `${money.format(x.expected)} due` : money.format(x.received));
+      return cells([
+        displayDate,
+        x.property,
+        displayAmount,
+        x.period || "—",
+        statusBadge,
+        act
+      ]);
+    });
+  } else {
+    const sched = arrearsSchedule().filter(x => matchIncomeDate(x.date, x.period));
+    const receipts = propertyIncomeRecords().filter(x => matchIncomeDate(x.date, x.period));
+    const receiptByPeriod = new Map();
+    receipts.forEach(r => {
+      const p = state.properties.find(xp => xp.id === r.propertyId);
+      const per = r.period || resolveReceiptPeriod(r, p) || r.date?.slice(0, 7);
+      const key = `${r.propertyId}:${per}`;
+      if (!receiptByPeriod.has(key)) receiptByPeriod.set(key, r);
+    });
+
+    incomeRows = sched.slice().sort((a,b) => String(b.date).localeCompare(String(a.date)) || a.property.localeCompare(b.property)).map(x => {
+      const matchingReceipt = receiptByPeriod.get(`${x.propertyId}:${x.period}`);
+      const displayDate = matchingReceipt?.date || x.date;
+      const statusBadge = `<span class="status-badge ${x.status.toLowerCase()}">${x.status}${x.days ? ` (${x.days}d)` : ""}</span>`;
+      let act = "";
+      if (matchingReceipt) {
+        act = matchingReceipt.cashflowSource ? `<span class="property-action-stack">${cashTag} ${managementFeeAction(matchingReceipt)}</span>` : action("income", matchingReceipt.id);
+      } else if (x.status === "Overdue" || x.status === "Part-paid") {
+        act = `<button class="primary small" data-arrears-pay="${x.propertyId}" data-period="${x.period}" data-amount="${x.outstanding}">Record payment</button> <button class="ghost small" data-statement-property="${x.propertyId}">Statement</button>`;
+      } else {
+        act = `<button class="ghost small" data-statement-property="${x.propertyId}">Statement</button>`;
+      }
+      const displayAmount = matchingReceipt ? money.format(matchingReceipt.amount) : (x.status === "Upcoming" ? `${money.format(x.expected)} due` : money.format(x.received));
+      return cells([
+        displayDate,
+        x.property,
+        displayAmount,
+        x.period || "—",
+        statusBadge,
+        act
+      ]);
+    });
+  }
+
+  records("#propertyIncomeTable", ["Date", "Property", "Amount", "Period", "Status", "Action"], incomeRows, 6);
+
+  // 3. Property Expense table
+  const expenseRows = propertyExpenseRecords().filter(x => matchExpenseDate(x.date)).slice().sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+  records("#propertyExpenseTable",["Date","Property","Category","Amount","Action"],
+    expenseRows.map(x=>cells([x.date,propertyName(x.propertyId),x.category,money.format(x.amount),x.cashflowSource?cashTag:del("propertyExpenses",x.id)])),5);
+
+  // 4. Ledger month controls
+  const controls = by("#propertyLedgerMonthControls");
+  if (controls) {
+    controls.innerHTML = propertyLedgerMonthControls(ledgerMonth);
+  }
+
+  // 5. Populate property filter dropdown
+  const filter = by("#propertyIncomeFilter");
+  if (filter) {
+    const options = state.properties.slice().sort((a,b)=>a.property.localeCompare(b.property)).map(x=>`<option value="${x.id}" ${x.id===incomePropertyFilter?"selected":""}>${x.property}</option>`).join("");
+    filter.innerHTML = `<option value="">All properties</option>${options}`;
+  }
+
+  // 6. Populate property income date filter dropdown
+  const incomeDateSelect = by("#propertyIncomeDateFilter");
+  if (incomeDateSelect) {
+    const allMonths = new Set();
+    (state.propertyIncome || []).forEach(r => {
+      const m = r.period || (r.date ? r.date.slice(0, 7) : "");
+      if (/^\d{4}-\d{2}$/.test(m)) allMonths.add(m);
+    });
+    arrearsSchedule().forEach(s => {
+      if (/^\d{4}-\d{2}$/.test(s.period)) allMonths.add(s.period);
+    });
+    const sortedMonths = [...allMonths].sort().reverse();
+    const monthName = workspaceMonthLabel(ledgerMonth);
+
+    let html = `<option value="all" ${incomeDateFilter === "all" ? "selected" : ""}>All dates</option>`;
+    html += `<option value="month" ${incomeDateFilter === "month" ? "selected" : ""}>Selected month (${monthName})</option>`;
+    html += `<option value="2026-27" ${incomeDateFilter === "2026-27" ? "selected" : ""}>Tax year 2026/27</option>`;
+    html += `<option value="2025-26" ${incomeDateFilter === "2025-26" ? "selected" : ""}>Tax year 2025/26</option>`;
+    if (sortedMonths.length) {
+      html += `<optgroup label="Specific months">`;
+      for (const m of sortedMonths) {
+        const label = workspaceMonthLabel(m);
+        html += `<option value="${m}" ${incomeDateFilter === m ? "selected" : ""}>${label}</option>`;
+      }
+      html += `</optgroup>`;
+    }
+    incomeDateSelect.innerHTML = html;
+  }
+
+  // 7. Populate property expense date filter dropdown
+  const expenseDateSelect = by("#propertyExpenseDateFilter");
+  if (expenseDateSelect) {
+    const monthName = workspaceMonthLabel(ledgerMonth);
+    expenseDateSelect.innerHTML = `
+      <option value="month" ${expenseDateFilter === "month" ? "selected" : ""}>Selected month (${monthName})</option>
+      <option value="all" ${expenseDateFilter === "all" ? "selected" : ""}>All dates</option>
+      <option value="2026-27" ${expenseDateFilter === "2026-27" ? "selected" : ""}>Tax year 2026/27</option>
+      <option value="2025-26" ${expenseDateFilter === "2025-26" ? "selected" : ""}>Tax year 2025/26</option>
+    `;
+  }
+}
 
 function classifyPropertyExpense(record) {
   const cat = String(record.category || "").trim().toLowerCase();
@@ -775,14 +913,17 @@ if (typeof by === "function") {
 }
 
 
-by("#propertyIncomeFilter").addEventListener("change",e=>{incomePropertyFilter=e.target.value;renderPropertyTables();applyEntryDisplay();});document.addEventListener("click",e=>{const pb=e.target.closest("[data-edit-property]"),ib=e.target.closest("[data-edit-income]");if(pb){const x=state.properties.find(v=>v.id===pb.dataset.editProperty),f=by("#editPropertyForm");for(const k of["id","property","tenant","tenantEmail","ownership","rent","deposit","start","end"])f.elements[k].value=x[k]??"";by("#editPropertyDialog").showModal();}if(ib){const x=state.propertyIncome.find(v=>v.id===ib.dataset.editIncome),f=by("#editIncomeForm");for(const k of["id","propertyId","date","amount","period","notes"])f.elements[k].value=x[k]??"";by("#editIncomeDialog").showModal();}});by("#editPropertyForm").addEventListener("submit",e=>{e.preventDefault();const f=new FormData(e.target),x=state.properties.find(v=>v.id===f.get("id"));if(x)Object.assign(x,{property:f.get("property"),tenant:f.get("tenant"),tenantEmail:f.get("tenantEmail")||"",ownership:num(f.get("ownership")),rent:num(f.get("rent")),deposit:num(f.get("deposit")),start:f.get("start"),end:f.get("end")});e.target.closest("dialog").close();render();});by("#editIncomeForm").addEventListener("submit",e=>{e.preventDefault();const f=new FormData(e.target),x=state.propertyIncome.find(v=>v.id===f.get("id"));if(x){
+by("#propertyIncomeFilter").addEventListener("change",e=>{incomePropertyFilter=e.target.value;renderPropertyTables();applyEntryDisplay();});
+by("#propertyIncomeDateFilter")?.addEventListener("change",e=>{incomeDateFilter=e.target.value;if(/^\d{4}-\d{2}$/.test(incomeDateFilter)){propertyLedgerMonth=incomeDateFilter;}renderPropertyTables();applyEntryDisplay();});
+by("#propertyExpenseDateFilter")?.addEventListener("change",e=>{expenseDateFilter=e.target.value;if(/^\d{4}-\d{2}$/.test(expenseDateFilter)){propertyLedgerMonth=expenseDateFilter;}renderPropertyTables();applyEntryDisplay();});
+document.addEventListener("click",e=>{const pb=e.target.closest("[data-edit-property]"),ib=e.target.closest("[data-edit-income]");if(pb){const x=state.properties.find(v=>v.id===pb.dataset.editProperty),f=by("#editPropertyForm");for(const k of["id","property","tenant","tenantEmail","ownership","rent","deposit","start","end"])f.elements[k].value=x[k]??"";by("#editPropertyDialog").showModal();}if(ib){const x=state.propertyIncome.find(v=>v.id===ib.dataset.editIncome),f=by("#editIncomeForm");for(const k of["id","propertyId","date","amount","period","notes"])f.elements[k].value=x[k]??"";by("#editIncomeDialog").showModal();}});by("#editPropertyForm").addEventListener("submit",e=>{e.preventDefault();const f=new FormData(e.target),x=state.properties.find(v=>v.id===f.get("id"));if(x)Object.assign(x,{property:f.get("property"),tenant:f.get("tenant"),tenantEmail:f.get("tenantEmail")||"",ownership:num(f.get("ownership")),rent:num(f.get("rent")),deposit:num(f.get("deposit")),start:f.get("start"),end:f.get("end")});e.target.closest("dialog").close();render();});by("#editIncomeForm").addEventListener("submit",e=>{e.preventDefault();const f=new FormData(e.target),x=state.propertyIncome.find(v=>v.id===f.get("id"));if(x){
   const p = state.properties.find(xp => xp.id === f.get("propertyId"));
   const date = f.get("date");
   const notes = f.get("notes") || "";
   let period = f.get("period") || resolveReceiptPeriod({ date, notes, propertyId: p?.id }, p);
   Object.assign(x,{propertyId:f.get("propertyId"),date,amount:num(f.get("amount")),period,notes});
 }e.target.closest("dialog").close();render();});
-function dateInTaxYear(date,year){const r=TaxEngine.YEARS[year];return!!r&&date>=r.start&&date<=r.end;}function formatUKDate(date){if(!/^\d{4}-\d{2}-\d{2}$/.test(date||""))return date;const[y,m,d]=date.split("-");return`${d}/${m}/${y}`;}function applyEntryDisplay(){const tables=["employmentTable","uberTable","propertyIncomeTable","propertyExpenseTable","rentHistoryTable","pensionTable","paymentTable"];for(const id of tables)for(const row of all(`#${id} .tr:not(.header)`)){const cell=row.querySelector("span"),iso=cell?.textContent?.trim();if(!/^\d{4}-\d{2}-\d{2}$/.test(iso||""))continue;row.hidden=entryYearFilter!=="all"&&!dateInTaxYear(iso,entryYearFilter);cell.textContent=formatUKDate(iso);}for(const row of all("#propertyTable .tr:not(.header)")){const cell=row.children[3];if(cell)cell.textContent=cell.textContent.replace(/\d{4}-\d{2}-\d{2}/g,formatUKDate);}}by("#entryYearFilter").addEventListener("change",e=>{entryYearFilter=e.target.value;render();});by("#propertyIncomeFilter").addEventListener("change",()=>applyEntryDisplay());
+function dateInTaxYear(date,year){const r=TaxEngine.YEARS[year];return!!r&&date>=r.start&&date<=r.end;}function formatUKDate(date){if(!/^\d{4}-\d{2}-\d{2}$/.test(date||""))return date;const[y,m,d]=date.split("-");return`${d}/${m}/${y}`;}function applyEntryDisplay(){const tables=["employmentTable","uberTable","propertyIncomeTable","propertyExpenseTable","rentHistoryTable","pensionTable","paymentTable"];for(const id of tables)for(const row of all(`#${id} .tr:not(.header)`)){const cell=row.querySelector("span"),iso=cell?.textContent?.trim();if(!/^\d{4}-\d{2}-\d{2}$/.test(iso||""))continue;if(id==="propertyIncomeTable"||id==="propertyExpenseTable"){row.hidden=false;}else{row.hidden=entryYearFilter!=="all"&&!dateInTaxYear(iso,entryYearFilter);}cell.textContent=formatUKDate(iso);}for(const row of all("#propertyTable .tr:not(.header)")){const cell=row.children[3];if(cell)cell.textContent=cell.textContent.replace(/\d{4}-\d{2}-\d{2}/g,formatUKDate);}}by("#entryYearFilter").addEventListener("change",e=>{entryYearFilter=e.target.value;render();});
 function arrearsSchedule(){const today=new Date(),todayIso=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`,rows=[];const allIncome=propertyIncomeRecords(),incomeMap=new Map();for(const x of allIncome){if(!x.propertyId)continue;const p=(state.properties||[]).find(prop=>prop.id===x.propertyId);const recPeriod=x.period||resolveReceiptPeriod(x,p)||(x.date?x.date.slice(0,7):"");const key=`${x.propertyId}:${recPeriod}`;incomeMap.set(key,(incomeMap.get(key)||0)+num(x.amount));}for(const p of state.properties){if(!p.start||!p.rent)continue;const[startY,startM,startD]=p.start.split("-").map(Number),end=p.end||"9999-12-31";let includedUpcoming=false;for(let i=0;i<240;i++){const cursor=new Date(Date.UTC(startY,startM-1+i,1)),y=cursor.getUTCFullYear(),m=cursor.getUTCMonth()+1,last=new Date(Date.UTC(y,m,0)).getUTCDate(),date=`${y}-${String(m).padStart(2,"0")}-${String(Math.min(startD,last)).padStart(2,"0")}`;if(date>end)break;if(date>todayIso){if(includedUpcoming)break;includedUpcoming=true;}const period=date.slice(0,7),received=incomeMap.get(`${p.id}:${period}`)||0,outstanding=Math.max(0,num(p.rent)-received),future=date>todayIso,status=future?"Upcoming":outstanding===0?"Paid":received>0?"Part-paid":"Overdue",days=future||!outstanding?0:Math.max(0,Math.floor((Date.parse(todayIso)-Date.parse(date))/86400000));rows.push({propertyId:p.id,property:p.property,date,period,expected:num(p.rent),received,outstanding,status,days});if(includedUpcoming)break;}}return rows;}
 function renderArrears(){let rows=arrearsSchedule().filter(x=>(!arrearsPropertyFilter||x.propertyId===arrearsPropertyFilter)&&(entryYearFilter==="all"||dateInTaxYear(x.date,entryYearFilter))),overdue=rows.filter(x=>x.status==="Overdue"||x.status==="Part-paid"),total=overdue.reduce((a,x)=>a+x.outstanding,0),oldest=overdue.slice().sort((a,b)=>a.date.localeCompare(b.date))[0],under30=overdue.filter(x=>x.days<30).reduce((a,x)=>a+x.outstanding,0),d30=overdue.filter(x=>x.days>=30&&x.days<60).reduce((a,x)=>a+x.outstanding,0),d60=overdue.filter(x=>x.days>=60&&x.days<90).reduce((a,x)=>a+x.outstanding,0),d90=overdue.filter(x=>x.days>=90).reduce((a,x)=>a+x.outstanding,0);by("#arrearsMetrics").innerHTML=metric("Current arrears",money.format(total),`${overdue.length} overdue instalment(s)`,total?"alert":"")+metric("Oldest unpaid",oldest?formatUKDate(oldest.date):"None",oldest?`${oldest.days} days overdue`:"All due rent paid")+metric("Under 30 days",money.format(under30),`30-59: ${money.format(d30)}`)+metric("60+ days",money.format(d60+d90),`90+: ${money.format(d90)}`);records("#arrearsTable",["Due date","Property","Expected","Received","Outstanding","Status","Action"],rows.sort((a,b)=>b.date.localeCompare(a.date)||a.property.localeCompare(b.property)).map(x=>cells([formatUKDate(x.date),x.property,money.format(x.expected),money.format(x.received),money.format(x.outstanding),`<span class="status-badge ${x.status.toLowerCase()}">${x.status}${x.days?`  -  ${x.days}d`:""}</span>`,x.outstanding&&x.status!=="Upcoming"?`<button class="primary small" data-arrears-pay="${x.propertyId}" data-period="${x.period}" data-amount="${x.outstanding}">Record payment</button><button class="ghost small" data-statement-property="${x.propertyId}">Statement</button>`:"-"])),7);const f=by("#arrearsPropertyFilter"),o=state.properties.slice().sort((a,b)=>a.property.localeCompare(b.property)).map(x=>`<option value="${x.id}" ${x.id===arrearsPropertyFilter?"selected":""}>${x.property}</option>`).join("");f.innerHTML=`<option value="">All properties</option>${o}`;}
 by("#arrearsPropertyFilter").addEventListener("change",e=>{arrearsPropertyFilter=e.target.value;renderArrears();});document.addEventListener("click",e=>{const b=e.target.closest("[data-arrears-pay]");if(!b)return;const f=by("#incomeForm"),today=new Date();f.elements.propertyId.value=b.dataset.arrearsPay;f.elements.date.value=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;f.elements.amount.value=b.dataset.amount;f.elements.period.value=b.dataset.period;f.elements.notes.value=`Arrears payment for ${b.dataset.period}`;by("#incomeDialog").showModal();});
@@ -2312,6 +2453,7 @@ window.getTenantAnnualStatement = getTenantAnnualStatement;
 window.renderTenantStatement = renderTenantStatement;
 window.formatTenantStatementEmail = formatTenantStatementEmail;
 window.propertyIncomeRecords = propertyIncomeRecords;
+window.renderPropertyTables = renderPropertyTables;
 window.syncCashflowRentToPropertyRecords = syncCashflowRentToPropertyRecords;
 
 if (typeof by === "function") {

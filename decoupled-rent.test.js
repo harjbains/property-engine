@@ -14,7 +14,7 @@ test("decoupled rent: cashflow edits do not mutate propertyIncome and propertyIn
       { id: "prop-leslie", property: "35 Leslie Road", rent: 900, start: "2025-04-01" }
     ],
     propertyIncome: [
-      { id: "pi-1", propertyId: "prop-penn", date: "2026-09-26", amount: 850, period: "2026-09", notes: "Sept paid" }
+      { id: "pi-1", propertyId: "prop-penn", date: "2026-10-12", amount: 850, period: "2026-10", notes: "Oct paid" }
     ],
     propertyExpenses: [],
     rentChanges: [],
@@ -79,16 +79,16 @@ test("decoupled rent: cashflow edits do not mutate propertyIncome and propertyIn
   vm.runInContext(fs.readFileSync("abratax-export.js", "utf8"), sandbox);
   vm.runInContext(fs.readFileSync("app.js", "utf8"), sandbox);
 
-  // 1. Check propertyIncomeRecords returns the manual receipt for 2026-09
-  const septRecords = sandbox.propertyIncomeRecords("2026-09");
-  const pennSept = septRecords.filter(r => r.propertyId === "prop-penn");
-  assert.equal(pennSept.length, 1, "Should find 1 manual receipt for Sept 2026 for Penn Road");
-  assert.equal(pennSept[0].amount, 850);
-
-  // 2. Unpaid month 2026-10 has 0 records in propertyIncomeRecords
+  // 1. Check propertyIncomeRecords returns the manual receipt for 2026-10
   const octRecords = sandbox.propertyIncomeRecords("2026-10");
   const pennOct = octRecords.filter(r => r.propertyId === "prop-penn");
-  assert.equal(pennOct.length, 0, "Unpaid October should have 0 records for Penn Road");
+  assert.equal(pennOct.length, 1, "Should find 1 manual receipt for Oct 2026 for Penn Road");
+  assert.equal(pennOct[0].amount, 850);
+
+  // 2. Unpaid month 2026-09 has 0 records in propertyIncomeRecords
+  const septRecords = sandbox.propertyIncomeRecords("2026-09");
+  const pennSept = septRecords.filter(r => r.propertyId === "prop-penn");
+  assert.equal(pennSept.length, 0, "Unpaid September should have 0 records for Penn Road");
 
   // 3. syncCashflowRentToPropertyRecords is a decoupled no-op
   const appStateBefore = JSON.parse(store["tax-engine-v3"]);
@@ -140,4 +140,16 @@ test("mobile rent receipt: quick-spend records rent into propertyIncome and opti
   // Verify decoupling: syncMobilePropertyIncome is a no-op
   const syncMatch = qsJs.match(/function syncMobilePropertyIncome[\s\S]*?\n\}/);
   assert.ok(syncMatch && syncMatch[0].includes("return;"), "syncMobilePropertyIncome must be decoupled no-op");
+});
+
+test("property income ledger: date filter and property filter show full tenancy schedule, past paid rents, and overdue arrears", () => {
+  const html = fs.readFileSync("index.html", "utf8");
+  assert.ok(html.includes('id="propertyIncomeDateFilter"'), "propertyIncomeDateFilter select must exist in index.html");
+  assert.ok(html.includes('id="propertyExpenseDateFilter"'), "propertyExpenseDateFilter select must exist in index.html");
+  assert.ok(html.includes('id="propertyIncomeFilter"'), "propertyIncomeFilter select must exist in index.html");
+
+  const appJs = fs.readFileSync("app.js", "utf8");
+  assert.ok(appJs.includes("propertyIncomeDateFilter"), "app.js must handle propertyIncomeDateFilter");
+  assert.ok(appJs.includes("incomeDateFilter"), "app.js must manage incomeDateFilter state");
+  assert.ok(appJs.includes("matchIncomeDate"), "app.js must filter income by date");
 });

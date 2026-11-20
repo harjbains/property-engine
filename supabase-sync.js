@@ -11,34 +11,7 @@ function logToUI(msg) {
   if (typeof document === 'undefined') return;
   const div = document.createElement('div');
   div.style = 'position:fixed; top:10px; right:10px; background:rgba(0,0,0,0.8); color:white; padding:10px; z-index:9999; border-radius:5px; font-family:monospace; max-width:400px; word-wrap:break-word; margin-bottom:5px;';
-  div.textContent = msg; console.log(msg); console.log(msg); console.log(msg); console.log(msg);
-  document.body.appendChild(div);
-  setTimeout(() => div.remove(), 10000);
-}
-
-
-function logToUI(msg) {
-  const div = document.createElement("div");
-  div.style = "position:fixed; top:10px; right:10px; background:rgba(0,0,0,0.8); color:white; padding:10px; z-index:9999; border-radius:5px; font-family:monospace; max-width:400px; word-wrap:break-word; margin-bottom:5px;";
-  div.textContent = msg; console.log(msg); console.log(msg);
-  document.body.appendChild(div);
-  setTimeout(() => div.remove(), 10000);
-}
-
-
-function logToUI(msg) {
-  const div = document.createElement("div");
-  div.style = "position:fixed; top:10px; right:10px; background:rgba(0,0,0,0.8); color:white; padding:10px; z-index:9999; border-radius:5px; font-family:monospace; max-width:400px; word-wrap:break-word; margin-bottom:5px;";
   div.textContent = msg; console.log(msg);
-  document.body.appendChild(div);
-  setTimeout(() => div.remove(), 10000);
-}
-
-
-function logToUI(msg) {
-  const div = document.createElement("div");
-  div.style = "position:fixed; top:10px; right:10px; background:rgba(0,0,0,0.8); color:white; padding:10px; z-index:9999; border-radius:5px; font-family:monospace; max-width:400px; word-wrap:break-word; margin-bottom:5px;";
-  div.textContent = msg;
   document.body.appendChild(div);
   setTimeout(() => div.remove(), 10000);
 }

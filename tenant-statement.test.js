@@ -118,21 +118,21 @@ test("tenant statement generates Jan to Dec statement, tracks cumulative balance
   assert.equal(augRow.amountPaid, 850);
   assert.equal(augRow.cumulativeBalance, 850);
 
-  // September 2026 was paid late on 12/10/2026
+  // September 2026 remains unpaid (arrears)
   const sepRow = statement.rows.find(r => r.month === "2026-09");
   assert.ok(sepRow);
   assert.equal(sepRow.rentDue, 850);
-  assert.equal(sepRow.amountPaid, 850, "September rent was receipted on 12/10/2026 and must clear September");
-  assert.equal(sepRow.status, "Paid");
-  assert.equal(sepRow.cumulativeBalance, 850);
+  assert.equal(sepRow.amountPaid, 0, "September rent is unpaid and in arrears");
+  assert.equal(sepRow.status, "Unpaid");
+  assert.equal(sepRow.cumulativeBalance, 1700, "Cumulative balance after missed September rent must be £1,700 arrears");
 
-  // October 2026 remains unpaid
+  // October 2026 was paid late on 12/10/2026
   const octRow = statement.rows.find(r => r.month === "2026-10");
   assert.ok(octRow);
   assert.equal(octRow.rentDue, 850);
-  assert.equal(octRow.amountPaid, 0, "October rent remains unpaid");
-  assert.equal(octRow.status, "Unpaid");
-  assert.equal(octRow.cumulativeBalance, 1700, "Cumulative balance after unpaid October must be £1,700 arrears");
+  assert.equal(octRow.amountPaid, 850, "October rent was receipted on 12/10/2026");
+  assert.equal(octRow.status, "Paid");
+  assert.equal(octRow.cumulativeBalance, 1700, "Cumulative balance remains £1,700 arrears");
 
   // November and December 2026 are upcoming and must NOT accrue arrears in right col
   const novRow = statement.rows.find(r => r.month === "2026-11");

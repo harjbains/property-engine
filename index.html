@@ -68,7 +68,7 @@
 </head>
 <body>
   <aside class="sidebar">
-    <div class="brand"><span class="brand-mark">TE</span><div><strong>Tax Engine</strong><small>MTD-ready planning &bull; v1.6.21</small></div></div>
+    <div class="brand"><span class="brand-mark">TE</span><div><strong>Tax Engine</strong><small>MTD-ready planning &bull; v1.6.22</small></div></div>
     <nav id="nav">
       <button class="active" data-view="dashboard">Banking</button><button data-view="uber">Uber</button><button data-view="properties" data-module-nav="property">Properties</button><button data-view="pension" data-module-nav="pension">Pension</button><button data-view="mtd">MTD Updates</button>
 <button data-view="campaigns">Campaigns</button><button data-view="settings">Settings</button>
@@ -167,7 +167,7 @@
       </div>
       <div class="card"><div class="card-head"><div><p class="eyebrow">PROPERTY RECORDS</p><h2>Tenancies</h2></div></div><div class="table records" id="propertyTable"></div></div>
       <div class="property-actions"><button class="primary" data-open-cashflow-workspace>Open Cashflow</button><button class="ghost" data-open="rentDialog">Raise rent</button><button class="ghost" id="btnOpenTenantStatements">Tenant statements</button></div><div class="property-ledger-month" id="propertyLedgerMonthControls"></div>
-      <div class="grid two property-ledgers"><div class="card"><div class="card-head"><div><p class="eyebrow">INCOME LEDGER</p><h2>Rent received</h2></div><label>Property filter<select id="propertyIncomeFilter"><option value="">All properties</option></select></label></div><div class="table records" id="propertyIncomeTable"></div></div><div class="card"><div class="card-head"><div><p class="eyebrow">EXPENSE LEDGER</p><h2>Property costs</h2></div></div><div class="table records" id="propertyExpenseTable"></div></div></div>
+      <div class="grid two property-ledgers"><div class="card"><div class="card-head"><div><p class="eyebrow">INCOME LEDGER</p><h2>Rent received</h2></div><div class="filter-controls" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;"><label>Property filter<select id="propertyIncomeFilter"><option value="">All properties</option></select></label><label>Date filter<select id="propertyIncomeDateFilter"><option value="all">All dates</option><option value="month">Selected month</option><option value="2026-27">Tax year 2026/27</option><option value="2025-26">Tax year 2025/26</option></select></label></div></div><div class="table records" id="propertyIncomeTable"></div></div><div class="card"><div class="card-head"><div><p class="eyebrow">EXPENSE LEDGER</p><h2>Property costs</h2></div><label>Date filter<select id="propertyExpenseDateFilter"><option value="month">Selected month</option><option value="all">All dates</option><option value="2026-27">Tax year 2026/27</option><option value="2025-26">Tax year 2025/26</option></select></label></div><div class="table records" id="propertyExpenseTable"></div></div></div>
       <div class="card"><div class="card-head"><div><p class="eyebrow">RENT HISTORY</p><h2>Rent changes</h2></div></div><div class="table records" id="rentHistoryTable"></div></div>
       <div class="card arrears-card"><div class="card-head"><div><p class="eyebrow">ARREARS CONTROL</p><h2>Rent due and outstanding</h2><p>Scheduled rent is matched against receipts by property and rental month.</p></div><label>Property filter<select id="arrearsPropertyFilter"><option value="">All properties</option></select></label></div><div class="metrics compact" id="arrearsMetrics"></div><div class="table records" id="arrearsTable"></div></div>
     </section>
@@ -309,5 +309,5 @@
       </div>
     </div>
   </dialog>
-  <script src="tax-engine.js?v=24"></script><script src="financial-controls.js?v=4"></script><script src="property-records.js?v=1"></script><script src="abratax-export.js?v=1"></script><script src="app.js?v=177"></script><script src="supabase-sync.js?v=34"></script>
+  <script src="tax-engine.js?v=24"></script><script src="financial-controls.js?v=4"></script><script src="property-records.js?v=1"></script><script src="abratax-export.js?v=1"></script><script src="app.js?v=180"></script><script src="supabase-sync.js?v=35"></script>
 </body></html>
