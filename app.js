@@ -2,69 +2,7 @@
 const KEY="tax-engine-v3",LEGACY_KEY="tax-engine-v2",money=new Intl.NumberFormat("en-GB",{style:"currency",currency:"GBP",maximumFractionDigits:2});
 
 function logToUI(msg) {
-  const div = document.createElement("div");
-  div.style = "position:fixed; top:10px; right:10px; background:rgba(0,0,0,0.8); color:white; padding:10px; z-index:9999; border-radius:5px; font-family:monospace; max-width:400px; word-wrap:break-word; margin-bottom:5px;";
-  div.textContent = msg; console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg);
-  document.body.appendChild(div);
-  setTimeout(() => div.remove(), 10000);
-}
-
-
-function logToUI(msg) {
-  const div = document.createElement("div");
-  div.style = "position:fixed; top:10px; right:10px; background:rgba(0,0,0,0.8); color:white; padding:10px; z-index:9999; border-radius:5px; font-family:monospace; max-width:400px; word-wrap:break-word; margin-bottom:5px;";
-  div.textContent = msg; console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg);
-  document.body.appendChild(div);
-  setTimeout(() => div.remove(), 10000);
-}
-
-
-function logToUI(msg) {
-  const div = document.createElement("div");
-  div.style = "position:fixed; top:10px; right:10px; background:rgba(0,0,0,0.8); color:white; padding:10px; z-index:9999; border-radius:5px; font-family:monospace; max-width:400px; word-wrap:break-word; margin-bottom:5px;";
-  div.textContent = msg; console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg);
-  document.body.appendChild(div);
-  setTimeout(() => div.remove(), 10000);
-}
-
-
-function logToUI(msg) {
-  const div = document.createElement("div");
-  div.style = "position:fixed; top:10px; right:10px; background:rgba(0,0,0,0.8); color:white; padding:10px; z-index:9999; border-radius:5px; font-family:monospace; max-width:400px; word-wrap:break-word; margin-bottom:5px;";
-  div.textContent = msg; console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg);
-  document.body.appendChild(div);
-  setTimeout(() => div.remove(), 10000);
-}
-
-
-function logToUI(msg) {
-  const div = document.createElement("div");
-  div.style = "position:fixed; top:10px; right:10px; background:rgba(0,0,0,0.8); color:white; padding:10px; z-index:9999; border-radius:5px; font-family:monospace; max-width:400px; word-wrap:break-word; margin-bottom:5px;";
-  div.textContent = msg; console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg);
-  document.body.appendChild(div);
-  setTimeout(() => div.remove(), 10000);
-}
-
-
-function logToUI(msg) {
-  const div = document.createElement("div");
-  div.style = "position:fixed; top:10px; right:10px; background:rgba(0,0,0,0.8); color:white; padding:10px; z-index:9999; border-radius:5px; font-family:monospace; max-width:400px; word-wrap:break-word; margin-bottom:5px;";
-  div.textContent = msg; console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg);
-  document.body.appendChild(div);
-  setTimeout(() => div.remove(), 10000);
-}
-
-
-function logToUI(msg) {
-  const div = document.createElement("div");
-  div.style = "position:fixed; top:10px; right:10px; background:rgba(0,0,0,0.8); color:white; padding:10px; z-index:9999; border-radius:5px; font-family:monospace; max-width:400px; word-wrap:break-word; margin-bottom:5px;";
-  div.textContent = msg; console.log(msg); console.log(msg); console.log(msg); console.log(msg); console.log(msg);
-  document.body.appendChild(div);
-  setTimeout(() => div.remove(), 10000);
-}
-
-
-function logToUI(msg) {
+  if (typeof document === 'undefined') return;
   const div = document.createElement("div");
   div.style = "position:fixed; top:10px; right:10px; background:rgba(0,0,0,0.8); color:white; padding:10px; z-index:9999; border-radius:5px; font-family:monospace; max-width:400px; word-wrap:break-word; margin-bottom:5px;";
   div.textContent = msg; console.log(msg); console.log(msg); console.log(msg); console.log(msg);
@@ -891,54 +829,8 @@ function dedupeCashflowPropertyRents(incomeList){
 }
 
 function syncCashflowRentToPropertyRecords(item, month, expectedAmount, actualAmount, status){
-  try{
-    if(!state || !Array.isArray(state.properties)) return;
-
-    let prop = null;
-    if(item.propertyId){
-      prop = state.properties.find(p => p.id === item.propertyId);
-    }
-    if(!prop){
-      const desc = String(item.description || item.payment || "").toLowerCase();
-      prop = state.properties.find(p => {
-        const pName = String(p.property || "").toLowerCase();
-        return (desc.includes("penn") && pName.includes("penn")) ||
-               (desc.includes("leslie") && pName.includes("leslie")) ||
-               (desc.includes("ranelagh") && pName.includes("ranelagh"));
-      });
-    }
-    if(!prop) return;
-
-    state.propertyIncome = state.propertyIncome || [];
-    const finalAmount = status === "Received" ? (actualAmount != null ? num(actualAmount) : num(expectedAmount)) : num(expectedAmount);
-
-    let recs = state.propertyIncome.filter(r => r.propertyId === prop.id && (r.period === month || (r.date && r.date.slice(0, 7) === month)));
-    if(recs.length > 0){
-      recs[0].amount = Math.max(0, finalAmount);
-      recs[0].modifiedAt = new Date().toISOString();
-      recs[0].notes = finalAmount === 0 ? "Rent adjusted to £0.00" : (status === "Received" ? "Rent received" : "Monthly rent expected");
-      if(recs.length > 1){
-        const keepId = recs[0].id;
-        state.propertyIncome = state.propertyIncome.filter(r => !(r.propertyId === prop.id && (r.period === month || (r.date && r.date.slice(0, 7) === month)) && r.id !== keepId));
-      }
-    }else{
-      const day = String(prop.property || "").toLowerCase().includes("penn") ? 26 : 1;
-      state.propertyIncome.push({
-        id: uid(),
-        propertyId: prop.id,
-        date: month + '-' + String(day).padStart(2, '0'),
-        amount: Math.max(0, finalAmount),
-        period: month,
-        notes: finalAmount === 0 ? "Rent adjusted to £0.00" : "Rent from cashflow",
-        modifiedAt: new Date().toISOString()
-      });
-    }
-
-    state.savedAt = new Date().toISOString();
-    save();
-  }catch(e){
-    console.error("Failed to sync property rent to app state:", e);
-  }
+  // Intentionally decoupled: Cashflow adjustments do not modify property tenancy records.
+  return;
 }
 
 function cashflowStateForMonth(month){
@@ -1110,7 +1002,7 @@ function copyPreviousFixedCosts(){
       const desc=compactName(i.description||i.payment);
       return desc&&(desc.includes(pComp)||pComp.includes(desc));
     });
-    if(!isPresent){
+    if(!isPresent && candidateIncomes.length === 0){
       existingPropertyIds.add(p.id);
       existingRents.add(pComp);
       const day=cashDay(p.start)||(pComp.includes("penn")?26:1);
@@ -1398,27 +1290,12 @@ function manualPropertyIncomeRecords(month=""){
   });
 }function propertyIncomeRecords(month=""){
   if(month){
-    const cash=dedupeMoneyRecords(cashflowPropertyIncomeRecords(month));
-    if(cash.length) return cash;
-    const manual=dedupeMoneyRecords(manualPropertyIncomeRecords(month));
-    try{
-      const raw=localStorage.getItem(cashflowKey(month));
-      if(raw){
-        const xSaved=JSON.parse(raw);
-        if(xSaved&&Array.isArray(xSaved.income)){
-          return manual.map(mRec=>{
-            const cfItem=xSaved.income.find(ci=>ci.propertyId===mRec.propertyId||(ci.treatment==="property_income"&&String(ci.description||"").toLowerCase().includes("penn")&&String(propertyName(mRec.propertyId)||"").toLowerCase().includes("penn")));
-            if(cfItem&&num(cfItem.expected)===0&&(cfItem.actual==null||num(cfItem.actual)===0)){
-              return {...mRec,amount:0,notes:"Rent adjusted to £0.00"};
-            }
-            return mRec;
-          });
-        }
-      }
-    }catch{}
-    return manual;
+    return dedupeMoneyRecords(manualPropertyIncomeRecords(month));
   }
-  const months=new Set([...state.propertyIncome.map(i=>{const p=(state.properties||[]).find(x=>x.id===i.propertyId);return resolveReceiptPeriod(i,p)||i.date?.slice(0,7);}),...cashflowPropertyIncomeRecords().map(i=>i.period||i.date?.slice(0,7))].filter(Boolean));
+  const months=new Set(state.propertyIncome.map(i=>{
+    const p=(state.properties||[]).find(x=>x.id===i.propertyId);
+    return resolveReceiptPeriod(i,p)||i.period||i.date?.slice(0,7);
+  }).filter(Boolean));
   return dedupeMoneyRecords([...months].flatMap(m=>propertyIncomeRecords(m)));
 }
 function manualPropertyExpenseRecords(month=""){return state.propertyExpenses.filter(i=>!month||i.date?.slice(0,7)===month);}function dedupePropertyExpenseRecords(rows){const seen=new Set();return rows.filter(i=>{const raw=String(i.category||"").trim().toLowerCase(),category=raw==="agent fees"||raw==="property management"?"agent fees":raw,key=`${i.propertyId||""}:${i.date||""}:${num(i.amount).toFixed(2)}:${category}`;if(seen.has(key))return false;seen.add(key);return true;});}function propertyExpenseRecords(month=""){const manual=manualPropertyExpenseRecords(month),cash=cashflowPropertyExpenseRecords(month);return dedupePropertyExpenseRecords([...cash,...manual]);}function paidCashflowPropertyItems(x,month,includeLedger=true){const all=[...x.fixed.map(i=>normaliseCashItem({...i,date:i.due,description:i.payment,source:"fixed"})),...x.spending.map(i=>normaliseCashItem({...i,source:"spending"}))],cash=all.filter(i=>i.treatment&&i.treatment!=="cashflow"&&i.treatment!=="room_rent"&&i.treatment!=="transfer"&&i.propertyId&&cashDateMonth(i.date,month)===month&&num(i.actual)>0&&(i.status==="Paid"||i.status==="Part-paid"));return includeLedger?FinancialControls.propertyPayslipItems(propertyExpenseRecords(month)):cash;}
@@ -2335,6 +2212,8 @@ window.arrearsSchedule = arrearsSchedule;
 window.getTenantAnnualStatement = getTenantAnnualStatement;
 window.renderTenantStatement = renderTenantStatement;
 window.formatTenantStatementEmail = formatTenantStatementEmail;
+window.propertyIncomeRecords = propertyIncomeRecords;
+window.syncCashflowRentToPropertyRecords = syncCashflowRentToPropertyRecords;
 
 if (typeof by === "function") {
   const btnOpenStmt = by("#btnOpenTenantStatements");

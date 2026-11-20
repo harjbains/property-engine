@@ -472,52 +472,8 @@ function dedupeCashflowPropertyRents(incomeList){
 }
 
 function syncMobilePropertyIncome(item, month, expectedAmount, actualAmount, status){
-  try{
-    const s = loadAppState();
-    if(!s || !Array.isArray(s.properties)) return;
-
-    let prop = null;
-    if(item.propertyId){
-      prop = s.properties.find(p => p.id === item.propertyId);
-    }
-    if(!prop){
-      const desc = String(item.description || item.payment || "").toLowerCase();
-      prop = s.properties.find(p => {
-        const pName = String(p.property || "").toLowerCase();
-        return (desc.includes("penn") && pName.includes("penn")) ||
-               (desc.includes("leslie") && pName.includes("leslie")) ||
-               (desc.includes("ranelagh") && pName.includes("ranelagh"));
-      });
-    }
-    if(!prop) return;
-
-    s.propertyIncome = s.propertyIncome || [];
-    const finalAmount = status === "Received" ? (actualAmount != null ? num(actualAmount) : num(expectedAmount)) : num(expectedAmount);
-
-    let rec = s.propertyIncome.find(r => r.propertyId === prop.id && (r.period === month || (r.date && r.date.slice(0, 7) === month)));
-    if(rec){
-      rec.amount = Math.max(0, finalAmount);
-      rec.modifiedAt = new Date().toISOString();
-      rec.notes = finalAmount === 0 ? "Rent adjusted to £0.00" : (status === "Received" ? "Rent received" : "Monthly rent expected");
-    }else{
-      const day = String(prop.property || "").toLowerCase().includes("penn") ? 26 : 1;
-      s.propertyIncome.push({
-        id: crypto.randomUUID ? crypto.randomUUID() : ('pi-' + Date.now()),
-        propertyId: prop.id,
-        date: month + '-' + String(day).padStart(2, '0'),
-        amount: Math.max(0, finalAmount),
-        period: month,
-        notes: finalAmount === 0 ? "Rent adjusted to £0.00" : "Rent from cashflow",
-        modifiedAt: new Date().toISOString()
-      });
-    }
-
-    s.savedAt = new Date().toISOString();
-    s.sourceDevice = "mobile";
-    localStorage.setItem("tax-engine-v3", JSON.stringify(s));
-  }catch(e){
-    console.error("Failed to sync property rent to app state:", e);
-  }
+  // Intentionally decoupled: Mobile cashflow adjustments do not modify property tenancy records.
+  return;
 }
 
 function propertyOptions(){
@@ -913,10 +869,185 @@ window.openEditModal=function(id,type){
   }
 };
 
+
+function populateRentReceiptProperties(){
+  const s = loadAppState();
+  const select = by("#rentReceiptProperty");
+  if(!select) return;
+  const properties = s.properties || [];
+  select.innerHTML = '<option value="">Select Property...</option>' + properties.map(p => {
+    const rent = p.rent ? ` (£${p.rent}/mo)` : '';
+    const tenant = p.tenant ? ` - Tenant: ${p.tenant}` : '';
+    return `<option value="${p.id}" data-rent="${p.rent || 0}">${p.property || p.property_name || "Property"}${tenant}${rent}</option>`;
+  }).join("");
+}
+
+function renderMobileRecentRent(){
+  const container = by("#mobileRecentRentList");
+  const countEl = by("#mobileRecentRentCount");
+  if(!container) return;
+  const s = loadAppState();
+  const receipts = (s.propertyIncome || []).slice();
+  receipts.sort((a, b) => (b.date || "").localeCompare(a.date || "") || (b.createdAt || "").localeCompare(a.createdAt || ""));
+  const recent = receipts.slice(0, 5);
+  if(countEl) countEl.textContent = `${receipts.length} total`;
+  if(!recent.length){
+    container.innerHTML = '<div style="padding:0.75rem; text-align:center; color:#9ca3af; font-size:0.8rem;">No rent receipts recorded yet</div>';
+    return;
+  }
+  container.innerHTML = recent.map(r => {
+    const prop = (s.properties || []).find(p => p.id === r.propertyId);
+    const pName = prop ? (prop.property || prop.property_name || "Property") : (r.property || "Property");
+    return `<div class="mobile-item" style="padding: 0.65rem 0.85rem; border-left: 3.5px solid #059669;">
+      <div class="mobile-item-info">
+        <div class="mobile-item-title" style="font-size: 0.88rem; font-weight: 700;">${pName}</div>
+        <div style="font-size: 0.72rem; color: #6b7280;">${r.date || ""} · Period: ${r.period || r.date?.slice(0, 7) || ""}${r.notes ? ` · ${r.notes}` : ""}</div>
+      </div>
+      <div style="text-align: right;">
+        <span style="font-weight: 700; color: #047857; font-size: 0.95rem;">£${Number(r.amount || 0).toFixed(2)}</span>
+        <span style="display: block; font-size: 0.68rem; color: #059669; font-weight: 600;">Received</span>
+      </div>
+    </div>`;
+  }).join("");
+}
+
 function init(){
+
   by("#mobileMonth").value=currentMonth;
   by("#spendDay").value=todayIso();
   by("#spendProperty").innerHTML=propertyOptions();
+
+  // Setup mobile rent receipting
+  populateRentReceiptProperties();
+  renderMobileRecentRent();
+  const rentDateInput = by("#rentReceiptDate");
+  if(rentDateInput) rentDateInput.value = todayIso();
+  const rentPeriodInput = by("#rentReceiptPeriod");
+  if(rentPeriodInput) rentPeriodInput.value = currentMonth;
+
+  // Tabs toggle
+  const btnTabSpend = by("#btnTabSpend");
+  const btnTabRentReceipt = by("#btnTabRentReceipt");
+  const spendForm = by("#mobileSpendForm");
+  const rentForm = by("#mobileRentReceiptForm");
+
+  if(btnTabSpend && btnTabRentReceipt && spendForm && rentForm){
+    btnTabSpend.addEventListener("click", () => {
+      btnTabSpend.classList.add("active");
+      btnTabRentReceipt.classList.remove("active");
+      spendForm.style.display = "block";
+      rentForm.style.display = "none";
+    });
+    btnTabRentReceipt.addEventListener("click", () => {
+      btnTabRentReceipt.classList.add("active");
+      btnTabSpend.classList.remove("active");
+      spendForm.style.display = "none";
+      rentForm.style.display = "block";
+      populateRentReceiptProperties();
+      renderMobileRecentRent();
+    });
+  }
+
+  // Rent property change auto-fills rent
+  const rentPropSelect = by("#rentReceiptProperty");
+  const rentAmtInput = by("#rentReceiptAmount");
+  const rentBankPreview = by("#rentBankAmountPreview");
+
+  if(rentPropSelect && rentAmtInput){
+    rentPropSelect.addEventListener("change", e => {
+      const selected = rentPropSelect.selectedOptions[0];
+      const rent = selected ? Number(selected.dataset.rent || 0) : 0;
+      if(rent > 0){
+        rentAmtInput.value = rent.toFixed(2);
+      }
+      if(rentBankPreview) rentBankPreview.textContent = (Number(rentAmtInput.value) || 0).toFixed(2);
+    });
+  }
+
+  if(rentAmtInput && rentBankPreview){
+    rentAmtInput.addEventListener("input", e => {
+      rentBankPreview.textContent = (Number(e.target.value) || 0).toFixed(2);
+    });
+  }
+
+  // Rent receipt form submission
+  if(rentForm){
+    rentForm.addEventListener("submit", e => {
+      e.preventDefault();
+      const propId = rentPropSelect ? rentPropSelect.value : "";
+      const amt = Number(rentAmtInput ? rentAmtInput.value : 0) || 0;
+      const rDate = rentDateInput ? rentDateInput.value : todayIso();
+      const rPeriod = rentPeriodInput ? rentPeriodInput.value : rDate.slice(0, 7);
+      const notes = by("#rentReceiptNotes") ? by("#rentReceiptNotes").value.trim() : "";
+      const addToBank = by("#rentReceiptAddToBank") ? by("#rentReceiptAddToBank").checked : false;
+
+      if(!propId){
+        alert("Please select a property.");
+        return;
+      }
+      if(amt <= 0){
+        alert("Please enter a valid amount.");
+        return;
+      }
+
+      const s = loadAppState();
+      const prop = (s.properties || []).find(p => p.id === propId);
+      const propName = prop ? (prop.property || prop.property_name || "Property") : "Property";
+
+      const receipt = {
+        id: (typeof crypto !== "undefined" && crypto.randomUUID) ? crypto.randomUUID() : ('pi-' + Date.now()),
+        propertyId: propId,
+        date: rDate,
+        amount: amt,
+        period: rPeriod,
+        notes: notes || "Mobile rent receipt",
+        createdAt: new Date().toISOString()
+      };
+
+      s.propertyIncome = s.propertyIncome || [];
+      s.propertyIncome.push(receipt);
+      s.savedAt = new Date().toISOString();
+      localStorage.setItem("tax-engine-v3", JSON.stringify(s));
+
+      if(addToBank){
+        const x = loadCashflow(currentMonth);
+        x.bankAccounts = x.bankAccounts || { zempler: 0, lloyds: 0 };
+        x.bankAccounts.lloyds = (Number(x.bankAccounts.lloyds) || 0) + amt;
+        x.bank = Object.values(x.bankAccounts).reduce((sum, v) => sum + (Number(v) || 0), 0);
+        x.bankUpdatedAt = new Date().toISOString();
+
+        x.income = x.income || [];
+        x.income.push({
+          id: (typeof crypto !== "undefined" && crypto.randomUUID) ? crypto.randomUUID() : ('cf-' + Date.now()),
+          date: rDate.slice(0, 7) === currentMonth ? rDate : todayIso(),
+          description: `${propName} rent received`,
+          category: "Rent income",
+          expected: amt,
+          actual: amt,
+          status: "Received",
+          account: "lloyds",
+          treatment: "cashflow",
+          notes: `Receipted for period ${rPeriod}`
+        });
+        saveCashflow(x);
+      }
+
+      if(window.TaxEngineSync){
+        if(typeof window.TaxEngineSync.pushAll === "function") window.TaxEngineSync.pushAll();
+        else if(typeof window.TaxEngineSync.schedulePush === "function") window.TaxEngineSync.schedulePush();
+      }
+
+      alert(`✓ Rent receipt recorded: £${amt.toFixed(2)} for ${propName} (Period: ${rPeriod})`);
+
+      if(rentAmtInput) rentAmtInput.value = "";
+      if(by("#rentReceiptNotes")) by("#rentReceiptNotes").value = "";
+      if(rentBankPreview) rentBankPreview.textContent = "0.00";
+
+      render();
+      renderMobileRecentRent();
+    });
+  }
+
   if(by("#spendCampaign")) by("#spendCampaign").innerHTML=campaignOptions();
   const spendCat=by("#spendCategory");
   if(spendCat)spendCat.value="Living";

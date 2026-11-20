@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
   <title>Mobile Cashflow</title>
   <meta name="theme-color" content="#111827">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   
   <style>
     body.mobile-cashflow { background: #f3f4f6; color: #111827; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -80,7 +83,7 @@
 <body class="mobile-cashflow">
   <header class="mobile-header">
     <div style="display: flex; align-items: center; gap: 0.5rem;">
-      <h1>Mobile Cashflow</h1>
+      <h1>Mobile Cashflow <small style="font-size: 0.7rem; color: #9ca3af; font-weight: normal;">v1.6.20</small></h1>
       <button id="syncStatusBadge" type="button" class="sync-badge" title="Tap to toggle sync details" style="display: none; align-items: center; gap: 0.35rem; border: none; background: #064e3b; color: #a7f3d0; font-size: 0.72rem; font-weight: 700; padding: 0.2rem 0.55rem; border-radius: 999px; cursor: pointer;">
         <span class="sync-dot" style="width: 6px; height: 6px; border-radius: 50%; background: #34d399;"></span>
         <span id="syncBadgeText">Synced</span>
@@ -188,14 +191,19 @@
     </div>
   </section>
 
-  <!-- Add Spend Form -->
-  <section class="mobile-section">
-    <div class="section-head-bar">
-      <h2>Record Expenditure</h2>
+  <!-- Actions Section (Spend or Receipt Rent) -->
+  <section class="mobile-section" id="mobileActionSection">
+    <div class="section-head-bar" style="margin-bottom: 0.75rem;">
+      <div class="filter-pills" id="entryTypeTabs">
+        <button type="button" class="filter-pill active" id="btnTabSpend">💸 Spend</button>
+        <button type="button" class="filter-pill" id="btnTabRentReceipt">🏠 Receipt Rent</button>
+      </div>
       <button type="button" id="btnOpenScanModal" class="filter-pill" style="border: 1px solid #7c3aed; background: #f5f3ff; color: #6d28d9; font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem; cursor: pointer;">
         📷 Auto-Allocate Bank
       </button>
     </div>
+
+    <!-- Add Spend Form -->
     <form class="mobile-add-spend" id="mobileSpendForm">
       <div class="mobile-form-group">
         <label>Description</label>
@@ -237,6 +245,58 @@
         </select>
       </div>
       <button type="submit" class="mobile-submit">Add Expenditure</button>
+    </form>
+
+    <!-- Receipt Tenant Rent Form -->
+    <form class="mobile-add-spend" id="mobileRentReceiptForm" style="display: none; border-top: 3px solid #059669; padding-top: 0.85rem;">
+      <div class="mobile-form-group">
+        <label>Property & Tenant</label>
+        <select name="propertyId" id="rentReceiptProperty" required>
+          <option value="">Select Property...</option>
+        </select>
+      </div>
+      <div style="display: flex; gap: 0.75rem;">
+        <div class="mobile-form-group" style="flex: 1;">
+          <label>Amount Received (£)</label>
+          <input type="number" name="amount" id="rentReceiptAmount" step="0.01" min="0" required placeholder="0.00">
+        </div>
+        <div class="mobile-form-group" style="flex: 1;">
+          <label>Date Received</label>
+          <input type="date" name="date" id="rentReceiptDate" required>
+        </div>
+      </div>
+      <div style="display: flex; gap: 0.75rem;">
+        <div class="mobile-form-group" style="flex: 1;">
+          <label>Rent Period (Month)</label>
+          <input type="month" name="period" id="rentReceiptPeriod" required>
+        </div>
+        <div class="mobile-form-group" style="flex: 1;">
+          <label>Notes (optional)</label>
+          <input type="text" name="notes" id="rentReceiptNotes" placeholder="e.g. Bank transfer, Late">
+        </div>
+      </div>
+      <div class="mobile-form-group" style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 0.375rem; padding: 0.65rem 0.75rem; margin-top: 0.25rem;">
+        <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer; margin: 0;">
+          <input type="checkbox" id="rentReceiptAddToBank" checked style="width: 18px; height: 18px; accent-color: #059669; cursor: pointer;">
+          <span style="font-size: 0.85rem; color: #065f46; font-weight: 600;">
+            Also add to Lloyds bank balance (+£<span id="rentBankAmountPreview">0.00</span>)
+          </span>
+        </label>
+      </div>
+      <button type="submit" class="mobile-submit" id="btnSubmitRentReceipt" style="background: #059669; margin-top: 0.5rem;">
+        ✓ Save Rent Receipt
+      </button>
+
+      <!-- Recent Rent Receipts Container -->
+      <div id="mobileRecentRentContainer" style="margin-top: 1rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+          <span style="font-size: 0.75rem; font-weight: 700; color: #4b5563; text-transform: uppercase;">Recent Rent Receipts</span>
+          <span id="mobileRecentRentCount" style="font-size: 0.72rem; color: #6b7280;"></span>
+        </div>
+        <div class="mobile-list" id="mobileRecentRentList" style="gap: 0.4rem;">
+          <!-- Injected dynamically -->
+        </div>
+      </div>
     </form>
   </section>
 
@@ -444,7 +504,7 @@
   </dialog>
 
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-  <script src="quick-spend.js?v=112"></script>
-  <script src="supabase-sync.js?v=32"></script>
+  <script src="quick-spend.js?v=113"></script>
+  <script src="supabase-sync.js?v=33"></script>
 </body>
 </html>
