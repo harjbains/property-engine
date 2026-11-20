@@ -81,12 +81,14 @@ test("decoupled rent: cashflow edits do not mutate propertyIncome and propertyIn
 
   // 1. Check propertyIncomeRecords returns the manual receipt for 2026-09
   const septRecords = sandbox.propertyIncomeRecords("2026-09");
-  assert.equal(septRecords.length, 1, "Should find 1 manual receipt for Sept 2026");
-  assert.equal(septRecords[0].amount, 850);
+  const pennSept = septRecords.filter(r => r.propertyId === "prop-penn");
+  assert.equal(pennSept.length, 1, "Should find 1 manual receipt for Sept 2026 for Penn Road");
+  assert.equal(pennSept[0].amount, 850);
 
   // 2. Unpaid month 2026-10 has 0 records in propertyIncomeRecords
   const octRecords = sandbox.propertyIncomeRecords("2026-10");
-  assert.equal(octRecords.length, 0, "Unpaid October should have 0 records");
+  const pennOct = octRecords.filter(r => r.propertyId === "prop-penn");
+  assert.equal(pennOct.length, 0, "Unpaid October should have 0 records for Penn Road");
 
   // 3. syncCashflowRentToPropertyRecords is a decoupled no-op
   const appStateBefore = JSON.parse(store["tax-engine-v3"]);
