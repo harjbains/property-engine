@@ -5,13 +5,13 @@ function logToUI(msg) {
   if (typeof document === 'undefined') return;
   const div = document.createElement("div");
   div.style = "position:fixed; top:10px; right:10px; background:rgba(0,0,0,0.8); color:white; padding:10px; z-index:9999; border-radius:5px; font-family:monospace; max-width:400px; word-wrap:break-word; margin-bottom:5px;";
-  div.textContent = msg; console.log(msg);
+  div.textContent = msg;
   document.body.appendChild(div);
   setTimeout(() => div.remove(), 10000);
 }
 
 const by=s=>document.querySelector(s),all=s=>[...document.querySelectorAll(s)],uid=()=>crypto.randomUUID(),num=v=>Math.max(0,Number(v)||0),normaliseTaxYear=v=>String(v||"").trim().replace("/","-"),paymentTaxYear=x=>normaliseTaxYear(x.taxYear||x.intendedTaxYear||x.taxYearIntended),paymentsForYear=year=>state.payments.filter(x=>paymentTaxYear(x)===normaliseTaxYear(year)),sum=(a,k)=>(a===state?.payments?paymentsForYear(state.year):a).reduce((t,x)=>t+num(x[k]),0),pct=v=>num(v)/100,showPct=v=>(num(v)*100).toFixed(2).replace(/\.00$/,"");
-const MODULE_LABELS={employment:"Employment/PAYE",uber:"Self-employment/Uber",property:"Property income",pension:"Private pension",savings:"Savings interest",dividends:"Dividends/shares",other:"Other income"};let incomePropertyFilter="",incomeDateFilter="all",expenseDateFilter="month",arrearsPropertyFilter="",entryYearFilter="all",dashboardView="actual",dashboardMonth="",propertyLedgerMonth="",mtdPeriodNumber=0,scheduleDetailData={},taxWorkspaceTab="cashflow",cashflowEditor=null,sandboxEditor=null;
+const MODULE_LABELS={employment:"Employment/PAYE",uber:"Self-employment/Uber",property:"Property income",pension:"Private pension",savings:"Savings interest",dividends:"Dividends/shares",other:"Other income"};let incomePropertyFilter="",incomeDateFilter="all",expenseDateFilter="month",arrearsPropertyFilter="",entryYearFilter="all",dashboardView="actual",dashboardMonth="",propertyLedgerMonth="",propertyActiveTab="ledgers",mtdPeriodNumber=0,scheduleDetailData={},taxWorkspaceTab="cashflow",cashflowEditor=null,sandboxEditor=null;
 function yearSettings(year){const r={...TaxEngine.rulesFor(year)};return{rules:r,modules:{employment:false,uber:true,property:true,pension:true,savings:false,dividends:false,other:false},forecast:{monthsRemaining:12,method:"annual",scenario:"expected",uberForecast:55000,uberWeeklyProvision:750,annualMiles:52000,uberOtherExpenses:0,propertyIncome:32000,propertyExpenses:3000,pensionIncome:8295},hmrc:{reserve:year==="2026-27"?1714.59:0,standardMonthly:0,preferredDay:28,catchupShortfall:0,catchupMonths:12,minimumPayment:0,roundTo:10},banking:{safetyBuffer:2000},moduleData:{employment:{gross:0,taxCode:"1257L",payeTax:0,payeTaxProvided:false,niDeducted:0,benefitsEnabled:false,benefits:0},uber:{simplifiedMileage:true},property:{treatment:"standard",basicRate:r.basicRate,higherRate:r.higherRate,additionalRate:r.additionalRate,financeRestriction:true,disallowedInterest:3700,carriedFinanceCosts:0,propertyAllowanceEnabled:false,propertyAllowanceAmount:r.propertyAllowance},pension:{annual:8295,taxCode:"1257L",taxDeducted:691.20,taxProvided:true,inputBasis:"gross",includeState:false},savings:{interest:0,personalAllowance:r.savingsAllowanceBasic,startingRateEnabled:false,basicRate:r.basicRate,higherRate:r.higherRate,additionalRate:r.additionalRate},dividends:{income:0,allowance:r.dividendAllowance,basicRate:r.dividendBasicRate,higherRate:r.dividendHigherRate,additionalRate:r.dividendAdditionalRate},other:{description:"",amount:0,category:"Other taxable income",taxDeducted:0}}};}
 function ranelaghRentDates(){return Array.from({length:16},(_,i)=>{const d=new Date(Date.UTC(2025,3+i,1));return`${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,"0")}-01`;});}function demo(){const ranelaghId=uid(),rentMonths=ranelaghRentDates().map(date=>({id:uid(),propertyId:ranelaghId,date,amount:550,period:date.slice(0,7),notes:"Monthly rent received on the 1st"}));return{version:3,year:"2026-27",settingsByYear:{"2025-26":yearSettings("2025-26"),"2026-27":yearSettings("2026-27")},employment:[],uber:[],properties:[{id:ranelaghId,property:"5a Ranelagh Road",tenant:"Not entered",ownership:100,rent:550,deposit:0,start:"2025-04-01",end:""}],propertyIncome:rentMonths,propertyExpenses:[],rentChanges:[],pension:[],payments:[]};}
 function ensureRanelagh(base){const removed=new Set(base.properties.filter(x=>x.property==="Wolverhampton rental").map(x=>x.id));base.properties=base.properties.filter(x=>!removed.has(x.id));base.propertyIncome=base.propertyIncome.filter(x=>!removed.has(x.propertyId));base.propertyExpenses=base.propertyExpenses.filter(x=>!removed.has(x.propertyId));base.rentChanges=base.rentChanges.filter(x=>!removed.has(x.propertyId));let p=base.properties.find(x=>x.property==="5a Ranelagh Road");if(!p){p={id:uid(),property:"5a Ranelagh Road",tenant:"Not entered",ownership:100,rent:550,deposit:0,start:"2025-04-01",end:""};base.properties.push(p);}p.ownership=p.ownership||100;const existing=new Set(base.propertyIncome.filter(x=>x.propertyId===p.id).map(x=>x.date));for(const date of ranelaghRentDates())if(!existing.has(date))base.propertyIncome.push({id:uid(),propertyId:p.id,date,amount:550,period:date.slice(0,7),notes:"Monthly rent received on the 1st"});return base;}
@@ -293,7 +293,9 @@ function shiftPropertyLedgerMonth(step){
   applyEntryDisplay();
 }
 function propertyLedgerMonthControls(month){return`<button class="ghost small" data-property-ledger-month="-1">&larr;</button><strong>${workspaceMonthLabel(month)}</strong><button class="ghost small" data-property-ledger-month="1">&rarr;</button>`;}
+function setPropertyTab(tab){propertyActiveTab=tab||propertyActiveTab||"ledgers";all("[data-property-tab]").forEach(btn=>{btn.classList.toggle("active",btn.dataset.propertyTab===propertyActiveTab);});all("[data-property-panel]").forEach(panel=>{panel.hidden=panel.dataset.propertyPanel!==propertyActiveTab;});}window.setPropertyTab=setPropertyTab;
 function renderPropertyTables(){
+  setPropertyTab(propertyActiveTab);
   const action=(kind,id)=>kind==="property"?`<span class="row-actions"><button class="ghost small" data-statement-property="${id}">Stmnt</button><button class="ghost small" data-edit-${kind}="${id}">Edit</button>${del("properties",id)}</span>`:`<span class="row-actions"><button class="ghost small" data-edit-${kind}="${id}">Edit</button>${del("propertyIncome",id)}</span>`,
         cashTag=`<span class="entry-tag">Cashflow</span>`,
         ledgerMonth=propertyLedgerSelectedMonth();
@@ -2554,5 +2556,13 @@ if (typeof by === "function") {
     }
   });
 }
+
+
+  document.addEventListener("click", (e) => {
+    const tabBtn = e.target.closest("[data-property-tab]");
+    if (tabBtn && tabBtn.dataset.propertyTab) {
+      setPropertyTab(tabBtn.dataset.propertyTab);
+    }
+  });
 
 })();
